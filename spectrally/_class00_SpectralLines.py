@@ -11,15 +11,15 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from bsplines2d import as Previous
+from bsplines2d import BSplines2D as Previous
 import bsplines2d as bs2
 import datastock as ds
 
 
-from . import _class00_check as _check
-from . import _class00_add_ion as _add_ion
-from . import _class00_compute as _compute
-from . import _class00_plot as plot
+# from . import _class00_check as _check
+from . import _class00_check_ion as _check_ion
+# from . import _class00_compute as _compute
+# from . import _class00_plot as plot
 
 
 __all__ = ['SpectralLines']
@@ -50,14 +50,15 @@ class SpectralLine(Previous):
 
     # _show_in_summary_core = ['shape', 'ref', 'group']
     _dshow = dict(Previous._dshow)
+    _dshow['ion'] = ['element', 'A', 'Z', 'q', 'isoelect']
 
     _ddef['params']['dobj'] = {
-        'ion': {
-            'A': {'cls': float},
-            'Z': {'cls': int},
-            'q': {'cls': int},
-            'isoelect': {'cls': str},
-        },
+        # 'ion': {
+            # 'A': {'cls': float},
+            # 'Z': {'cls': int},
+            # 'q': {'cls': int},
+            # 'isoelect': {'cls': str},
+        # },
         'lines': {
             'lambda0': {'cls': float, 'def': 0.},
             'source': {'cls': str, 'def': 'unknown'},
@@ -83,9 +84,18 @@ class SpectralLine(Previous):
     def add_ion(self, key=None):
         """ Add an ion
         """
-        _add_ion.add_ion(
+        _check_ion.add_ion(
             coll=self,
             key=key,
+        )
+
+    def remove_ion(self, key=None, propagate=None):
+        """ Add an ion
+        """
+        _check_ion.remove_ion(
+            coll=self,
+            key=key,
+            propagate=propagate,
         )
 
     # -------------------
@@ -95,11 +105,11 @@ class SpectralLine(Previous):
     def add_spectral_line(
         self,
         key=None,
-        lambda0=None,
+        ion=None,
+        lamb0=None,
+        transition=None,
         pec=None,
         source=None,
-        transition=None,
-        ion=None,
         symbol=None,
         **kwdargs,
     ):
@@ -109,7 +119,7 @@ class SpectralLine(Previous):
         self.add_obj(
             which=self._which_lines,
             key=key,
-            lambda0=lambda0,
+            lambda0=lamb0,
             pec=pec,
             source=source,
             transition=transition,
