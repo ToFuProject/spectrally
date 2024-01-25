@@ -20,10 +20,10 @@ _SPECTRAL_DUNITS = {
 }
 
 
-# #############################################################################
-# #############################################################################
+# ###############################################################
+# ###############################################################
 #                       from openadas
-# #############################################################################
+# ###############################################################
 
 
 def from_openadas(
@@ -43,14 +43,15 @@ def from_openadas(
     """
     Load lines and pec from openadas, either:
         - online = True:  directly from the website
-        - online = False: from pre-downloaded files in ~/.tofu/openadas/
+        - online = False: from pre-downloaded files in ~/.spectrally/openadas/
 
     Provide wavelengths in m
 
     Example:
     --------
-            >>> import tofu as tf
-            >>> lines_mo = tf.data.SpectralLines.from_openadas(
+            >>> import spectrally as sp
+            >>> coll = sp.Collection()
+            >>> coll.add_spectral_lines_from_openadas(
                 element='Mo',
                 lambmin=3.94e-10,
                 lambmax=4e-10,
@@ -59,8 +60,8 @@ def from_openadas(
     """
 
     # Preliminary import and checks
-    from ..openadas2tofu import _requests
-    from ..openadas2tofu import _read_files
+    from .openadas import _requests
+    from .openadas import _read_files
 
     if online is None:
         online = _OPENADAS_ONLINE
@@ -145,10 +146,10 @@ def from_openadas(
     return ddata, dref, dobj
 
 
-# #############################################################################
-# #############################################################################
+# ###############################################################
+# ###############################################################
 #                       from nist
-# #############################################################################
+# ###############################################################
 
 
 def _from_nist(
@@ -172,14 +173,15 @@ def _from_nist(
     """
     Load lines from nist, either:
         - cache_from = False:  directly from the website
-        - cache_from = True: from pre-downloaded files in ~/.tofu/nist/
+        - cache_from = True: from pre-downloaded files in ~/.spectrally/nist/
 
     Provide wavelengths in m
 
     Example:
     --------
-            >>> import tofu as tf
-            >>> lines_mo = tf.data.SpectralLines.from_nist(
+            >>> import spectrally as sp
+            >>> coll = sp.Collection()
+            >>> sp.add_spectral_lines_from_nist(
                 element='Mo',
                 lambmin=3.94e-10,
                 lambmax=4e-10,
@@ -188,7 +190,7 @@ def _from_nist(
     """
 
     # Preliminary import and checks
-    from ..nist2tofu import _requests
+    from ..nist import _requests
 
     if verb is None:
         verb = False
@@ -234,10 +236,10 @@ def _from_nist(
     return dobj
 
 
-# #############################################################################
-# #############################################################################
+# ###############################################################
+# ###############################################################
 #                       from module
-# #############################################################################
+# ###############################################################
 
 
 def _check_extract_dict_from_mod(mod, k0):
@@ -318,10 +320,10 @@ def from_module(pfe=None):
     return dobj
 
 
-# #############################################################################
-# #############################################################################
+# ##############################################################
+# ##############################################################
 #                       Units conversion
-# #############################################################################
+# ##############################################################
 
 
 def _check_convert_spectral(

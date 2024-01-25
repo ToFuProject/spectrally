@@ -18,7 +18,8 @@ import datastock as ds
 
 # from . import _class00_check as _check
 from . import _class00_check_ion as _check_ion
-# from . import _class00_compute as _compute
+from . import _class00_check_lines as _check_lines
+from . import _class00_compute as _compute
 # from . import _class00_plot as plot
 
 
@@ -75,7 +76,7 @@ class SpectralLine(Previous):
     _quant_ne = _QUANT_NE
     _quant_Te = _QUANT_TE
 
-    _units_lambda0 = _UNITS_LAMBDA0
+    _units_lamb0 = _UNITS_LAMBDA0
 
     # -------------------
     # add ion
@@ -116,7 +117,8 @@ class SpectralLine(Previous):
         """ Add a spectral line by key and rest wavelength, optionally with
 
         """
-        self.add_obj(
+        _check_lines.add_line(
+            coll=self,
             which=self._which_lines,
             key=key,
             lambda0=lamb0,
@@ -139,35 +141,7 @@ class SpectralLine(Previous):
     # from openadas
     # ------------------
 
-    @classmethod
-    def from_openadas(
-        cls,
-        lambmin=None,
-        lambmax=None,
-        element=None,
-        charge=None,
-        online=None,
-        update=None,
-        create_custom=None,
-    ):
-        """
-        Load lines and pec from openadas, either:
-            - online = True:  directly from the website
-            - online = False: from pre-downloaded files in ~/.tofu/openadas/
-        """
-        ddata, dref, dobj = _compute.from_openadas(
-            lambmin=lambmin,
-            lambmax=lambmax,
-            element=element,
-            charge=charge,
-            online=online,
-            update=update,
-            create_custom=create_custom,
-            which_lines=cls._which_lines,
-        )
-        return cls(ddata=ddata, dref=dref, dobj=dobj)
-
-    def add_from_openadas(
+    def add_spectral_lines_from_openadas(
         self,
         lambmin=None,
         lambmax=None,
@@ -180,7 +154,7 @@ class SpectralLine(Previous):
         """
         Load and add lines and pec from openadas, either:
             - online = True:  directly from the website
-            - online = False: from pre-downloaded files in ~/.tofu/openadas/
+            - online = False: from pre-downloaded files in ~/.spectrally/openadas/
         """
         ddata, dref, dobj = _compute.from_openadas(
             lambmin=lambmin,
@@ -196,53 +170,14 @@ class SpectralLine(Previous):
             dobj0=self._dobj,
             which_lines=self._which_lines,
         )
-        self.update(ddata=ddata, dref=dref, dobj=dobj)
+        return ddata, dref, dobj
+        # self.update(ddata=ddata, dref=dref, dobj=dobj)
 
     # -----------------
     # from nist
     # ------------------
 
-    @classmethod
-    def from_nist(
-        cls,
-        lambmin=None,
-        lambmax=None,
-        element=None,
-        charge=None,
-        ion=None,
-        wav_observed=None,
-        wav_calculated=None,
-        transitions_allowed=None,
-        transitions_forbidden=None,
-        cache_from=None,
-        cache_info=None,
-        verb=None,
-        create_custom=None,
-    ):
-        """
-        Load lines and pec from openadas, either:
-            - online = True:  directly from the website
-            - online = False: from pre-downloaded files in ~/.tofu/openadas/
-        """
-        dobj = _compute._from_nist(
-            lambmin=lambmin,
-            lambmax=lambmax,
-            element=element,
-            charge=charge,
-            ion=ion,
-            wav_observed=wav_observed,
-            wav_calculated=wav_calculated,
-            transitions_allowed=transitions_allowed,
-            transitions_forbidden=transitions_forbidden,
-            cache_from=cache_from,
-            cache_info=cache_info,
-            verb=verb,
-            create_custom=create_custom,
-            group_lines=cls._which_lines,
-        )
-        return cls(dobj=dobj)
-
-    def add_from_nist(
+    def add_spectral_lines_from_nist(
         self,
         lambmin=None,
         lambmax=None,
@@ -261,7 +196,7 @@ class SpectralLine(Previous):
         """
         Load and add lines and pec from openadas, either:
             - online = True:  directly from the website
-            - online = False: from pre-downloaded files in ~/.tofu/openadas/
+            - online = False: from pre-downloaded files in ~/.spectrally/openadas/
         """
         dobj = _compute._from_nist(
             lambmin=lambmin,
@@ -283,12 +218,11 @@ class SpectralLine(Previous):
         )
         self.update(dobj=dobj)
 
-    # -----------------
-    # from file (.py)
-    # ------------------
+    # -----------------------
+    # from file (.py or json)
+    # -----------------------
 
-    @classmethod
-    def from_module(cls, pfe=None):
+    def add_spectral_lines_from_file(cls, pfe=None):
 
         dobj = _compute.from_module(pfe=pfe)
 
@@ -753,10 +687,8 @@ class SpectralLine(Previous):
             wintit=wintit, tit=tit, dtit=dtit,
         )
 
-
-
     # -------------------
-    # units conversione
+    # units conversion
     # -------------------
 
     def convert_units_spectral(
