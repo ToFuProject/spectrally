@@ -1,7 +1,12 @@
 import sys
 import os
-import getpass
 import argparse
+
+
+# ########################################################
+# ########################################################
+#               DEFAULTS
+# ########################################################
 
 
 _PKG = 'spectrally'
@@ -10,9 +15,20 @@ _PKG = 'spectrally'
 # test if in a git repo
 _HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_PKG = os.path.dirname(_HERE)
+_PATH_LOCALDIR = os.path.join(os.path.expanduser('~'), f'.{_PKG}')
+
+
+# ########################################################
+# ########################################################
+#               get mods
+# ########################################################
 
 
 def get_mods():
+
+    # ----------------------------------
+    # isgit repo? (load local vs global)
+
     isgit = False
     if '.git' in os.listdir(_PATH_PKG) and _PKG in _PATH_PKG:
         isgit = True
@@ -25,8 +41,10 @@ def get_mods():
     else:
         import spectrally as sp
 
+    # ------------------
     # default parameters
-    pfe = os.path.join(os.path.expanduser('~'), '.{_PKG}', '_scripts_def.py')
+
+    pfe = os.path.join(_PATH_LOCALDIR, '_scripts_def.py')
     if os.path.isfile(pfe):
         # Make sure we load the user-specific file
         # sys.path method
@@ -41,14 +59,16 @@ def get_mods():
     else:
         try:
             import spectrally.entrypoints._def as _defscripts
-        except Exception as err:
+        except Exception:
             from . import _def as _defscripts
-    return tf, _defscripts
+
+    return sp, _defscripts
 
 
-# #############################################################################
+# ########################################################
+# ########################################################
 #       utility functions
-# #############################################################################
+# ########################################################
 
 
 def _str2bool(v):
@@ -90,79 +110,113 @@ def _str2tlim(v):
     return v
 
 
-# #############################################################################
+# ########################################################
+# ########################################################
 #       Parser for version
-# #############################################################################
+# ########################################################
 
 
 def parser_version():
-    msg = f""" Get pkg version from bash optionally set an enviroment variable
 
-    If run from a git repo containing {_PKG}, simply returns git describe
-    Otherwise reads the {_PKG} version stored in {_PKG}/version.py
+    # -------------
+    # defaults
+    # -------------
 
-    """
     ddef = {
-        'path': os.path.join(_TOFUPATH, _PKG),
+        'path': os.path.join(_PATH_PKG, _PKG),
         'envvar': False,
         'verb': True,
         'warn': True,
         'force': False,
-        'name': 'TOFU_VERSION',
+        'name': f'{_PKG.upper()}_VERSION',
     }
+
+    # ------------------
+    # Instanciate parser
+    # ------------------
+
+    # description msg
+    msg = (
+        "Get pkg version from bash optionally set an enviroment variable\n\n"
+        "If run from a git repo containing {_PKG}, returns git describe\n"
+        "Otherwise reads the {_PKG} version stored in {_PKG}/version.py\n"
+    )
 
     # Instanciate parser
     parser = argparse.ArgumentParser(description=msg)
 
+    # ----------------------
     # Define input arguments
-    parser.add_argument('-p', '--path',
-                        type=str,
-                        help=f'{_PKG} source directory where version.py is found',
-                        required=False, default=ddef['path'])
-    parser.add_argument('-v', '--verb',
-                        type=_str2bool,
-                        help='flag indicating whether to print the version',
-                        required=False, default=ddef['verb'])
-    parser.add_argument('-ev', '--envvar',
-                        type=_str2boolstr,
-                        help='name of the environment variable to set, if any',
-                        required=False, default=ddef['envvar'])
-    parser.add_argument('-w', '--warn',
-                        type=_str2bool,
-                        help=('flag indicatin whether to print a warning when'
-                              + 'the desired environment variable (envvar)'
-                              + 'already exists'),
-                        required=False, default=ddef['warn'])
-    parser.add_argument('-f', '--force',
-                        type=_str2bool,
-                        help=('flag indicating whether to force the update of '
-                              + 'the desired environment variable (envvar)'
-                              + ' even if it already exists'),
-                        required=False, default=ddef['force'])
+    # ----------------------
+
+    # path
+    parser.add_argument(
+        '-p', '--path',
+        type=str,
+        help=f'{_PKG} source directory to version.py',
+        required=False, default=ddef['path'],
+    )
+
+    # verb
+    parser.add_argument(
+        '-v', '--verb',
+        type=_str2bool,
+        help='flag indicating whether to print the version',
+        required=False,
+        default=ddef['verb'],
+    )
+
+    # env variable
+    parser.add_argument(
+        '-ev', '--envvar',
+        type=_str2boolstr,
+        help='name of the environment variable to set, if any',
+        required=False,
+        default=ddef['envvar'],
+    )
+
+    # warnings
+    parser.add_argument(
+        '-w', '--warn',
+        type=_str2bool,
+        help=(
+            'flag indicatin whether to print a warning when '
+            'desired environment variable (envvar) already exists'
+        ),
+        required=False,
+        default=ddef['warn'],
+    )
+
+    # force
+    parser.add_argument(
+        '-f', '--force',
+        type=_str2bool,
+        help=(
+            'flag indicating whether to force the update of '
+            'desired environment variable (envvar) even if it already exists'
+        ),
+        required=False,
+        default=ddef['force'],
+    )
 
     return ddef, parser
 
 
-# #############################################################################
+# ########################################################
+# ########################################################
 #       Parser for custom
-# #############################################################################
+# ########################################################
 
 
 def parser_custom():
-    msg = f""" Create a local copy of {_PKG} default parameters
 
-    This creates a local copy, in your home, of {_PKG} default parameters
-    A directory .{_PKG} is created in your home directory
-    In this directory, modules containing default parameters are copied
-    You can then customize them without impacting other users
-
-    """
-    _USER = getpass.getuser()
-    _USER_HOME = os.path.expanduser('~')
+    # -------------
+    # defaults
+    # -------------
 
     ddef = {
-        'target': os.path.join(_USER_HOME, f'.{_PKG}'),
-        'source': os.path.join(_TOFUPATH, _PKG),
+        'target': _PATH_LOCALDIR,
+        'source': os.path.join(_PATH_PKG, _PKG),
         'files': [
             '_entrypoints_def.py',
         ],
@@ -173,34 +227,63 @@ def parser_custom():
         ],
     }
 
+    # ------------------
     # Instanciate parser
+    # ------------------
+
+    # description msg
+    msg = (
+        f" Create a local copy of {_PKG} default parameters\n\n"
+        f"A directory '.{_PKG}' is created in your home directory:\n"
+        f"\t{_PATH_LOCALDIR}\n"
+        "In this directory, modules containing default parameters are copied\n"
+        "You can then customize them without impacting other users\n"
+    )
+
+    # instanciate
     parser = argparse.ArgumentParser(description=msg)
 
+    # ----------------------
     # Define input arguments
-    parser.add_argument('-s', '--source',
-                        type=str,
-                        help=f'{_PKG} source directory',
-                        required=False,
-                        default=ddef['source'])
-    parser.add_argument('-t', '--target',
-                        type=str,
-                        help=(f'directory where .{_PKG}/ should be created'
-                              + ' (default: {})'.format(ddef['target'])),
-                        required=False,
-                        default=ddef['target'])
-    parser.add_argument('-f', '--files',
-                        type=str,
-                        help='list of files to be copied',
-                        required=False,
-                        nargs='+',
-                        default=ddef['files'],
-                        choices=ddef['files'])
+    # ----------------------
+
+    # source
+    parser.add_argument(
+        '-s', '--source',
+        type=str,
+        help=f'{_PKG} source directory',
+        required=False,
+        default=ddef['source'],
+    )
+
+    # target
+    parser.add_argument(
+        '-t', '--target',
+        type=str,
+        help=(f'directory where .{_PKG}/ should be created'
+              + ' (default: {})'.format(ddef['target'])),
+        required=False,
+        default=ddef['target'],
+    )
+
+    # files
+    parser.add_argument(
+        '-f', '--files',
+        type=str,
+        help='list of files to be copied',
+        required=False,
+        nargs='+',
+        default=ddef['files'],
+        choices=ddef['files'],
+    )
+
     return ddef, parser
 
 
-# #############################################################################
+# ########################################################
+# ########################################################
 #       Parser dict
-# #############################################################################
+# ########################################################
 
 
 _DPARSER = {
