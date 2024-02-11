@@ -4,4 +4,4 @@ scipy
 matplotlib
 astropy
 contourpy
-bsplines2d>=0.0.12
+bsplines2d>=0.0.14

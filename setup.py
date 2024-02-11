@@ -64,7 +64,7 @@ setup(
     use_scm_version=False,
 
     # Description of what library does
-    description="A python library for generic multidimensional bsplines on various meshes, using datastock",
+    description="A python library for spectral fitting",
     long_description=long_description,
     long_description_content_type=long_description_content_type,
 
@@ -100,7 +100,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords="bsplines data analysis modelling mesh plot",
+    keywords="spectral fit gaussian lorentzian voigt",
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
@@ -123,7 +123,7 @@ setup(
         "matplotlib",
         "astropy",
         "contourpy",
-        "bsplines2d>=0.0.12",
+        "bsplines2d>=0.0.14",
     ],
     python_requires=">=3.6",
 
