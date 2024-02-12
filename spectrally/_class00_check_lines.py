@@ -140,3 +140,24 @@ def _check(
     )
 
     return ion, lamb0, transition, source, symbol
+
+
+#############################################
+#############################################
+#       add ions from lines dobj
+#############################################
+
+
+def _add_lines_from_dobj(coll=None, dref=None, ddata=None, dobj=None):
+
+    # add ions
+    lions = sorted(dobj.get('ion', {}).keys())
+    if len(lions) > 0:
+        for ion in lions:
+            coll.add_ion(ion)
+        del dobj['ion']
+
+    # update
+    coll.update(ddata=ddata, dref=dref, dobj=dobj)
+
+    return

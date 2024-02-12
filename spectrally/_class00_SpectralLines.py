@@ -110,7 +110,7 @@ class SpectralLine(Previous):
         """ Add a spectral line by key and rest wavelength, optionally with
 
         """
-        _check_lines.add_line(
+        _check_lines.add_lines(
             coll=self,
             which=self._which_lines,
             key=key,
@@ -147,7 +147,7 @@ class SpectralLine(Previous):
         """
         Load and add lines and pec from openadas, either:
             - online = True:  directly from the website
-            - online = False: from pre-downloaded files in ~/.spectrally/openadas/
+            - online = False: from pre-downloaded files ~/.spectrally/openadas/
         """
         ddata, dref, dobj = _compute.from_openadas(
             lambmin=lambmin,
@@ -163,7 +163,13 @@ class SpectralLine(Previous):
             dobj0=self._dobj,
             which_lines=self._which_lines,
         )
-        self.update(ddata=ddata, dref=dref, dobj=dobj)
+
+        return _check_lines._add_lines_from_dobj(
+            coll=self,
+            dref=dref,
+            ddata=ddata,
+            dobj=dobj,
+        )
 
     # -----------------
     # from nist
@@ -208,7 +214,11 @@ class SpectralLine(Previous):
             dlines0=self._dobj.get('lines'),
             group_lines=self._which_lines,
         )
-        self.update(dobj=dobj)
+
+        return _check_lines._add_lines_from_dobj(
+            coll=self,
+            dobj=dobj,
+        )
 
     # -----------------------
     # from file (.py or json)
