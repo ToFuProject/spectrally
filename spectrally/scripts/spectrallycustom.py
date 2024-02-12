@@ -77,8 +77,11 @@ def custom(
 
     if isinstance(files, str):
         files = [files]
-    c0 = (not isinstance(files, list)
-          or any([ff not in ddef['files'] for ff in files]))
+
+    c0 = (
+        not isinstance(files, list)
+        or any([ff not in ddef['files'] for ff in files])
+    )
     if c0 is True:
         msg = "All files should be in {}".format(ddef['files'])
         raise Exception(msg)
@@ -101,7 +104,7 @@ def custom(
         for ff in files:
             mod, f0 = ff.split('_')[1:]
             copyfile(
-                os.path.join(source, mod, '_'+f0),
+                os.path.join(source, mod, f'_{f0}'),
                 os.path.join(target, ff),
             )
 
