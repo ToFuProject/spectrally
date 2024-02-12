@@ -11,13 +11,14 @@ import datastock as ds
 
 
 # tofu
-from tofu.version import __version__
+# from tofu.version import __version__
 
 
-__github = 'https://github.com/ToFuProject/tofu/issues'
-_WINTIT = 'tofu-%s        report issues / requests at {}'.format(
-    __version__, __github,
-)
+# __github = 'https://github.com/ToFuProject/tofu/issues'
+_WINTIT = ""
+# 'tofu-%s        report issues / requests at {}'.format(
+    # __version__, __github,
+# )
 
 
 # #############################################################################

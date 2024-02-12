@@ -2,17 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
-import os
-import sys
-import warnings
 import copy
 
 
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 from bsplines2d import BSplines2D as Previous
-import bsplines2d as bs2
 import datastock as ds
 
 
@@ -20,10 +14,10 @@ import datastock as ds
 from . import _class00_check_ion as _check_ion
 from . import _class00_check_lines as _check_lines
 from . import _class00_compute as _compute
-# from . import _class00_plot as plot
+from . import _class00_plot as _plot
 
 
-__all__ = ['SpectralLines']
+__all__ = ['SpectralLine']
 
 
 #############################################
@@ -42,7 +36,6 @@ _UNITS_LAMBDA0 = 'm'
 #############################################
 #       Spectral Lines
 #############################################
-
 
 
 class SpectralLine(Previous):
@@ -165,13 +158,12 @@ class SpectralLine(Previous):
             update=update,
             create_custom=create_custom,
             dsource0=self._dobj.get('source'),
-            dref0=self._dref,
-            ddata0=self._ddata,
+            dref0=self._dref if len(self._dref) > 0 else None,
+            ddata0=self._ddata if len(self._ddata) > 0 else None,
             dobj0=self._dobj,
             which_lines=self._which_lines,
         )
-        return ddata, dref, dobj
-        # self.update(ddata=ddata, dref=dref, dobj=dobj)
+        self.update(ddata=ddata, dref=dref, dobj=dobj)
 
     # -----------------
     # from nist
