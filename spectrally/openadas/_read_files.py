@@ -139,12 +139,13 @@ def _format_for_DataStock_adf15(
     dlines0=None,
 ):
     """
-    Format dout from step03_read_all() for SPectralLines object
+    Format dout from step03_read_all() for SpectralLines object
     (separated te, ne, ions, sources, lines)
     """
 
     # ----------------------------------------------
     # Remove already known lines of dlines0 provided
+    # ----------------------------------------------
 
     if dlines0 is not None:
         # Check for mistakes
@@ -182,6 +183,7 @@ def _format_for_DataStock_adf15(
 
     # --------------------------
     # Get dict of unique sources
+    # --------------------------
 
     lsource = sorted(set([v0['source'] for v0 in dout.values()]))
     dsource = {}
@@ -213,6 +215,7 @@ def _format_for_DataStock_adf15(
 
     # ----------------------------
     # Get dict of unique Te and ne
+    # ----------------------------
 
     # initialize dict and numbers
     dte, dne = {}, {}
@@ -354,6 +357,7 @@ def _format_for_DataStock_adf15(
 
     # ---------------
     # Get dict of pec
+    # ---------------
 
     dpec = {
         '{}-pec'.format(k0): {
@@ -371,6 +375,7 @@ def _format_for_DataStock_adf15(
 
     # --------
     # dlines
+    # --------
 
     inds = np.argsort([v0['lambda0'] for v0 in dout.values()])
     lk0 = np.array(list(dout.keys()), dtype=str)[inds]
@@ -690,14 +695,15 @@ def step03_read_all(
     # Extract data from each file
     # --------------------
 
-    func = eval('_read_{}'.format(typ1))
+    func = eval(f'_read_{typ1}')
     dout = {}
     for pfe in lpfe:
         if verb is True:
-            msg = "\tLoading data from {}".format(pfe)
+            msg = f"\tLoading data from {pfe}"
             print(msg)
         dout = func(pfe, dout=dout, **kwdargs)
 
+    # format for Collection
     if typ1 == 'adf15' and format_for_DataStock is True:
         return _format_for_DataStock_adf15(
             dout,
@@ -706,6 +712,7 @@ def step03_read_all(
             ddata0=ddata0,
             dlines0=dlines0,
         )
+
     else:
         return dout
 
