@@ -12,9 +12,8 @@ import argparse
 _PKG = 'spectrally'
 
 
-# test if in a git repo
 _HERE = os.path.abspath(os.path.dirname(__file__))
-_PATH_PKG = os.path.dirname(_HERE)
+_PATH_PKG = os.path.dirname(os.path.dirname(_HERE))
 _PATH_LOCALDIR = os.path.join(os.path.expanduser('~'), f'.{_PKG}')
 
 
@@ -25,6 +24,7 @@ _PATH_LOCALDIR = os.path.join(os.path.expanduser('~'), f'.{_PKG}')
 
 
 def get_mods():
+    """ Test if git repo """
 
     # ----------------------------------
     # isgit repo? (load local vs global)
