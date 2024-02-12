@@ -187,7 +187,7 @@ def _from_nist(
     """
 
     # Preliminary import and checks
-    from ..nist import _requests
+    from .nist import _requests
 
     if verb is None:
         verb = False
