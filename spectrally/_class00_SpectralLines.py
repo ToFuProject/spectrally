@@ -196,7 +196,7 @@ class SpectralLine(Previous):
         """
         Load and add lines and pec from openadas, either:
             - online = True:  directly from the website
-            - online = False: from pre-downloaded files in ~/.spectrally/openadas/
+            - online = False: from pre-downloaded files in ~/.spectrally/nist/
         """
         dobj = _compute._from_nist(
             lambmin=lambmin,
