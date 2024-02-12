@@ -87,13 +87,10 @@ def from_openadas(
             )
         except Exception as err:
             msg = (
-                """
-                {}
-
-                For some reason data could not be downloaded from openadas
-                    => see error message above
-                    => maybe check your internet connection?
-                """.format(err)
+                str(err) + "\n\n"
+                "For some reason data could not be downloaded from openadas\n"
+                "\t=> see error message above\n"
+                "\t=> maybe check your internet connection?\n"
             )
             raise Exception(msg)
 
