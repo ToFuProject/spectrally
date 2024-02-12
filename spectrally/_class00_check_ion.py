@@ -139,7 +139,7 @@ def _call_err(key):
         "\t- LL: is one or 2 letter\n"
         "\t- XX: is one or 2 integers\n"
         "Or it can be just an element 'LL' => all ions are added\n"
-        "Provided:\n\t{key}\n"
+        f"Provided:\n\t{key}\n"
     )
     raise Exception(msg)
 
