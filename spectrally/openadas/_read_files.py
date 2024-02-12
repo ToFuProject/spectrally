@@ -13,8 +13,11 @@ from scipy.interpolate import RectBivariateSpline as scpRectSpl
 __all__ = ['step03_read', 'step03_read_all']
 
 
-_DTYPES = {'adf11': ['acd', 'ccd', 'scd', 'plt', 'prb'],
-           'adf15': None}
+_PKG = 'spectrally'
+_DTYPES = {
+    'adf11': ['acd', 'ccd', 'scd', 'plt', 'prb'],
+    'adf15': None,
+}
 _DEG = 1
 _PECASFUNC = True
 
@@ -26,7 +29,7 @@ _PECASFUNC = True
 
 
 def _get_PATH_LOCAL():
-    pfe = os.path.join(os.path.expanduser('~'), '.tofu', 'openadas2tofu')
+    pfe = os.path.join(os.path.expanduser('~'), f'.{_PKG}', 'openadas')
     if os.path.isdir(pfe):
         return pfe
     else:
@@ -42,7 +45,11 @@ def _get_subdir_from_pattern(path, pattern, mult=None):
         => mult = 'warn': warning
         => mult = 'err': Exception
     """
+
+    # -------------
     # Check inputs
+    # -------------
+
     if mult is None:
         mult = 'err'
     if mult not in [True, 'warn', 'err']:
@@ -55,20 +62,24 @@ def _get_subdir_from_pattern(path, pattern, mult=None):
     if isinstance(pattern, str):
         pattern = [pattern]
 
+    # -------------
     # Get matches
+    # -------------
+
     ld = [
         dd for dd in os.listdir(path)
         if os.path.isdir(os.path.join(path, dd))
         and all([pp in dd for pp in pattern])
     ]
     if len(ld) != 1:
-        msg = ("You have no / many directories in your local "
-               + "~/.tofu/openadas2tofu/ matching the desired file type:\n"
-               + "\t- path: {}\n".format(path)
-               + "\t- provided (all): {}\n".format(pattern)
-               + "\t- available: {}\n".format(ld)
-               + "  => download the data with "
-               + "tf.openadas2tofu.step02_download()")
+        msg = (
+            "You have no / many directories in your local "
+            f"~/.{_PKG}/openadas/ matching the desired file type:\n"
+            f"\t- path: {path}\n"
+            f"\t- provided (all): {pattern}\n"
+            f"\t- available: {ld}\n"
+            f" => download the data with sp.openadas.step02_download()\n"
+        )
         if len(ld) == 0:
             raise Exception(msg)
         else:
@@ -76,17 +87,26 @@ def _get_subdir_from_pattern(path, pattern, mult=None):
                 raise Exception(msg)
             elif mult == 'warn':
                 warnings.warn(msg)
+
     return [os.path.join(path, dd) for dd in ld]
 
 
 def _get_available_elements_from_path(path=None, typ1=None):
+
+    # ------------
     # Check inputs
+    # ------------
+
     if not os.path.isdir(path):
         msg = (
             "Provided path is not an existing directory!\n"
             + "\t- provided: {}".format(path)
         )
         raise Exception(msg)
+
+    # ----------------
+    # check data types
+    # ----------------
 
     ltyp = ['adf15']
     if typ1 not in ltyp:
@@ -97,12 +117,17 @@ def _get_available_elements_from_path(path=None, typ1=None):
         )
         raise Exception(msg)
 
+    # --------------
+    # ADF15
+    # --------------
+
     if typ1 == 'adf15':
         lf = [
             ff for ff in os.listdir(path)
             if all([ss in ff for ss in ['pec', '][']])
         ]
         element = [ff[ff.index('][')+2:] for ff in lf]
+
     return element
 
 
@@ -193,6 +218,7 @@ def _format_for_DataStock_adf15(
     dte, dne = {}, {}
     if dref0 is None:
         ite, ine = 0, 0
+
     else:
         ite = int(np.max([
             int(k0.split('-')[-1]) for k0 in dref0.keys()
@@ -388,25 +414,27 @@ def step03_read(
 
     example
     -------
-        >>> import tofu as tf
+        >>> import spectrally as sp
         >>> fn = '/adf11/scd74/scd74_ar.dat'
-        >>> out = tf.openadas2tofu.step03_read(fn)
+        >>> out = sp.openadas.step03_read(fn)
         >>> fn = '/adf15/pec40][ar/pec40][ar_ca][ar16.dat'
-        >>> out = tf.openadas2tofu.step03_read(fn)
+        >>> out = sp.openadas.step03_read(fn)
     """
 
     path_local = _get_PATH_LOCAL()
 
-    # Check whether the local .tofu repo exists, if not recommend tofu-custom
+    # Check whether the local .spectrally repo exists, if not spectrally-custom
     if path_local is None:
-        path = os.path.join(os.path.expanduser('~'), '.tofu', 'openadas2tofu')
-        msg = ("You do not seem to have a local ./tofu repository\n"
-               + "tofu uses that local repository to store all user-specific "
-               + "data and downloads\n"
-               + "In particular, openadas files are downloaded and saved in:\n"
-               + "\t{}\n".format(path)
-               + "  => to set-up your local .tofu repo, run in a terminal:\n"
-               + "\ttofu-custom")
+        path = os.path.join(os.path.expanduser('~'), f'.{_PKG}', 'openadas')
+        msg = (
+            f"You do not seem to have a local ./{_PKG} repository\n"
+            f"{_PKG} uses that local repository to store all user-specific "
+            "data and downloads\n"
+            "In particular, openadas files are downloaded and saved in:\n"
+            f"\t{path}\n"
+            f"  => to set-up your local .{_PKG} repo, run in a terminal:\n"
+            f"\t{_PKG}-custom"
+        )
         raise Exception(msg)
 
     # Determine whether adas_path is an absolute path or an adas full name
@@ -420,19 +448,22 @@ def step03_read(
         # Check file was downloaded locally
         pfe = os.path.join(path_local, adas_path)
         if not os.path.isfile(pfe):
-            msg = ("Provided file does not seem to exist:\n"
-                   + "\t{}\n".format(pfe)
-                   + "  => Search it online with "
-                   + "tofu.openadas2tofu.step01_search_online()\n"
-                   + "  => Download it with "
-                   + "tofu.openadas2tofu.step02_download()")
+            msg = (
+                "Provided file does not seem to exist:\n"
+                f"\t{pfe}\n"
+                "  => Search it online with "
+                "sp.openadas.step01_search_online()\n"
+                "  => Download it with sp.openadas.step02_download()"
+            )
             raise FileNotFoundError(msg)
 
     lc = [ss for ss in _DTYPES.keys() if ss in pfe]
     if not len(lc) == 1:
-        msg = ("File type could not be derived from absolute path:\n"
-               + "\t- provided:  {}\n".format(pfe)
-               + "\t- supported: {}".format(sorted(_DTYPES.keys())))
+        msg = (
+            "File type could not be derived from absolute path:\n"
+            f"\t- provided:  {pfe}\n"
+            f"\t- supported: {sorted(_DTYPES.keys())}"
+        )
         raise Exception(msg)
 
     func = eval('_read_{}'.format(lc[0]))
@@ -471,37 +502,48 @@ def step03_read_all(
 
     examples
     --------
-        >>> import tofu as tf
-        >>> dout = tf.openadas2tofu.step03_read_all(element='ar', typ1='adf11')
-        >>> dout = tf.openadas2tofu.step03_read_all(element='ar', typ1='adf15',
-                                                    charge=16,
-                                                    lambmin=3.94e-10,
-                                                    lambmax=4.e-10)
+        >>> import spectrally as sp
+        >>> dout = sp.openadas.step03_read_all(element='ar', typ1='adf11')
+        >>> dout = sp.openadas.step03_read_all(
+            element='ar',
+            typ1='adf15',
+            charge=16,
+            lambmin=3.94e-10,
+            lambmax=4.e-10,
+        )
     """
 
     # --------------------
-    # Check whether the local .tofu repo exists, if not recommend tofu-custom
+    # Check whether the local .spectrally repo exists, if not spectrally-custom
+
     path_local = _get_PATH_LOCAL()
     if path_local is None:
-        path = os.path.join(os.path.expanduser('~'), '.tofu', 'openadas2tofu')
-        msg = ("You do not seem to have a local ./tofu repository\n"
-               + "tofu uses that local repository to store all user-specific "
-               + "data and downloads\n"
-               + "In particular, openadas files are downloaded and saved in:\n"
-               + "\t{}\n".format(path)
-               + "  => to set-up your local .tofu repo, run in a terminal:\n"
-               + "\ttofu-custom")
+        path = os.path.join(os.path.expanduser('~'), f'.{_PKG}', 'openadas')
+        msg = (
+            f"You do not seem to have a local ./{_PKG} repository\n"
+            f"{_PKG} uses that local repository to store all user-specific "
+            "data and downloads\n"
+            "In particular, openadas files are downloaded and saved in:\n"
+            "\t{path}\n"
+            f"  => to set-up your local .{_PKG} repo, run in a terminal:\n"
+            f"\t{_PKG}-custom"
+        )
         raise Exception(msg)
 
     # --------------------
     # Check / format input
+    # --------------------
+
     if typ1 is None:
         typ1 = 'adf15'
     if not isinstance(typ1, str) or typ1.lower() not in _DTYPES.keys():
-        msg = ("Please choose a valid adas file type:\n"
-               + "\t- allowed:  {}\n".format(_DTYPES.keys())
-               + "\t- provided: {}".format(typ1))
+        msg = (
+            "Please choose a valid adas file type:\n"
+            f"\t- allowed:  {_DTYPES.keys()}\n"
+            f"\t- provided: {typ1}\n"
+        )
         raise Exception(msg)
+
     typ1 = typ1.lower()
     if typ1 == 'adf11' and typ2 is None:
         typ2 = _DTYPES[typ1]
@@ -521,10 +563,14 @@ def step03_read_all(
     # --------------------
     # Get elevant directory
     # Level 1: Type
+    # --------------------
+
     path = _get_subdir_from_pattern(path_local, typ1, mult='err')[0]
 
     # --------------------
     # element
+    # --------------------
+
     c0 = (
         element is None
         or isinstance(element, str)
@@ -554,6 +600,8 @@ def step03_read_all(
 
     # --------------------
     # charge
+    # --------------------
+
     if charge is not None:
         c0 = (
             isinstance(charge, int)
@@ -585,6 +633,7 @@ def step03_read_all(
 
     # --------------------
     # Get list of relevant directories per element
+    # --------------------
 
     # Level 2: element or typ2
     if typ1 == 'adf11':
@@ -602,6 +651,8 @@ def step03_read_all(
 
     # --------------------
     # Get list of relevant files pfe
+    # --------------------
+
     lpfe = list(itt.chain.from_iterable([[
         os.path.join(path, ff) for ff in os.listdir(path)
         if (
@@ -637,6 +688,8 @@ def step03_read_all(
 
     # --------------------
     # Extract data from each file
+    # --------------------
+
     func = eval('_read_{}'.format(typ1))
     dout = {}
     for pfe in lpfe:
