@@ -31,7 +31,7 @@ __all__ = ['SpectralFit']
 #############################################
 
 
-class SpectralLine(Previous):
+class SpectralFit(Previous):
 
     _which_model = 'spect_model'
 
@@ -73,4 +73,3 @@ class SpectralLine(Previous):
     # -------------------
     # plot spectral model
     # -------------------
-
