@@ -26,7 +26,6 @@ __all__ = ['SpectralLine']
 #############################################
 
 
-_WHICH_LINES = 'spectral_lines'
 _QUANT_NE = 'ne'
 _QUANT_TE = 'Te'
 _UNITS_LAMBDA0 = 'm'
@@ -65,7 +64,7 @@ class SpectralLine(Previous):
     }
 
     _which_ion = 'ion'
-    _which_lines = _WHICH_LINES
+    _which_lines = 'spect_lines'
     _quant_ne = _QUANT_NE
     _quant_Te = _QUANT_TE
 
