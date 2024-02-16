@@ -10,7 +10,7 @@ from bsplines2d import BSplines2D as Previous
 import datastock as ds
 
 
-from ._class00_SpectralLines import SpectralLine as Previous
+from ._class00_SpectralLines import SpectralLines as Previous
 from . import _class01_check_model as _check_model
 from . import _class01_check_constraints as _check_constraints
 

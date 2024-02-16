@@ -214,7 +214,6 @@ def _get_from_periodictable(update=False):
     Z = tuple([Z[ii] for ii in inds])
     A = tuple([A[ii] for ii in inds])
 
-
     # save to local file
     if update is True:
         import pandas as pd

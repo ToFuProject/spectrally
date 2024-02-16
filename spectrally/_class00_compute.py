@@ -1,7 +1,11 @@
+# #!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
 
 # standard
+import os
 import itertools as itt
+import json
 
 
 # common
@@ -121,6 +125,14 @@ def from_openadas(
     ddata = dpec
 
     # ------------------
+    # lambda0 => lamb0
+
+    lk = list(dlines.keys())
+    for k0 in lk:
+        dlines[k0]['lamb0'] = dlines[k0]['lambda0']
+        del dlines[k0]['lambda0']
+
+    # ------------------
     # ions and source
 
     # Only keep ions and sources not already stored
@@ -149,7 +161,7 @@ def from_openadas(
 # ###############################################################
 
 
-def _from_nist(
+def from_nist(
     lambmin=None,
     lambmax=None,
     element=None,
@@ -221,10 +233,21 @@ def _from_nist(
         dlines0=dlines0,
     )
 
+    # ------------------
+    # lambda0 => lamb0
+
+    lk = list(dlines.keys())
+    for k0 in lk:
+        dlines[k0]['lamb0'] = dlines[k0]['lambda0']
+        del dlines[k0]['lambda0']
+
+    # --------
     # ions
     lion = sorted(set([dlines[k0]['ion'] for k0 in dlines.keys()]))
 
+    # ------------
     # dobj (lines)
+
     dobj = {
         group_lines: dlines,
         'ion': {k0: {} for k0 in lion},
@@ -235,8 +258,95 @@ def _from_nist(
 
 # ###############################################################
 # ###############################################################
-#                       from module
+#                       from file
 # ###############################################################
+
+
+def from_file(coll=None, pfe=None):
+
+    # ---------------
+    # check file
+    # --------------
+
+    pfe = _check_pfe(pfe)
+
+    # ---------------
+    # open file
+    # ---------------
+
+    if pfe.endswith('.json'):
+        with open(pfe) as json_file:
+            dlines = json.load(json_file)
+
+    elif pfe.endswith('.npz'):
+        dlines = dict(np.load(pfe, allow_pickle=True))
+
+    elif pfe.endswith('.py'):
+        dlines = _from_module(pfe=pfe)
+
+    # ions
+    lions = sorted(set([
+        v0.get('ion') for v0 in dlines.values()
+        if v0.get('ion') is not None
+    ]))
+
+    # sources
+    lsources = sorted(set([
+        v0.get('source') for v0 in dlines.values()
+        if v0.get('source') is not None
+    ]))
+
+    dobj = {
+        coll._which_lines: dlines,
+        'ion': {k0: {} for k0 in lions},
+        'source': {k0: {} for k0 in lsources},
+    }
+
+    return dobj
+
+
+#############################################
+#       check and extract
+#############################################
+
+
+def _check_pfe(pfe):
+
+    # ------------------
+    # basic check
+    # ------------------
+
+    if not (isinstance(pfe, str) and os.path.isfile(pfe)):
+        msg = (
+            "Arg pfe must be a str, a valid 'path/file.ext'\n"
+            "Provided:\n\t{pfe}\n"
+        )
+        raise Exception(msg)
+
+    pfe = os.path.abspath(pfe)
+
+    # ------------
+    # extension
+    # ------------------
+
+    if pfe.endswith('.npz'):
+        pass
+
+    elif pfe.endswith('.json'):
+        pass
+
+    elif pfe.endswith('.py'):
+        pass
+
+    else:
+        msg = (
+            "Unhandled pfe extension!\n"
+            "Usable extensions: '.npz', '.json', '.py'\n"
+            "Provided:\n\t{pfe}\n"
+        )
+        raise Exception(msg)
+
+    return pfe
 
 
 def _check_extract_dict_from_mod(mod, k0):
@@ -262,9 +372,11 @@ def _check_extract_dict_from_mod(mod, k0):
         return
 
 
-def from_module(pfe=None):
+def _from_module(pfe=None):
 
+    # ------------
     # Check input
+
     c0 = (
         os.path.isfile(pfe)
         and pfe[-3:] == '.py'
@@ -278,21 +390,27 @@ def from_module(pfe=None):
         raise Exception(msg)
     pfe = os.path.abspath(pfe)
 
+    # -----------
     # Load module
+
     path, fid = os.path.split(pfe)
     import importlib.util
     spec = importlib.util.spec_from_file_location(fid[:-3], pfe)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
 
+    # -----------------------------------------
     # extract source, transition, ion, element
+
     dobj = {}
     for k0 in ['source', 'transition', 'ion', 'element']:
         dd = _check_extract_dict_from_mod(mod, k0)
         if dd is not None:
             dobj[k0] = dd
 
+    # --------
     # add ion
+
     if 'ion' not in dobj.keys():
         lions = np.array([
                 v0['ion'] for k0, v0 in mod.dlines.items()
@@ -312,9 +430,7 @@ def from_module(pfe=None):
                     k0: {'ION': k0} for k0 in lIONS
                 }
 
-    # extract lines
-    dobj['lines'] = mod.dlines
-    return dobj
+    return mod.dlines
 
 
 # ##############################################################

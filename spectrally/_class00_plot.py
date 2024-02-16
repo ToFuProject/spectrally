@@ -42,7 +42,7 @@ def _check_axvline_inputs(
     param_x = ds._generic_check._check_var(
         param_x, 'param_x',
         types=str,
-        default='lambda0',
+        default='lamb0',
     )
 
     # ------
@@ -486,7 +486,7 @@ def plot_dominance_map(
             dax[k0].transData, dax[k0].transAxes
         )
         for k1 in damp.keys():
-            lamb0 = din[k1]['lambda0']
+            lamb0 = din[k1]['lamb0']
             dax[k0].plot(
                 lamb0*lamb, damp[k1]['data'],
                 ls='None', marker='.', lw=1., c=dcolor[damp[k1]['color']],

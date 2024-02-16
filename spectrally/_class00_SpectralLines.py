@@ -17,7 +17,7 @@ from . import _class00_compute as _compute
 from . import _class00_plot as _plot
 
 
-__all__ = ['SpectralLine']
+__all__ = ['SpectralLines']
 
 
 #############################################
@@ -37,7 +37,7 @@ _UNITS_LAMBDA0 = 'm'
 #############################################
 
 
-class SpectralLine(Previous):
+class SpectralLines(Previous):
 
     _ddef = copy.deepcopy(Previous._ddef)
 
@@ -122,6 +122,23 @@ class SpectralLine(Previous):
             **kwdargs,
         )
 
+    def add_spectral_lines_from_file(
+        self,
+        pfe=None,
+    ):
+        """ Add a spectral line from json, npz or py file
+
+        """
+        dobj = _compute.from_file(
+            coll=self,
+            pfe=pfe,
+        )
+
+        return _check_lines._add_lines_from_dobj(
+            coll=self,
+            dobj=dobj,
+        )
+
     # ---------------------
     # Add PEC
     # ---------------------
@@ -195,7 +212,7 @@ class SpectralLine(Previous):
             - online = True:  directly from the website
             - online = False: from pre-downloaded files in ~/.spectrally/nist/
         """
-        dobj = _compute._from_nist(
+        dobj = _compute.from_nist(
             lambmin=lambmin,
             lambmax=lambmax,
             element=element,
@@ -219,36 +236,16 @@ class SpectralLine(Previous):
             dobj=dobj,
         )
 
-    # -----------------------
-    # from file (.py or json)
-    # -----------------------
+    # ---------------
+    # remove lines
+    # ---------------
 
-    def add_spectral_lines_from_file(cls, pfe=None):
-
-        dobj = _compute.from_module(pfe=pfe)
-
-        # Create collection
-        out = cls(dobj=dobj)
-
-        # Replace ION by ion if relevant
-        c0 = (
-            'ion' in out._dobj.keys()
-            and 'ion' not in out.get_lparam(which='lines')
-            and 'ION' in out.get_lparam(which='lines')
+    def remove_spectral_lines(self, keys=None, propagate=None):
+        return _check_lines.remove_lines(
+            coll=self,
+            keys=keys,
+            propagate=propagate,
         )
-        if c0:
-            for k0, v0 in out._dobj['lines'].items():
-                ion = [
-                    k1 for k1, v1 in out._dobj['ion'].items()
-                    if out._dobj['lines'][k0]['ION'] == v1['ION']
-                ][0]
-                out._dobj['lines'][k0]['ion'] = ion
-                del out._dobj['lines'][k0]['ION']
-        return out
-
-    # -----------------
-    # summary
-    # ------------------
 
     # -----------------
     # conversion wavelength - energy - frequency
@@ -692,7 +689,7 @@ class SpectralLine(Previous):
     # units conversion
     # -------------------
 
-    def convert_units_spectral(
+    def convert_spectral_lines_units(
         self,
         data=None,
         units=None,
@@ -706,3 +703,23 @@ class SpectralLine(Previous):
             units_in=units_in,
         )
 
+    # -------------------
+    # saving
+    # -------------------
+
+    def save_spectral_lines_to_file(
+        self,
+        path=None,
+        name=None,
+        keys=None,
+        overwrite=None,
+    ):
+        """ Save a set of spectral lines as a json file (or npz) """
+
+        return _check_lines._save_to_file(
+            coll=self,
+            keys=keys,
+            name=name,
+            path=path,
+            overwrite=overwrite,
+        )

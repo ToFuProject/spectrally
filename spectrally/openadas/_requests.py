@@ -385,9 +385,11 @@ def step01_search_online_by_wavelengthA(
             'File Details': 4,
         }
     if col != list(dcolex.keys()):
-        msg = ("Format of table columns in html seems to have changed!\n"
-               + "\t- expected: {}\n".format(colex)
-               + "\t- observed: {}".format(col))
+        msg = (
+            "Format of table columns in html seems to have changed!\n"
+            f"\t- expected: {dcolex}\n"
+            f"\t- observed: {col}\n"
+        )
         raise Exception(msg)
 
     lout = []
