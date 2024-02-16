@@ -5,7 +5,7 @@
 import warnings
 
 
-from ._class00_SpectralLines import SpectralLine as Collection
+from ._class01_SpectralFit import SpectralFit as Collection
 
 
 _PKG = 'spectrally'

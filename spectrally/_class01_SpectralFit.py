@@ -11,7 +11,8 @@ import datastock as ds
 
 
 from ._class00_SpectralLines import SpectralLine as Previous
-from . import _class01_check as _check
+from . import _class01_check_model as _check_model
+from . import _class01_check_constraints as _check_constraints
 
 
 __all__ = ['SpectralFit']
@@ -42,11 +43,12 @@ class SpectralFit(Previous):
     _dshow[_which_model] = ['']
 
     _ddef['params']['dobj'] = {
-        'spect_model': {
-            'lambda0': {'cls': float, 'def': 0.},
-            'source': {'cls': str, 'def': 'unknown'},
-        },
     }
+
+    # ###################
+    # -------------------
+    # Spectral models
+    # -------------------
 
     # -------------------
     # add spectral model
@@ -56,20 +58,97 @@ class SpectralFit(Previous):
         self,
         key=None,
         dmodel=None,
+        dconstraints=None,
     ):
+        """ Add a spectral model for future fitting
 
-        return _check._model(
+        Defined by a set of functions and constraints.
+            - dmodel: dict of (key, function type) pairs
+            - dconstraints: dict of (key, {'ref': k0, k1: [c0, c1], k2: [c0, c1]})
+
+        Available function types for dmodel are:
+            - 'linear': typically a linear background
+            - 'exp': typically an exponential background
+            - 'gauss': typically a doppler-broadened line
+            - 'lorentz': ypically a natural-broadened line
+            - 'pvoigt': typically a doppler-and-natural broadened line
+
+        dconstraints holds a dict of constraints groups.
+        Each group is a dict with a 'ref' variable
+        Other variables (keys) are compued as linear functions of 'ref'
+
+        Parameters
+        ----------
+        key : str, optional
+            DESCRIPTION. The default is None.
+        dmodel : dict, optional
+            DESCRIPTION. The default is None.
+        dconstraints : dict, optional
+            DESCRIPTION. The default is None.
+
+        """
+
+        # check and store the model
+        _check_model._dmodel(
             coll=self,
             key=key,
             dmodel=dmodel,
+            dconstraints=dconstraints,
+        )
+
+        # check and store the constraints
+        _check_constraints._dconstraints(
+            coll=self,
+            key=key,
+            dconstraints=dconstraints,
         )
 
     # -------------------
     # show spectral model
     # -------------------
 
-
+    def _get_show_obj(self, which=None):
+        if which == self._which_model:
+            return _check_model._show
+        else:
+            return super()._get_show_obj()
 
     # -------------------
-    # plot spectral model
+    # get spectral model
     # -------------------
+
+    def get_spectral_model_variables(self, key=None):
+        """ Get ordered list of individual variable names """
+        return _check_model._get_var(self, key=key)
+
+
+    # ###################
+    # -------------------
+    # Spectral fits
+    # -------------------
+
+    # -------------------
+    # add spectral fit
+    # -------------------
+
+    def add_spectral_fit(
+        self,
+        key_model=None,
+        key_data=None,
+        key_lamb=None,
+        dinitial=None,
+        dscales=None,
+        dconstants=None,
+        domain=None,
+        # optional 2d fit
+        key_bs=None,
+    ):
+
+        # _check_fit._fit(
+        #     coll=self,
+        #     key=key,
+        #     dmodel=dmodel,
+        #     dconstraints=dconstraints,
+        # )
+
+        return
