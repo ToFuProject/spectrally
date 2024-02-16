@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest] 
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10"]
 
     steps:
@@ -42,4 +42,4 @@ jobs:
         pip install -e ".[dev]" # --no-build-isolation
     - name: Test with pytest
       run: |
-        pytest datastock/tests -v -x
+        pytest spectrally/tests -v -x
