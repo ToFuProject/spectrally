@@ -5,9 +5,7 @@
 import copy
 
 
-import numpy as np
 from bsplines2d import BSplines2D as Previous
-import datastock as ds
 
 
 from ._class00_SpectralLines import SpectralLines as Previous

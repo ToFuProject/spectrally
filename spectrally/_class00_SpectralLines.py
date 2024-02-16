@@ -7,7 +7,6 @@ import copy
 
 import numpy as np
 from bsplines2d import BSplines2D as Previous
-import datastock as ds
 
 
 # from . import _class00_check as _check
@@ -311,163 +310,165 @@ class SpectralLines(Previous):
     # PEC interpolation
     # ------------------
 
-    def calc_pec(
-        self,
-        key=None,
-        ind=None,
-        ne=None,
-        Te=None,
-        deg=None,
-        grid=None,
-        return_params=None,
-    ):
-        """ Compute the pec (<sigma v>) by interpolation for chosen lines
-
-        Assumes Maxwellian electron distribution
-
-        Provide ne and Te and 1d np.ndarrays
-
-        if grid=False:
-            - ne is a (n,) 1d array
-            - Te is a (n,) 1d array
-          => the result is a dict of (n,) 1d array
-
-        if grid=True:
-            - ne is a (n1,) 1d array
-            - Te is a (n2,) 1d array
-          => the result is a dict of (n1, n2) 2d array
-        """
-
-        # Check keys
-        key = self._ind_tofrom_key(
-            which=self._which_lines, key=key, ind=ind, returnas=str,
-        )
-        dlines = self._dobj[self._which_lines]
-
-        key, dnTe, return_params = _check._check_compute_pec(
-            # check keys
-            key=key,
-            dlines=dlines,
-            ddata=self._ddata,
-            _quant_ne=self._quant_ne,
-            _quant_Te=self._quant_Te,
-            # check ne, Te
-            ne=ne,
-            Te=Te,
-            return_params=return_params,
-        )
-        keypec = [f'{k0}-pec' for k0 in key]
-
-        # group lines per common ref
-        lref = set([self._ddata[k0]['ref'] for k0 in keypec])
-        dref = {
-            k0: [k1 for k1 in keypec if self._ddata[k1]['ref'] == k0]
-            for k0 in lref
-        }
-
-        # Interpolate
-        for ii, (k0, v0) in enumerate(dref.items()):
-            douti, dparami = self.interpolate(
-                # interpolation base
-                keys=v0,
-                ref_key=k0,
-                # interpolation pts
-                x0=dnTe['ne'],
-                x1=dnTe['Te'],
-                # parameters
-                deg=deg,
-                deriv=0,
-                grid=grid,
-                log_log=True,
-                return_params=True,
-            )
-
-            # update dict
-            if ii == 0:
-                dout = douti
-                dparam = dparami
-            else:
-                dout.update(**douti)
-                dparam['keys'] += dparami['keys']
-                dparam['ref_key'] += dparami['ref_key']
-
-        # -------
-        # return
-
-        if return_params is True:
-            dparam['key'] = dparam['keys']
-            del dparam['keys']
-            dparam['ne'] = dparam['x0']
-            dparam['Te'] = dparam['x1']
-            del dparam['x0'], dparam['x1']
-            return dout, dparam
-        else:
-            return dout
-
-    def calc_intensity(
-        self,
-        key=None,
-        ind=None,
-        ne=None,
-        Te=None,
-        concentration=None,
-        deg=None,
-        grid=None,
-    ):
-        """ Compute the lines intensities by pec interpolation for chosen lines
-
-        Assumes Maxwellian electron distribution
-        Assumes concentration = nz / ne
-
-        Provide ne and Te and 1d np.ndarrays
-
-        Provide concentration as:
-            - a np.ndarray (same concentration assumed for all lines)
-            - a dict of {key: np.ndarray}
-
-        if grid=False:
-            - ne is a (n,) 1d array
-            - Te is a (n,) 1d array
-            - concentration is a (dict of) (n,) 1d array(s)
-          => the result is a dict of (n1, n2) 2d array
-
-        if grid=True:
-            - ne is a (n1,) 1d array
-            - Te is a (n2,) 1d array
-            - concentration is a (dict of) (n1, n2) 2d array(s)
-          => the result is a dict of (n1, n2) 2d array
-
-
-        """
-
-        # Check keys
-        key = self._ind_tofrom_key(
-            which=self._which_lines, key=key, ind=ind, returnas=str,
-        )
-
-        # interpolate pec
-        dout, dparam = self.calc_pec(
-            key=key,
-            ind=ind,
-            ne=ne,
-            Te=Te,
-            grid=grid,
-            deg=deg,
-            return_params=True,
-        )
-
-        # check concentrations
-        concentration = _check._check_compute_intensity(
-            key=[k0[:-4] for k0 in dparam['key']],
-            concentration=concentration,
-            shape=dparam['ne'].shape,
-        )
-
-        # Derive intensity
-        for k0, v0 in dout.items():
-            dout[k0] = v0['data']*dparam['ne']**2*concentration[k0[:-4]]
-
-        return dout
+# =============================================================================
+#     def calc_pec(
+#         self,
+#         key=None,
+#         ind=None,
+#         ne=None,
+#         Te=None,
+#         deg=None,
+#         grid=None,
+#         return_params=None,
+#     ):
+#         """ Compute the pec (<sigma v>) by interpolation for chosen lines
+#
+#         Assumes Maxwellian electron distribution
+#
+#         Provide ne and Te and 1d np.ndarrays
+#
+#         if grid=False:
+#             - ne is a (n,) 1d array
+#             - Te is a (n,) 1d array
+#           => the result is a dict of (n,) 1d array
+#
+#         if grid=True:
+#             - ne is a (n1,) 1d array
+#             - Te is a (n2,) 1d array
+#           => the result is a dict of (n1, n2) 2d array
+#         """
+#
+#         # Check keys
+#         key = self._ind_tofrom_key(
+#             which=self._which_lines, key=key, ind=ind, returnas=str,
+#         )
+#         dlines = self._dobj[self._which_lines]
+#
+#         key, dnTe, return_params = _check._check_compute_pec(
+#             # check keys
+#             key=key,
+#             dlines=dlines,
+#             ddata=self._ddata,
+#             _quant_ne=self._quant_ne,
+#             _quant_Te=self._quant_Te,
+#             # check ne, Te
+#             ne=ne,
+#             Te=Te,
+#             return_params=return_params,
+#         )
+#         keypec = [f'{k0}-pec' for k0 in key]
+#
+#         # group lines per common ref
+#         lref = set([self._ddata[k0]['ref'] for k0 in keypec])
+#         dref = {
+#             k0: [k1 for k1 in keypec if self._ddata[k1]['ref'] == k0]
+#             for k0 in lref
+#         }
+#
+#         # Interpolate
+#         for ii, (k0, v0) in enumerate(dref.items()):
+#             douti, dparami = self.interpolate(
+#                 # interpolation base
+#                 keys=v0,
+#                 ref_key=k0,
+#                 # interpolation pts
+#                 x0=dnTe['ne'],
+#                 x1=dnTe['Te'],
+#                 # parameters
+#                 deg=deg,
+#                 deriv=0,
+#                 grid=grid,
+#                 log_log=True,
+#                 return_params=True,
+#             )
+#
+#             # update dict
+#             if ii == 0:
+#                 dout = douti
+#                 dparam = dparami
+#             else:
+#                 dout.update(**douti)
+#                 dparam['keys'] += dparami['keys']
+#                 dparam['ref_key'] += dparami['ref_key']
+#
+#         # -------
+#         # return
+#
+#         if return_params is True:
+#             dparam['key'] = dparam['keys']
+#             del dparam['keys']
+#             dparam['ne'] = dparam['x0']
+#             dparam['Te'] = dparam['x1']
+#             del dparam['x0'], dparam['x1']
+#             return dout, dparam
+#         else:
+#             return dout
+#
+#     def calc_intensity(
+#         self,
+#         key=None,
+#         ind=None,
+#         ne=None,
+#         Te=None,
+#         concentration=None,
+#         deg=None,
+#         grid=None,
+#     ):
+#         """ Compute the lines intensities by pec interpolation for chosen lines
+#
+#         Assumes Maxwellian electron distribution
+#         Assumes concentration = nz / ne
+#
+#         Provide ne and Te and 1d np.ndarrays
+#
+#         Provide concentration as:
+#             - a np.ndarray (same concentration assumed for all lines)
+#             - a dict of {key: np.ndarray}
+#
+#         if grid=False:
+#             - ne is a (n,) 1d array
+#             - Te is a (n,) 1d array
+#             - concentration is a (dict of) (n,) 1d array(s)
+#           => the result is a dict of (n1, n2) 2d array
+#
+#         if grid=True:
+#             - ne is a (n1,) 1d array
+#             - Te is a (n2,) 1d array
+#             - concentration is a (dict of) (n1, n2) 2d array(s)
+#           => the result is a dict of (n1, n2) 2d array
+#
+#
+#         """
+#
+#         # Check keys
+#         key = self._ind_tofrom_key(
+#             which=self._which_lines, key=key, ind=ind, returnas=str,
+#         )
+#
+#         # interpolate pec
+#         dout, dparam = self.calc_pec(
+#             key=key,
+#             ind=ind,
+#             ne=ne,
+#             Te=Te,
+#             grid=grid,
+#             deg=deg,
+#             return_params=True,
+#         )
+#
+#         # check concentrations
+#         concentration = _check._check_compute_intensity(
+#             key=[k0[:-4] for k0 in dparam['key']],
+#             concentration=concentration,
+#             shape=dparam['ne'].shape,
+#         )
+#
+#         # Derive intensity
+#         for k0, v0 in dout.items():
+#             dout[k0] = v0['data']*dparam['ne']**2*concentration[k0[:-4]]
+#
+#         return dout
+# =============================================================================
 
     # -----------------
     # plotting
@@ -516,192 +517,196 @@ class SpectralLines(Previous):
             wintit=wintit, tit=tit,
         )
 
-    def plot_pec_single(
-        self,
-        key=None,
-        ind=None,
-        ne=None,
-        Te=None,
-        concentration=None,
-        deg=None,
-        grid=None,
-        ax=None,
-        sortby=None,
-        param_x=None,
-        param_txt=None,
-        ymin=None,
-        ymax=None,
-        ls=None,
-        lw=None,
-        fontsize=None,
-        side=None,
-        dcolor=None,
-        fraction=None,
-        figsize=None,
-        dmargin=None,
-        wintit=None,
-        tit=None,
-    ):
-        """ Same as plot_spectral_lines() with extra scatter plot with circles
-
-        The circles' diameters depend on the pec value for each line
-
-        Requires:
-            - Te = scalar (eV)
-            - ne = scalar (/m3)
-
-        """
-
-        # ------------
-        # Check ne, Te
-
-        ltypes = [int, float, np.integer, np.floating]
-        dnTe = {'ne': ne, 'Te': Te}
-        single = all([
-            type(v0) in ltypes or len(v0) == 1 for v0 in dnTe.values()
-        ])
-        if not single:
-            msg = ("Arg ne and Te must be floats!")
-            raise Exception(msg)
-
-        # --------
-        # Get dpec
-        dpec = self.calc_pec(
-            key=key,
-            ind=ind,
-            ne=ne,
-            Te=Te,
-            deg=deg,
-            grid=False,
-            return_params=False,
-        )
-        key = [k0[:-4] for k0 in dpec.keys()]
-
-        ne = float(ne)
-        Te = float(Te)
-        tit = (
-            r'$n_e$' + f'= {ne} ' + r'$/m^3$'
-            + r' -  $T_e$ = ' + f'{Te/1000.} keV'
-        )
-
-        pmax = np.max([np.log10(v0['data']) for v0 in dpec.values()])
-        pmin = np.min([np.log10(v0['data']) for v0 in dpec.values()])
-        dsize = {
-            k0[:-4]: (np.log10(v0['data']) - pmin) / (pmax - pmin)*19 + 1
-            for k0, v0 in dpec.items()
-        }
-
-        return _plot.plot_axvlines(
-            din=self._dobj[self._which_lines],
-            key=key,
-            param_x=param_x,
-            param_txt=param_txt,
-            sortby=sortby,
-            dsize=dsize,
-            ax=ax, ymin=ymin, ymax=ymax,
-            ls=ls, lw=lw, fontsize=fontsize,
-            side=side, dcolor=dcolor, fraction=fraction,
-            figsize=figsize, dmargin=dmargin,
-            wintit=wintit, tit=tit,
-        )
-
-    def plot_pec(
-        self,
-        key=None,
-        ind=None,
-        ne=None,
-        Te=None,
-        norder=None,
-        ne_scale=None,
-        Te_scale=None,
-        param_txt=None,
-        param_color=None,
-        deg=None,
-        dax=None,
-        proj=None,
-        ymin=None,
-        ymax=None,
-        ls=None,
-        lw=None,
-        fontsize=None,
-        side=None,
-        dcolor=None,
-        fraction=None,
-        figsize=None,
-        dmargin=None,
-        dtit=None,
-        tit=None,
-        wintit=None,
-    ):
-
-        # -----------
-        # Check input
-
-        # Check ne, Te
-        lc = [np.isscalar(ne) or len(ne) == 1, np.isscalar(Te) or len(Te) == 1]
-        if all(lc):
-            msg = "For a single (ne, Te) space, use plot_pec_singe()"
-            raise Exception(msg)
-
-        # Get dpec
-        dpec = self.calc_pec(
-            key=key,
-            ind=ind,
-            ne=ne,
-            Te=Te,
-            deg=deg,
-            grid=False,
-        )
-        damp = {k0: {'data': v0} for k0, v0 in dpec.items()}
-
-        # Create grid
-        ne_grid = ds._class1_compute._get_grid1d(
-            ne, scale=ne_scale, npts=ne.size*2, nptsmin=3,
-        )
-        Te_grid = ds._class1_compute._get_grid1d(
-            Te, scale=Te_scale, npts=Te.size*2, nptsmin=3,
-        )
-
-        # get dpec for grid
-        dpec_grid = self.calc_pec(
-            key=key,
-            ind=ind,
-            ne=ne_grid,
-            Te=Te_grid,
-            deg=deg,
-            grid=True,
-        )
-
-        raise NotImplementedError()
-
-        return _plot.plot_dominance_map(
-            din=self._dobj['lines'], im=im, extent=extent,
-            xval=ne, yval=Te, damp=damp,
-            x_scale=ne_scale, y_scale=Te_scale, amp_scale='log',
-            param_txt='symbol',
-            dcolor=dcolor,
-            dax=dax, proj=proj,
-            figsize=figsize, dmargin=dmargin,
-            wintit=wintit, tit=tit, dtit=dtit,
-        )
+# =============================================================================
+#     def plot_pec_single(
+#         self,
+#         key=None,
+#         ind=None,
+#         ne=None,
+#         Te=None,
+#         concentration=None,
+#         deg=None,
+#         grid=None,
+#         ax=None,
+#         sortby=None,
+#         param_x=None,
+#         param_txt=None,
+#         ymin=None,
+#         ymax=None,
+#         ls=None,
+#         lw=None,
+#         fontsize=None,
+#         side=None,
+#         dcolor=None,
+#         fraction=None,
+#         figsize=None,
+#         dmargin=None,
+#         wintit=None,
+#         tit=None,
+#     ):
+#         """ Same as plot_spectral_lines() with extra scatter plot with circles
+#
+#         The circles' diameters depend on the pec value for each line
+#
+#         Requires:
+#             - Te = scalar (eV)
+#             - ne = scalar (/m3)
+#
+#         """
+#
+#         # ------------
+#         # Check ne, Te
+#
+#         ltypes = [int, float, np.integer, np.floating]
+#         dnTe = {'ne': ne, 'Te': Te}
+#         single = all([
+#             type(v0) in ltypes or len(v0) == 1 for v0 in dnTe.values()
+#         ])
+#         if not single:
+#             msg = ("Arg ne and Te must be floats!")
+#             raise Exception(msg)
+#
+#         # --------
+#         # Get dpec
+#         dpec = self.calc_pec(
+#             key=key,
+#             ind=ind,
+#             ne=ne,
+#             Te=Te,
+#             deg=deg,
+#             grid=False,
+#             return_params=False,
+#         )
+#         key = [k0[:-4] for k0 in dpec.keys()]
+#
+#         ne = float(ne)
+#         Te = float(Te)
+#         tit = (
+#             r'$n_e$' + f'= {ne} ' + r'$/m^3$'
+#             + r' -  $T_e$ = ' + f'{Te/1000.} keV'
+#         )
+#
+#         pmax = np.max([np.log10(v0['data']) for v0 in dpec.values()])
+#         pmin = np.min([np.log10(v0['data']) for v0 in dpec.values()])
+#         dsize = {
+#             k0[:-4]: (np.log10(v0['data']) - pmin) / (pmax - pmin)*19 + 1
+#             for k0, v0 in dpec.items()
+#         }
+#
+#         return _plot.plot_axvlines(
+#             din=self._dobj[self._which_lines],
+#             key=key,
+#             param_x=param_x,
+#             param_txt=param_txt,
+#             sortby=sortby,
+#             dsize=dsize,
+#             ax=ax, ymin=ymin, ymax=ymax,
+#             ls=ls, lw=lw, fontsize=fontsize,
+#             side=side, dcolor=dcolor, fraction=fraction,
+#             figsize=figsize, dmargin=dmargin,
+#             wintit=wintit, tit=tit,
+#         )
+#
+#     def plot_pec(
+#         self,
+#         key=None,
+#         ind=None,
+#         ne=None,
+#         Te=None,
+#         norder=None,
+#         ne_scale=None,
+#         Te_scale=None,
+#         param_txt=None,
+#         param_color=None,
+#         deg=None,
+#         dax=None,
+#         proj=None,
+#         ymin=None,
+#         ymax=None,
+#         ls=None,
+#         lw=None,
+#         fontsize=None,
+#         side=None,
+#         dcolor=None,
+#         fraction=None,
+#         figsize=None,
+#         dmargin=None,
+#         dtit=None,
+#         tit=None,
+#         wintit=None,
+#     ):
+#
+#         # -----------
+#         # Check input
+#
+#         # Check ne, Te
+#         lc = [np.isscalar(ne) or len(ne) == 1, np.isscalar(Te) or len(Te) == 1]
+#         if all(lc):
+#             msg = "For a single (ne, Te) space, use plot_pec_singe()"
+#             raise Exception(msg)
+#
+#         # Get dpec
+#         dpec = self.calc_pec(
+#             key=key,
+#             ind=ind,
+#             ne=ne,
+#             Te=Te,
+#             deg=deg,
+#             grid=False,
+#         )
+#         damp = {k0: {'data': v0} for k0, v0 in dpec.items()}
+#
+#         # Create grid
+#         ne_grid = ds._class1_compute._get_grid1d(
+#             ne, scale=ne_scale, npts=ne.size*2, nptsmin=3,
+#         )
+#         Te_grid = ds._class1_compute._get_grid1d(
+#             Te, scale=Te_scale, npts=Te.size*2, nptsmin=3,
+#         )
+#
+#         # get dpec for grid
+#         dpec_grid = self.calc_pec(
+#             key=key,
+#             ind=ind,
+#             ne=ne_grid,
+#             Te=Te_grid,
+#             deg=deg,
+#             grid=True,
+#         )
+#
+#         raise NotImplementedError()
+#
+#         return _plot.plot_dominance_map(
+#             din=self._dobj['lines'], im=im, extent=extent,
+#             xval=ne, yval=Te, damp=damp,
+#             x_scale=ne_scale, y_scale=Te_scale, amp_scale='log',
+#             param_txt='symbol',
+#             dcolor=dcolor,
+#             dax=dax, proj=proj,
+#             figsize=figsize, dmargin=dmargin,
+#             wintit=wintit, tit=tit, dtit=dtit,
+#         )
+# =============================================================================
 
     # -------------------
     # units conversion
     # -------------------
 
-    def convert_spectral_lines_units(
-        self,
-        data=None,
-        units=None,
-        units_in=None,
-    ):
-
-        return _compute.convert_spectral_units(
-            coll=self,
-            data=data,
-            units=units,
-            units_in=units_in,
-        )
+# =============================================================================
+#     def convert_spectral_lines_units(
+#         self,
+#         data=None,
+#         units=None,
+#         units_in=None,
+#     ):
+#
+#         return _compute.convert_spectral_units(
+#             coll=self,
+#             data=data,
+#             units=units,
+#             units_in=units_in,
+#         )
+# =============================================================================
 
     # -------------------
     # saving
