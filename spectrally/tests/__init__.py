@@ -6,4 +6,4 @@ Created on Thu Feb 15 22:10:49 2024
 """
 
 
-from . import tests00_SpectralLines
+from . import test_00_SpectralLines

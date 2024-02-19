@@ -4,6 +4,7 @@
 
 import os
 import json
+import itertools as itt
 
 
 import numpy as np
@@ -255,6 +256,11 @@ def remove_lines(
         ])
         lpec = list(lpec_in.difference(lpec_out))
 
+        # lref
+        lref = list(set(itt.chain.from_iterable([
+            coll.ddata[k0]['ref'] for k0 in lpec
+        ])))
+
     # -----------------
     # remove
     # -----------------
@@ -264,10 +270,12 @@ def remove_lines(
     if propagate is True:
         if len(lions) > 0:
             coll.remove_obj(which='ion', key=lions)
+        if len(lref) > 0:
+            coll.remove_ref(lref, propagate=True)
+        if len(lpec) > 0:
+            coll.remove_data(lpec, propagate=True)
         if len(lsources) > 0:
             coll.remove_obj(which='source', key=lsources)
-        if len(lpec) > 0:
-            coll.remove_data(lpec)
 
     return
 

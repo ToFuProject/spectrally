@@ -148,19 +148,30 @@ def _format_for_DataStock_adf15(
     # ----------------------------------------------
 
     if dlines0 is not None:
-        # Check for mistakes
+
+        # --------------------------------------
+        # Check for redundancy vs existing lines
+
         dk0 = {
             k0: [
                 k1 for k1, v1 in dlines0.items()
                 if np.sum([(
                     v1['ion'] == v0['ion']
+                    and v1['source'] == v0['source']
                     and v1['transition'] == v0['transition'],
-                    v1['ion'] == v0['ion'] and v1['symbol'] == v0['symbol']
+                    v1['ion'] == v0['ion']
+                    and v1['source'] == v0['source']
+                    and v1['symbol'] == v0['symbol']
                 )]) == 1
             ]
             for k0, v0 in dout.items()
         }
+
         dk0 = {k0: v0 for k0, v0 in dk0.items() if len(v0) > 0}
+
+        # -----------------------
+        # raise warning if needed
+
         if len(dk0) > 0:
             msg = (
                 "\nPossible error in openadas detected,\n"
@@ -173,10 +184,15 @@ def _format_for_DataStock_adf15(
             )
             warnings.warn(msg)
 
+        # -----------------
+        # re-assemble dout
+
         dout = {
             k0: v0 for k0, v0 in dout.items()
             if not any([
-                v1['ion'] == v0['ion'] and v1['transition'] == v0['transition']
+                v1['ion'] == v0['ion']
+                and v1['source'] == v0['source']
+                and v1['transition'] == v0['transition']
                 for v1 in dlines0.values()
             ])
         }
@@ -195,22 +211,23 @@ def _format_for_DataStock_adf15(
 
     else:
         # Check against existing sources
-        nmax = int(np.max([
-            int(k0.split('-')[-1])
-            for k0 in dsource0.keys() if 'oa-adf15' in k0
-        ])) + 1
+        lsoa = [k0 for k0 in dsource0.keys() if 'oa-adf15' in k0]
+        if len(lsoa) > 0:
+            nmax = int(np.max([int(k0.split('-')[-1]) for k0 in lsoa])) + 1
+        else:
+            nmax = 0
+
         for ii, ss in enumerate(lsource):
-            lk0 = [k0 for k0, v0 in dsource0.items() if v0['long'] == ss]
+            lk0 = [k0 for k0, v0 in dsource0.items() if v0.get('long') == ss]
             if len(lk0) == 0:
-                k0 = 'oa-adf15-{:02}'.format(nmax)
+                k0 = f'oa-adf15-{nmax:02}'
                 nmax += 1
             elif len(lk0) == 1:
                 k0 = lk0[0]
             else:
-                msg = (
-                    "\nMultiple possible matches for source {}".format(ss)
-                )
+                msg = f"\nMultiple possible matches for source {ss}"
                 raise Exception(msg)
+
             dsource[k0] = {'long': ss}
 
     # ----------------------------
@@ -225,11 +242,11 @@ def _format_for_DataStock_adf15(
     else:
         ite = int(np.max([
             int(k0.split('-')[-1]) for k0 in dref0.keys()
-            if 'Te-' in k0 and 'oa-adf15' in ddata0[k0]['source']
+            if 'nTe' in k0 and 'oa-adf15' in ddata0[k0]['source']
         ])) + 1
         ine = int(np.max([
             int(k0.split('-')[-1]) for k0 in dref0.keys()
-            if 'ne-' in k0 and 'oa-adf15' in ddata0[k0]['source']
+            if 'nne' in k0 and 'oa-adf15' in ddata0[k0]['source']
         ])) + 1
 
     # scan
@@ -270,14 +287,14 @@ def _format_for_DataStock_adf15(
                 # }
             elif len(lk0) > 1:
                 msg = (
-                    "Multiple matches for dout[{}] in dref0:\n".format(k0)
-                    + "\t- {}".format(lk0)
+                    f"Multiple matches for dout['{k0}'] in dref0:\n"
+                    f"\t- {lk0}"
                 )
                 raise Exception(msg)
 
         if normal is True:
             if len(kte) == 0:
-                keyte = 'Te-{:02}'.format(ite)
+                keyte = f'Te{ite:02}'
                 dte[keyte] = {
                     'data': v0['te'],
                     'units': v0['te_units'],
@@ -328,14 +345,14 @@ def _format_for_DataStock_adf15(
                 # }
             elif len(lk0) > 1:
                 msg = (
-                    "Multiple matches for dout[{}] in dref0:\n".format(k0)
-                    + "\t- {}".format(lk0)
+                    f"Multiple matches for dout['{k0}'] in dref0:\n"
+                    f"\t- {k0}"
                 )
                 raise Exception(msg)
 
         if normal is True:
             if len(kne) == 0:
-                keyne = 'ne-{:02}'.format(ine)
+                keyne = f'ne{ine:02}'
                 dne[keyne] = {
                     'data': v0['ne'],
                     'units': v0['ne_units'],
@@ -360,7 +377,7 @@ def _format_for_DataStock_adf15(
     # ---------------
 
     dpec = {
-        '{}-pec'.format(k0): {
+        f'{k0}_pec': {
             'data': v0['pec'], 'units': v0['pec_units'],
             'ref': (v0['keyne'], v0['keyte']),
             'source': [
@@ -387,7 +404,7 @@ def _format_for_DataStock_adf15(
                 if v1['long'] == dout[k0]['source']
             ][0],
             'lambda0': dout[k0]['lambda0'],
-            'pec': '{}-pec'.format(k0),
+            'pec': f'{k0}_pec',
             'symbol': dout[k0]['symbol'],
             'type': dout[k0]['type'],
             'transition': dout[k0]['transition'],

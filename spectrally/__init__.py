@@ -6,6 +6,7 @@ import warnings
 
 
 from ._class01_SpectralFit import SpectralFit as Collection
+from ._saveload import load
 from . import tests
 
 

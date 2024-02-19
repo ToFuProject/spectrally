@@ -6,7 +6,7 @@ Created on Thu Feb 15 21:53:45 2024
 """
 # Built-in
 import os
-import shutils
+import shutil
 import warnings
 
 
@@ -18,6 +18,7 @@ import datastock as ds
 
 # spectrally-specific
 from .._class00_SpectralLines import SpectralLines as Collection
+from .._saveload import load
 
 
 _PATH_HERE = os.path.dirname(__file__)
@@ -63,7 +64,7 @@ def clean_output(path=_PATH_OUTPUT):
 
 def clean_local_path():
     if _CLEAN is True:
-        shutils.rmtree(_PATH_SP)
+        shutil.rmtree(_PATH_SP)
 
 
 def setup_module(module):
@@ -111,29 +112,36 @@ class Test00_SpectralLines():
         self.coll.add_spectral_lines_from_file(self.pfe_json)
 
     def test02_add_spectral_lines_from_openadas(self):
-        # if openadas:
         self.coll.add_spectral_lines_from_openadas(
             lambmin=3.94e-10,
             lambmax=4e-10,
             element='Ar',
             online=True,
         )
-        self.coll.remove_obj(which=self.coll._which_lines)
 
     def test03_add_spectral_lines_from_nist(self):
-        # if nist:
         self.coll.add_spectral_lines_from_nist(
             lambmin=3.94e-10,
             lambmax=4e-10,
             element='Ar',
         )
-        self.coll.remove_obj(which=self.coll._which_lines)
+
+    # ----------------
+    # removing
+    # ----------------
+
+    def test04_remove_spectral_lines(self):
+        lines = [
+            k0 for k0, v0 in self.coll.dobj[self.coll._which_lines].items()
+            if v0['source'] != 'file'
+        ]
+        self.coll.remove_spectral_lines(lines)
 
     # ------------------------
     #   Plotting
     # ------------------------
 
-    def test04_plot_spectral_lines(self):
+    def test05_plot_spectral_lines(self):
         self.coll.plot_spectral_lines()
         plt.close('all')
 
@@ -146,5 +154,5 @@ class Test00_SpectralLines():
 
     def test99_saveload(self):
         pfe = self.coll.save(path=_PATH_OUTPUT, return_pfe=True)
-        coll2 = ds.load(pfe)
+        coll2 = load(pfe, cls=Collection)
         assert self.coll == coll2
