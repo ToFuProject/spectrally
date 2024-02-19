@@ -26,9 +26,13 @@ _PATH_INPUT = os.path.join(_PATH_HERE, 'input')
 _PATH_OUTPUT = os.path.join(_PATH_HERE, 'output')
 
 
-_PATH_SP = os.path.join(os.path.expanduser('~'), '.spectrally')
+_PKG = 'spectrally'
+_PATH_SP = os.path.join(os.path.expanduser('~'), f'.{_PKG}')
 _PATH_OPAD = os.path.join(_PATH_SP, 'openadas')
 _PATH_NIST = os.path.join(_PATH_SP, 'nist')
+
+_CUSTOM = os.path.dirname(os.path.dirname(os.path.dirname(_PATH_HERE)))
+_CUSTOM = os.path.join(_CUSTOM, 'scripts', 'tofucustom.py')
 
 
 _CLEAN = False
@@ -62,6 +66,11 @@ def clean_output(path=_PATH_OUTPUT):
             os.remove(os.path.join(path, ff))
 
 
+def create_local_path():
+    if _CLEAN is True:
+        os.system('python {_CUSTOM}')
+
+
 def clean_local_path():
     if _CLEAN is True:
         shutil.rmtree(_PATH_SP)
@@ -69,6 +78,7 @@ def clean_local_path():
 
 def setup_module(module):
     clean_output()
+    create_local_path()
 
 
 def teardown_module(module):
