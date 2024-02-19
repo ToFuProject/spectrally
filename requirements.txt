@@ -2,6 +2,6 @@
 numpy
 scipy
 matplotlib
+pandas
 astropy
-contourpy
 bsplines2d>=0.0.14
