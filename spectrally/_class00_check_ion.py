@@ -2,8 +2,15 @@
 # -*- coding: utf-8 -*-
 
 
+import os
+
+
 import numpy as np
+import pandas as pd
 import datastock as ds
+
+
+_PATH_HERE = os.path.dirname(__file__)
 
 
 #############################################
@@ -188,7 +195,6 @@ def _get_table():
         symbols, names, Z, A = _get_from_periodictable()
 
     except Exception as err:
-        raise err
         symbols, names, Z, A = _get_from_local()
 
     return symbols, names, Z, A
@@ -214,16 +220,20 @@ def _get_from_periodictable(update=False):
     Z = tuple([Z[ii] for ii in inds])
     A = tuple([A[ii] for ii in inds])
 
-    # save to local file
-    if update is True:
-        import pandas as pd
-        df = pd.DataFrame()
-
     return symbols, names, Z, A
 
 
 def _get_from_local():
-    raise NotImplementedError()
+
+    pfe = os.path.join(_PATH_HERE, '_class00_check_ions_table.csv')
+    df = pd.read_csv(pfe)
+
+    symbols = df.symbol.to_list()
+    names = df.name.to_list()
+    Z = df.Z.to_list()
+    A = df.A.to_list()
+
+    return symbols, names, Z, A
 
 
 #############################################
