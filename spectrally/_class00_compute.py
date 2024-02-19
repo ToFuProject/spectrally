@@ -11,7 +11,6 @@ import json
 # common
 import numpy as np
 import scipy.constants as scpct
-from scipy.interpolate import RectBivariateSpline as scpRectSpl
 
 
 _OPENADAS_ONLINE = True
@@ -465,18 +464,18 @@ def _check_convert_spectral(
             raise Exception(msg)
 
     else:
+
         if not isinstance(data_in, np.ndarray):
             try:
                 data_in = np.asarray(data_in)
             except Exception as err:
                 msg = "Arg data shall be convertible to a np.ndarray!"
                 raise Exception(msg)
+
         if data_in.dtype not in [int, float]:
             msg = (
-                """
-                Arg data must be a np.ndarray of dtype int or float!
-                data.dtype = {}
-                """.format(data.dtype.name)
+                "Arg data must be a np.ndarray of dtype int or float!\n"
+                f"\t- data.dtype = {data_in.dtype.name}\n"
             )
             raise Exception(msg)
 
@@ -636,8 +635,8 @@ def convert_spectral(
     )
 
     # Convert
-    k0_in = [k0 for k0, v0 in _SPECTRAL_DUNITS.items() if units_in in v0][0]
-    k0_out = [k0 for k0, v0 in _SPECTRAL_DUNITS.items() if units_out in v0][0]
+    # k0_in = [k0 for k0, v0 in _SPECTRAL_DUNITS.items() if units_in in v0][0]
+    # k0_ou = [k0 for k0, v0 in _SPECTRAL_DUNITS.items() if units_ou in v0][0]
 
     # trivial case first
     if units_in == units_out:

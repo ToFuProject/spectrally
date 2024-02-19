@@ -10,15 +10,7 @@ import matplotlib.lines as mlines
 import datastock as ds
 
 
-# tofu
-# from tofu.version import __version__
-
-
-# __github = 'https://github.com/ToFuProject/tofu/issues'
 _WINTIT = ""
-# 'tofu-%s        report issues / requests at {}'.format(
-    # __version__, __github,
-# )
 
 
 # #############################################################################
@@ -211,7 +203,7 @@ def plot_axvlines(
     for ii, uu in enumerate(unique):
         lk = [k0 for k0 in key if din[k0][sortby] == uu]
         for k0 in lk:
-            ll = ax.axvline(
+            _ = ax.axvline(
                 x=din[k0][param_x],
                 ymin=ly[ii][0],
                 ymax=ly[ii][0] + fraction*dy,
@@ -261,25 +253,25 @@ def plot_axvlines(
 # #############################################################################
 
 
-def _dominance_map_check(
+# def _dominance_map_check(
 
-):
+# ):
 
-    if param_txt is None:
-        param_txt = 'symbol'
-    if param_color is None:
-        param_color = 'ion'
-    if norder is None:
-        norder = 0
+    # if param_txt is None:
+        # param_txt = 'symbol'
+    # if param_color is None:
+        # param_color = 'ion'
+    # if norder is None:
+        # norder = 0
 
-    if ne_scale is None:
-        ne_scale = 'log'
-    if Te_scale is None:
-        Te_scale = 'linear'
+    # if ne_scale is None:
+        # ne_scale = 'log'
+    # if Te_scale is None:
+        # Te_scale = 'linear'
 
-    return
+    # return
 
-
+"""
 def _ax_dominance_map(
     dax=None, figsize=None, dmargin=None,
     x_scale=None, y_scale=None, amp_scale=None,
@@ -514,3 +506,4 @@ def plot_dominance_map(
         )
 
     return dax
+"""
