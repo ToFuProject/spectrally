@@ -222,6 +222,10 @@ def _get_from_periodictable(update=False):
     return symbols, names, Z, A
 
 
+def _get_from_local():
+    raise NotImplementedError()
+
+
 #############################################
 #############################################
 #       iso-electronic sequence
