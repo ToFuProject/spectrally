@@ -87,7 +87,7 @@ class Test_nist(object):
                 continue
             print(f'{ii} / {itot}  -  {comb}')
 
-            # out = tfn.step01_search_online_by_wavelengthA(
+            # out = nist.step01_search_online_by_wavelengthA(
                 # lambmin=comb[0],
                 # lambmax=comb[1],
                 # ion=comb[2],
@@ -106,4 +106,4 @@ class Test_nist(object):
     # ------------------------
 
     def test02_clear_cache(self):
-        tfn.clear_cache()
+        nist.clear_cache()
