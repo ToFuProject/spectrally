@@ -119,7 +119,6 @@ class SpectralFit(Previous):
         """ Get ordered list of individual variable names """
         return _check_model._get_var(self, key=key)
 
-
     # ###################
     # -------------------
     # Spectral fits

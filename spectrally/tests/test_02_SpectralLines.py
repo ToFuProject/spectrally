@@ -40,23 +40,12 @@ def teardown_module(module):
 
 #######################################################
 #
-#     Utilities
-#
-#######################################################
-
-
-def _add_ref(st=None, nc=None, nx=None, lnt=None):
-    pass
-
-
-#######################################################
-#
 #     Instanciate and populate
 #
 #######################################################
 
 
-class Test00_SpectralLines():
+class Test00_Populate():
 
     # ------------------------
     #   setup and teardown
@@ -119,7 +108,7 @@ class Test00_SpectralLines():
 #######################################################
 
 
-class Test01_SpectralLines():
+class Test01_Manipulate():
 
     # ------------------------
     #   setup and teardown
