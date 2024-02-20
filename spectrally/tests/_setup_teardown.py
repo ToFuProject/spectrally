@@ -27,7 +27,7 @@ _PATH_SP = os.path.join(os.path.expanduser('~'), f'.{_PKG}')
 
 
 _CUSTOM = os.path.dirname(os.path.dirname(os.path.dirname(_PATH_HERE)))
-_CUSTOM = os.path.join(_CUSTOM, 'scripts', 'tofucustom.py')
+_CUSTOM = os.path.join(_CUSTOM, 'scripts', f'{_PKG}custom.py')
 
 
 #######################################################
