@@ -51,12 +51,12 @@ def _add_ref(st=None, nc=None, nx=None, lnt=None):
 
 #######################################################
 #
-#     Instanciate
+#     Instanciate and populate
 #
 #######################################################
 
 
-class Test_SpectralLines():
+class Test00_SpectralLines():
 
     # ------------------------
     #   setup and teardown
@@ -69,7 +69,6 @@ class Test_SpectralLines():
     def setup_method(self):
         self.coll = Collection()
         self.pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
-        self.coll.add_spectral_lines_from_file(self.pfe_json)
 
     # ------------------------
     #   Populating
@@ -99,6 +98,7 @@ class Test_SpectralLines():
 
     def test04_remove_spectral_lines(self):
         # populate
+        self.coll.add_spectral_lines_from_file(self.pfe_json)
         self.coll.add_spectral_lines_from_nist(
             lambmin=3.94e-10,
             lambmax=4e-10,
@@ -111,11 +111,34 @@ class Test_SpectralLines():
         ]
         self.coll.remove_spectral_lines(lines)
 
+
+#######################################################
+#
+#     Manipulate
+#
+#######################################################
+
+
+class Test01_SpectralLines():
+
+    # ------------------------
+    #   setup and teardown
+    # ------------------------
+
+    @classmethod
+    def setup_class(cls):
+        pass
+
+    def setup_method(self):
+        self.coll = Collection()
+        self.pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
+        self.coll.add_spectral_lines_from_file(self.pfe_json)
+
     # ------------------------
     #   Plotting
     # ------------------------
 
-    def test05_plot_spectral_lines(self):
+    def test00_plot_spectral_lines(self):
         self.coll.plot_spectral_lines()
         plt.close('all')
 
