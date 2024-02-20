@@ -26,7 +26,7 @@ _PKG = 'spectrally'
 _PATH_SP = os.path.join(os.path.expanduser('~'), f'.{_PKG}')
 
 
-_CUSTOM = os.path.dirname(os.path.dirname(os.path.dirname(_PATH_HERE)))
+_CUSTOM = os.path.dirname(_PATH_HERE)
 _CUSTOM = os.path.join(_CUSTOM, 'scripts', f'{_PKG}custom.py')
 
 
@@ -61,8 +61,10 @@ def create_local_path():
 
 def setup_module0(module):
     create_local_path()
-    clean_output()
 
 
 def teardown_module0(module):
     clean_output()
+    # clean
+    if os.path.isdir(_PATH_SP):
+        shutil.rmtree(_PATH_SP)

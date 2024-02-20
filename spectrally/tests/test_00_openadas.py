@@ -67,6 +67,7 @@ class Test_openadas(object):
         out = openadas.step01_search_online(
             'ar+16 ADF15',
             verb=True,
+            # verb=False,
             returnas=False,
         )
         assert out is None
@@ -107,7 +108,7 @@ class Test_openadas(object):
         out = openadas.step02_download(
             filename='/adf15/pec40][ar/pec40][ar_ic][ar16.dat',
             update=False,
-            verb=True,
+            verb=False,
             returnas=False,
         )
         assert out is None
@@ -138,7 +139,7 @@ class Test_openadas(object):
         out = openadas.step02_download_all(
             files=lf,
             update=False,
-            verb=True,
+            verb=False,
         )
         assert out is None
 
@@ -146,7 +147,7 @@ class Test_openadas(object):
             searchstr='ar+16 ADF15',
             include_partial=False,
             update=False,
-            verb=True,
+            verb=False,
         )
         assert out is None
 

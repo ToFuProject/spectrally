@@ -97,6 +97,14 @@ class Test_SpectralLines():
     # ----------------
 
     def test04_remove_spectral_lines(self):
+        # populate
+        self.coll.add_spectral_lines_from_file(self.pfe_json)
+        self.coll.add_spectral_lines_from_nist(
+            lambmin=3.94e-10,
+            lambmax=4e-10,
+            element='Ar',
+        )
+        # remove
         lines = [
             k0 for k0, v0 in self.coll.dobj[self.coll._which_lines].items()
             if v0['source'] != 'file'
