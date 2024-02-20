@@ -69,6 +69,7 @@ class Test_SpectralLines():
     def setup_method(cls):
         cls.coll = Collection()
         cls.pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
+        self.coll.add_spectral_lines_from_file(self.pfe_json)
 
     # ------------------------
     #   Populating
@@ -98,7 +99,6 @@ class Test_SpectralLines():
 
     def test04_remove_spectral_lines(self):
         # populate
-        self.coll.add_spectral_lines_from_file(self.pfe_json)
         self.coll.add_spectral_lines_from_nist(
             lambmin=3.94e-10,
             lambmax=4e-10,
