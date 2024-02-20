@@ -7,18 +7,22 @@ Created on Thu Feb 15 21:53:45 2024
 # Built-in
 import os
 import shutil
-import warnings
 
 
 # Standard
-import numpy as np
 import matplotlib.pyplot as plt
-import datastock as ds
 
 
 # spectrally-specific
 from .._class00_SpectralLines import SpectralLines as Collection
 from .._saveload import load
+
+
+#######################################################
+#
+#     DEFAULTS
+#
+#######################################################
 
 
 _PATH_HERE = os.path.dirname(__file__)
@@ -105,6 +109,10 @@ def _add_ref(st=None, nc=None, nx=None, lnt=None):
 
 
 class Test00_SpectralLines():
+
+    # ------------------------
+    #   setup and teardown
+    # ------------------------
 
     @classmethod
     def setup_class(cls):
