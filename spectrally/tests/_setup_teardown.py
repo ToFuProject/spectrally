@@ -70,7 +70,7 @@ def create_local_path(clean=_CLEAN):
 
 
 def clean_local_path(clean=_CLEAN):
-    if clean is True:
+    if clean is True and os.path.isdir(_PATH_SP):
         shutil.rmtree(_PATH_SP)
 
 
