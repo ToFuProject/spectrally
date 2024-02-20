@@ -15,9 +15,9 @@ import datastock as ds
 _DMODEL = {
     'linear': {'var': ['c0', 'c1']},
     'exp': {'var': ['amp', 'rate']},
-    'gauss': {'var': ['ampg', 'x0g', 'width']},
-    'lorentz': {'var': ['ampl', 'x0l', 'gamma']},
-    'pvoigt': {'var': ['ampp', 'x0p', 'width', 't', 'gamma']},
+    'gauss': {'var': ['amp', 'x0', 'width']},
+    'lorentz': {'var': ['amp', 'x0', 'gamma']},
+    'pvoigt': {'var': ['amp', 'x0', 'width', 't', 'gamma']},
 }
 _LMODEL_ORDER = ['linear', 'exp', 'gauss', 'lorentz', 'pvoigt']
 
@@ -149,7 +149,7 @@ def _check_dmodel(
         else:
             k1 = k0
 
-        dmod2[k1] = {'type': typ, 'var': _DMODEL[typ]}
+        dmod2[k1] = {'type': typ, 'var': _DMODEL[typ]['var']}
 
     # ---------------
     # raise error
@@ -158,7 +158,7 @@ def _check_dmodel(
     if len(dout) > 0:
         raise Exception(_dmodel_err(key, dout))
 
-    return dmodel
+    return dmod2
 
 
 #############################################
@@ -185,6 +185,8 @@ def _get_var(
         allowed=lok,
     )
 
+    # keys and dmodel
+    keys = coll.dobj[coll._which_model][key]['keys']
     dmodel = coll.dobj[coll._which_model][key]['dmodel']
 
     # concatenate
@@ -194,13 +196,13 @@ def _get_var(
         default=True,
     )
 
-    # --------------
+    # -------------
     # get lvar
     # -------------
 
     lvar = [
         [f"{k0}_{k1}" for k1 in dmodel[k0]['var']]
-        for k0 in dmodel['keys']
+        for k0 in keys
     ]
 
     if concatenate is True:

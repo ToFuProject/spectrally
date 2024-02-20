@@ -31,7 +31,8 @@ def _dconstraints(
     # ------------
 
     dconstraints, lvar = _check(
-        key,
+        coll=coll,
+        key=key,
         dconstraints=dconstraints,
     )
 
@@ -48,7 +49,8 @@ def _dconstraints(
     # store
     # --------------
 
-    coll._dobj[coll._which_model][key]['dconstraints'] = dconstraints
+    wsm = coll._which_model
+    coll._dobj[wsm][key]['dconstraints'] = dconstraints
 
     return
 
@@ -84,6 +86,13 @@ def _check(
     # -------------
 
     lvar = coll.get_spectral_model_variables(key, concatenate=True)
+
+    # -------------
+    # trivial
+    # -------------
+
+    if dconstraints is None:
+        dconstraints = {}
 
     # -------------
     # model
@@ -122,7 +131,7 @@ def _check(
     # ------------
 
     for k0, v0 in dconstraints.items():
-        for k1, v1 in v0.keys():
+        for k1, v1 in v0.items():
             if k1 != 'ref':
                 dconstraints[k0][k1] = np.atleast_1d(v1).astype(float).ravel()
 
@@ -130,10 +139,10 @@ def _check(
     # check each key is used once only
     # --------------------------------
 
-    lin = itt.chain.from_iterable([
-        [v0['ref']] + [k1 for ki in v0.keys() if k1 != 'ref']
+    lin = list(itt.chain.from_iterable([
+        [v0['ref']] + [k1 for k1 in v0.keys() if k1 != 'ref']
         for v0 in dconstraints.values()
-    ])
+    ]))
 
     linu = list(set(lin))
     if len(lin) > len(linu):
@@ -174,6 +183,10 @@ def _compute_coefs_offset(
     c2 = np.zeros((nvar, ng), dtype=float)
     c1 = np.zeros((nvar, ng), dtype=float)
     c0 = np.zeros((nvar,), dtype=float)
+
+    # --------------------------
+    # populate with constraints
+    # --------------------------
 
     for ii, gg in enumerate(lg):
 

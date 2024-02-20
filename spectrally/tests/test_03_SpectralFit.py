@@ -87,10 +87,10 @@ class Test00_Populate():
 
         # with constraints
         self.coll.add_spectral_model(
-            key='model00',
-            dmodel=self.dmodel['model00'],
+            key='model01',
+            dmodel=self.dmodel['model01'],
             dconstraints={
-                'g00': {'ref': 'l00_ampg', 'l01_ampg': [0, 1, 0]},
+                'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
                 'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
             },
         )
