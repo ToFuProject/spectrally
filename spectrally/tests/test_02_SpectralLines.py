@@ -67,8 +67,8 @@ class Test_SpectralLines():
         pass
 
     def setup_method(cls):
-        cls.coll = Collection()
-        cls.pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
+        self.coll = Collection()
+        self.pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
         self.coll.add_spectral_lines_from_file(self.pfe_json)
 
     # ------------------------
