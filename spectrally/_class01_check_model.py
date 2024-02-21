@@ -18,8 +18,9 @@ _DMODEL = {
     'gauss': {'var': ['amp', 'x0', 'width']},
     'lorentz': {'var': ['amp', 'x0', 'gamma']},
     'pvoigt': {'var': ['amp', 'x0', 'width', 't', 'gamma']},
+    'voigt': {'var': ['amp', 'x0', 'width', 'gamma']},
 }
-_LMODEL_ORDER = ['linear', 'exp', 'gauss', 'lorentz', 'pvoigt']
+_LMODEL_ORDER = ['linear', 'exp', 'gauss', 'lorentz', 'pvoigt', 'voigt']
 
 
 #############################################
@@ -38,6 +39,13 @@ def _dmodel(
     # key
     # ----------
 
+    wsm = coll._which_model
+    key = ds._generic_check._obj_key(
+        d0=coll.get(wsm, {}),
+        short='sm',
+        key=key,
+        ndigits=2,
+    )
 
     # --------------
     # check dmodel
@@ -54,7 +62,7 @@ def _dmodel(
     # --------------
 
     dobj = {
-        coll._which_model: {
+        wsm: {
             key: {
                 'keys': sorted(dmodel.keys()),
                 'dmodel': dmodel,
@@ -170,6 +178,7 @@ def _check_dmodel(
 def _get_var(
     coll=None,
     key=None,
+    all_free_tied=None,
     concatenate=None,
 ):
 
@@ -178,7 +187,8 @@ def _get_var(
     # -------------
 
     # key
-    lok = list(coll.dobj.get(coll._which_model, {}).keys())
+    wsm = coll._which_model
+    lok = list(coll.dobj.get(wsm, {}).keys())
     key = ds._generic_check._check_var(
         key, 'key',
         types=str,
@@ -186,8 +196,16 @@ def _get_var(
     )
 
     # keys and dmodel
-    keys = coll.dobj[coll._which_model][key]['keys']
-    dmodel = coll.dobj[coll._which_model][key]['dmodel']
+    keys = coll.dobj[wsm][key]['keys']
+    dmodel = coll.dobj[wsm][key]['dmodel']
+
+    # free_only
+    all_free_tied = ds._generic_check._check_var(
+        all_free_tied, 'all_free_tied',
+        types=str,
+        default='all',
+        allowed=['all', 'free', 'tied'],
+    )
 
     # concatenate
     concatenate = ds._generic_check._check_var(
@@ -200,10 +218,37 @@ def _get_var(
     # get lvar
     # -------------
 
-    lvar = [
-        [f"{k0}_{k1}" for k1 in dmodel[k0]['var']]
-        for k0 in keys
-    ]
+    # all variables
+    if all_free_tied == 'all':
+        lvar = [
+            [f"{k0}_{k1}" for k1 in dmodel[k0]['var']]
+            for k0 in keys
+        ]
+
+    # only free or only tied variables
+    else:
+        dconstraints = coll.dobj[wsm][key]['dconstraints']
+        lref = [v0['ref'] for v0 in dconstraints['dconst'].values()]
+
+        # lvar
+        lvar = [
+            [
+                f"{k0}_{k1}" for k1 in dmodel[k0]['var']
+                if (
+                        all_free_tied == 'free'
+                        and f"{k0}_{k1}" in lref
+                    )
+                or (
+                    all_free_tied == 'free'
+                    and f"{k0}_{k1}" not in lref
+                )
+            ]
+            for k0 in keys
+        ]
+
+    # ----------------
+    # concatenate
+    # ----------------
 
     if concatenate is True:
         lvar = list(itt.chain.from_iterable(lvar))

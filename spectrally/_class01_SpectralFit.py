@@ -25,6 +25,7 @@ __all__ = ['SpectralFit']
 class SpectralFit(Previous):
 
     _which_model = 'spect_model'
+    _which_fit = 'spect_fit'
 
     _ddef = copy.deepcopy(Previous._ddef)
 
@@ -109,12 +110,15 @@ class SpectralFit(Previous):
     def get_spectral_model_variables(
         self,
         key=None,
+        all_free_tied=None,
         concatenate=None,
     ):
         """ Get ordered list of individual variable names """
+
         return _check_model._get_var(
             coll=self,
             key=key,
+            all_free_tied=all_free_tied,
             concatenate=concatenate,
         )
 
@@ -129,22 +133,26 @@ class SpectralFit(Previous):
 
     def add_spectral_fit(
         self,
+        # keys
         key_model=None,
         key_data=None,
         key_lamb=None,
+        # fit parameters
         dinitial=None,
         dscales=None,
         dconstants=None,
         domain=None,
         # optional 2d fit
         key_bs=None,
+        # compute options
+        chain=None,
+
     ):
 
-        # _check_fit._fit(
-        #     coll=self,
-        #     key=key,
-        #     dmodel=dmodel,
-        #     dconstraints=dconstraints,
-        # )
+        _check_fit._check()
+
+
+        _compute_fit._compute()
+
 
         return
