@@ -85,7 +85,11 @@ def _check(
     # extract variale groups
     # -------------
 
-    lvar = coll.get_spectral_model_variables(key, concatenate=True)
+    lvar = coll.get_spectral_model_variables(
+        key,
+        all_free_tied='all',
+        concatenate=True,
+    )
 
     # -------------
     # trivial

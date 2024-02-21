@@ -70,6 +70,12 @@ class Test00_Populate():
                 'l01': 'lorentz',
                 'l02': 'pvoigt',
             },
+            'model02': {
+                'bck0': 'exp',
+                'l00': 'gauss',
+                'l01': 'lorentz',
+                'l02': 'voigt',
+            },
         }
 
     # ------------------------
@@ -89,6 +95,16 @@ class Test00_Populate():
         self.coll.add_spectral_model(
             key='model01',
             dmodel=self.dmodel['model01'],
+            dconstraints={
+                'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
+                'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
+            },
+        )
+
+        # with voigt
+        self.coll.add_spectral_model(
+            key='model02',
+            dmodel=self.dmodel['model02'],
             dconstraints={
                 'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
                 'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
