@@ -4,4 +4,4 @@ scipy
 matplotlib
 pandas
 astropy
-bsplines2d>=0.0.14
+bsplines2d>=0.0.15

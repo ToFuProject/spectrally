@@ -122,7 +122,7 @@ setup(
         "scipy",
         "matplotlib",
         "pandas",
-        "bsplines2d>=0.0.14",
+        "bsplines2d>=0.0.15",
     ],
     python_requires=">=3.6",
 
