@@ -318,7 +318,7 @@ def _check_pfe(pfe):
     if not (isinstance(pfe, str) and os.path.isfile(pfe)):
         msg = (
             "Arg pfe must be a str, a valid 'path/file.ext'\n"
-            "Provided:\n\t{pfe}\n"
+            f"Provided:\n\t{pfe}\n"
         )
         raise Exception(msg)
 
@@ -341,7 +341,7 @@ def _check_pfe(pfe):
         msg = (
             "Unhandled pfe extension!\n"
             "Usable extensions: '.npz', '.json', '.py'\n"
-            "Provided:\n\t{pfe}\n"
+            f"Provided:\n\t{pfe}\n"
         )
         raise Exception(msg)
 
