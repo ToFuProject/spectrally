@@ -14,22 +14,34 @@ import numpy as np
 import datastock as ds
 
 
+_DINDOK = {
+    0: 'ok',
+    -1: 'mask',
+    -2: 'out of domain',
+    -3: 'neg, inf or NaN',
+    -4: 'S/N valid, excluded',
+    -5: 'S/N non-valid, included',
+    -6: 'S/N non-valid, excluded',
+}
+
+
 #############################################
 #############################################
 #       main
 #############################################
 
 
-def main(
+def mask_domain(
     domain=None,
+    mask=None,
     ddata=None,
 ):
 
     # ------------
-    # check inputs
+    # check domain
     # ------------
 
-    domain = _check(
+    domain = _check_domain(
         domain=domain,
         ddata=ddata,
     )
@@ -55,6 +67,48 @@ def main(
         # apply
         domain[k0]['ind'] = indin & (~indout)
 
+    # ---------------
+    # check mask
+    # ---------------
+
+    dmask = _check_mask(
+        coll=coll,
+        mask=mask,
+    )
+
+    # -----------------
+    # initialize iok
+    # -----------------
+
+    iok = np.zeros(coll.ddata[key_data]['data'].shape, dtype=int)
+
+    # mask
+    sli = tuple([
+        coll.ddata[dmask['key']]['data']
+        if rr == ref[0]
+        else slice(None)
+        for rr in ref_data
+        if rr not in ref[1:]
+    ])
+    iok[sli] = -1
+
+
+    # domain
+    sli = [
+    ]
+    iok[sli] = -2
+
+    # -----------------
+    # store in dvalid
+    # -----------------
+
+    dvalid = {
+        'domain': domain,
+        'mask': dmask,
+        'iok': iok,
+        'meaning': _DINDOK,
+    }
+
     return domain
 
 
@@ -64,7 +118,7 @@ def main(
 #############################################
 
 
-def _check(
+def _check_domain(
     domain=None,
     ddata=None,
 ):
@@ -186,7 +240,7 @@ def _check(
                 isinstance(s0, (list, np.ndarray, tuple))
                 and len(s0) == 2
                 and all([np.isscalar(s1) for s1 in s0])
-                and not np.any(np.isnan(s0))
+                'and not np.any(np.isnan(s0))
                 and s0[0] < s0[1]
                 for s0 in spec
             ])
@@ -208,3 +262,102 @@ def _check(
         )
 
     return domain
+
+
+#############################################
+#############################################
+#       check mask
+#############################################
+
+
+def _mask_err(mask, ref=None, shape=None, lok=None):
+    return Exception(
+        "Arg mask must be either:\n"
+        "\t- a str (path/file.ext) to a valid .npy file\n"
+        "\t- a key to a known data array with ref = {ref}\n"
+        "\t\tavailable: {lok}\n"
+        "\t- a np.narray of bool and of shape = {shape}\n"
+        "Provided:\n{mask}\n"
+    )
+
+
+def _check_mask(
+    coll=None,
+    mask=None,
+):
+
+    # ----------------
+    # prepare
+    # ----------------
+
+    pfe = None
+    key = None
+
+    ref =
+    shape =
+
+    lok = [
+        k0 for k0, v0 in coll.ddata.items()
+        if v0['ref'] == ref
+        and v0['data'].dtype.name == 'bool'
+    ]
+
+    err = _mask_err(mask, ref=ref, shape=shape, lok=lok)
+
+    # ----------------
+    # str
+    # ----------------
+
+
+    if isinstance(mask, str):
+
+        if os.path.isfile(mask) and mask.endswith('.npy'):
+            pfe = str(mask)
+            mask = np.load(pfe)
+            key =
+
+        elif mask in lok:
+            key = mask
+
+        else:
+            raise err
+
+    # --------------
+    # numpy array
+    # --------------
+
+    if isinstance(mask, np.ndarray):
+
+        c0 = (
+            mask.shape == shape
+            and mask.dtype.name == 'bool'
+        )
+        if c0:
+            key =
+
+        else:
+            raise err
+
+    else:
+        raise err
+
+    # ----------------------
+    # store
+    # ----------------------
+
+    dmask = {
+        'pfe': pfe,
+        'key': key,
+    }
+
+    if key not in coll.ddata.keys():
+        coll.add_data(
+            key=key,
+            data=mask,
+            ref=ref,
+            units=None,
+            quant='bool',
+            dim='mask',
+        )
+
+    return dmask

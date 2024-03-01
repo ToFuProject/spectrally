@@ -22,7 +22,7 @@ import datastock as ds
 
 def main(
     coll=None,
-    dscales=None,
+    dparams=None,
     key_model=None,
     key_data=None,
     key_lamb=None,
@@ -33,7 +33,7 @@ def main(
     # check inputs
     # ------------
 
-    dscales = _check(dscales)
+    dparams = _check(dparams)
 
     # ------------
     # compute
@@ -50,7 +50,7 @@ def main(
     # ----------------------
     # prepare data if needed
 
-    c0 = any([dscales.get(k0) is None for k0 in lvar])
+    c0 = any([dparams.get(k0) is None for k0 in lvar])
     if c0:
 
         lamb = coll.ddata[key_lamb]['data']
@@ -77,7 +77,7 @@ def main(
     # check all variables
     for k0 in lvar:
 
-        if dscales.get(k0) is None:
+        if dparams.get(k0) is None:
 
             key, var = k0.split('_')
             typ = coll.dobj[key_model]['dmodel'][key]['type']
@@ -92,7 +92,7 @@ def main(
                 data=data,
             )
 
-            dscales[k0] = scale
+            dparams[k0] = scale
 
     return
 
@@ -105,7 +105,7 @@ def main(
 
 def _check(
     coll=None,
-    dscales=None,
+    dparams=None,
     key_model=None,
     key_data=None,
     key_lamb=None,
@@ -126,45 +126,45 @@ def _check(
     # Trivial: False = 1
     # --------------------
 
-    if dscales is False:
-        dscales = {k0: 1. for k0 in lvar}
-        return dscales
+    if dparams is False:
+        dparams = {k0: 1. for k0 in lvar}
+        return dparams
 
     # --------------------
     # Trivial: scalar => uniform
     # --------------------
 
-    if np.isscalar(dscales):
-        dscales = {k0: dscales for k0 in lvar}
-        return dscales
+    if np.isscalar(dparams):
+        dparams = {k0: dparams for k0 in lvar}
+        return dparams
 
     # --------------------
     # Non-trivial
     # --------------------
 
     # None
-    if dscales is None:
-        dscales = {}
+    if dparams is None:
+        dparams = {}
 
     c0 = (
-        isinstance(dscales, dict)
+        isinstance(dparams, dict)
         and all([
             k0 in lvar
             and ((np.isscalar(v0) and np.isfinite(v0)) or v0 is None)
-            for k0, v0 in dscales.items()
+            for k0, v0 in dparams.items()
         ])
     )
     if not c0:
         msg = (
-            "Arg dscales must be a dict with keys = variables of model"
+            "Arg dparams must be a dict with keys = variables of model"
             " and values = floats\n"
             f"\t- model: {key_model}\n"
             f"\t- variables: {lvar}\n"
-            f"Provided:\n{dscales}\n"
+            f"Provided:\n{dparams}\n"
         )
         raise Exception(msg)
 
-    return dscales
+    return dparams
 
 
 #############################################
@@ -222,8 +222,8 @@ def _get_scale(
             # Assuming bck = A*exp(rate*(lamb-lamb.min()))
             bck_amp = bcky
 
-        dscales = _fit12d_filldef_dscalesx0_float(
-            din=dscales, din_name='dscales', key='bck_amp',
+        dparams = _fit12d_filldef_dparamsx0_float(
+            din=dparams, din_name='dparams', key='bck_amp',
             vref=bck_amp, nspect=nspect,
         )
 

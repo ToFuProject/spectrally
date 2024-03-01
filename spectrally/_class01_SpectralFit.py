@@ -136,17 +136,15 @@ class SpectralFit(Previous):
         # keys
         key_model=None,
         key_data=None,
+        key_sigma=None,
         key_lamb=None,
         # fit parameters
-        dinitial=None,
-        dscales=None,
-        dconstants=None,
-        domain=None,
+        dparam=None,
+        mask=None,
         # optional 2d fit
         key_bs=None,
         # compute options
         chain=None,
-
     ):
 
         _check_fit._check()

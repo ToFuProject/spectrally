@@ -11,6 +11,7 @@ import datastock as ds
 
 
 # local
+from . import _class01_valid as _valid
 
 
 
@@ -36,9 +37,9 @@ def _check(
     key_data=None,
     key_lamb=None,
     # dict
-    dinitial=None,
-    dscales=None,
-    dconstants=None,
+    dparams=None,
+    dvalid=None,
+    mask=None,
     domain=None,
     # optional 2d fit
     key_bs=None,
@@ -52,6 +53,7 @@ def _check(
          key,
          key_model,
          key_data,
+         key_sigma,
          key_lamb,
          key_bs,
          key_bs_vect,
@@ -69,35 +71,30 @@ def _check(
     if key_bs is not None:
         ddata.update({key_bs_vect: coll.ddata[key_bs_vect]['data']})
 
-    # check domain
-    domain = _domain.main(
+    # ---------------------
+    # mask & domain
+    # ---------------------
+
+    dvalid = _valid.mask_domain(
         ddata=ddata,
         domain=domain,
     )
-    del ddata
 
     # ---------------------
-    # dscales
+    # validity
     # ---------------------
 
-    if dscales is None:
-        dscales = _dscales.main()
+    dvalid = _valid.valid(
+        coll=coll,
+        dvalid=dvalid,
+    )
 
     # ---------------------
-    # dinitial
+    # dparams
     # ---------------------
 
-    if dinitial is None:
-        dinitial = _get_dinital_from_data(
-        )
-
-
-    # ---------------------
-    # dconstants
-    # ---------------------
-
-    if dconstants is None:
-        dconstants = _get_dconstants_from_data()
+    if dparams is None:
+        dparams = _dparams.main()
 
     # -------- BACKUP ------------
     # Add dscales, dx0 and dbounds
@@ -119,13 +116,10 @@ def _check(
             key: {
                 'key_model': key_model,
                 'key_data': key_data,
+                'key_sigma': key_sigma,
                 'key_lamb': key_lamb,
                 'key_bs': key_bs,
-                'domain': domain,
-                'dinitial': dinitial,
-                'dscales': dscales,
-                'dconstants': dconstants,
-                'dindok': {'ind': indok, 'meaning': dindok},
+                'dparams', dparams,
                 'dvalid': dvalid,
                 'sol': None,
             },
