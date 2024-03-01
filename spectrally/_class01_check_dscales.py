@@ -23,6 +23,7 @@ import datastock as ds
 def main(
     coll=None,
     dscales=None,
+    key_model=None,
     key_data=None,
     key_lamb=None,
     key_bs=None,
@@ -38,6 +39,61 @@ def main(
     # compute
     # ------------
 
+    # ------------------
+    # list all variables
+    lvar = coll.get_spectral_model_variables(
+        key=key_model,
+        all_free_tied='all',
+        concatenate=True,
+    )
+
+    # ----------------------
+    # prepare data if needed
+
+    c0 = any([dscales.get(k0) is None for k0 in lvar])
+    if c0:
+
+        lamb = coll.ddata[key_lamb]['data']
+        data = coll.ddata[key_data]['data']
+
+        # TBF
+        Dlamb = np.diff(dinput['dprepare']['domain']['lamb']['minmax'])
+        lambm = dinput['dprepare']['domain']['lamb']['minmax'][0]
+        if not (np.isfinite(Dlamb)[0] and Dlamb > 0):
+            msg = (
+                "lamb min, max seems to be non-finite or non-positive!\n"
+                + "\t- dinput['dprepare']['domain']['lamb']['minmax'] = {}".format(
+                    dinput['dprepare']['domain']['lamb']['minmax']
+                )
+                + "\n  => Please provide domain['lamb']"
+            )
+            raise Exception(msg)
+        if lambm == 0:
+            lambm = Dlamb / 100.
+
+    # ----------------------
+    # compute if needed
+
+    # check all variables
+    for k0 in lvar:
+
+        if dscales.get(k0) is None:
+
+            key, var = k0.split('_')
+            typ = coll.dobj[key_model]['dmodel'][key]['type']
+
+            scale = _get_scale(
+                key_model=key_model,
+                key=k0,
+                typ=typ,
+                var=var,
+                # data
+                lamb=lamb,
+                data=data,
+            )
+
+            dscales[k0] = scale
+
     return
 
 
@@ -47,65 +103,215 @@ def main(
 #############################################
 
 
-def _check():
-
-    return
-
-
-
-
-def _fit12d_checkformat_dscalesx0(
-    din=None, dinput=None,
-    name=None, is2d=False,
+def _check(
+    coll=None,
+    dscales=None,
+    key_model=None,
+    key_data=None,
+    key_lamb=None,
+    key_bs=None,
 ):
-    lkconst = ['dratio', 'dshift']
-    lk = ['bck_amp', 'bck_rate']
-    lkdict = _DORDER
-    if din is None:
-        din = {}
-    if not isinstance(din, dict):
-        msg = f"Arg {name} must be a dict!"
-        raise Exception(msg)
 
-    lkfalse = [
-        k0 for k0, v0 in din.items()
-        if not (
-            (k0 in lkconst and type(v0) in _LTYPES)
-            or (k0 in lk and type(v0) in _LTYPES + [np.ndarray])
-            or (
-                k0 in lkdict
-                and type(v0) in _LTYPES + [np.ndarray]
-                or (
-                    isinstance(v0, dict)
-                    and all([
-                        k1 in dinput[k0]['keys']
-                        and type(v1) in _LTYPES + [np.ndarray]
-                        for k1, v1 in v0.items()
-                    ])
-                )
-            )
-        )
-    ]
+    # --------------------
+    # get model variables
+    # --------------------
 
-    if len(lkfalse) > 0:
+    lvar = coll.get_spectral_model_variables(
+        key=key_model,
+        all_free_tied='all',
+        concatenate=True,
+    )
+
+    # --------------------
+    # Trivial: False = 1
+    # --------------------
+
+    if dscales is False:
+        dscales = {k0: 1. for k0 in lvar}
+        return dscales
+
+    # --------------------
+    # Trivial: scalar => uniform
+    # --------------------
+
+    if np.isscalar(dscales):
+        dscales = {k0: dscales for k0 in lvar}
+        return dscales
+
+    # --------------------
+    # Non-trivial
+    # --------------------
+
+    # None
+    if dscales is None:
+        dscales = {}
+
+    c0 = (
+        isinstance(dscales, dict)
+        and all([
+            k0 in lvar
+            and ((np.isscalar(v0) and np.isfinite(v0)) or v0 is None)
+            for k0, v0 in dscales.items()
+        ])
+    )
+    if not c0:
         msg = (
-            f"Arg {name} must be a dict of the form:\n"
-            + "\t- {}\n".format({
-                kk: 'float' if kk in lkconst+lk
-                else {k1: 'float' for k1 in dinput[kk]['keys']}
-                for kk in lkfalse
-            })
-            + "\t- provided: {}".format({
-                kk: din[kk] for kk in lkfalse
-            })
+            "Arg dscales must be a dict with keys = variables of model"
+            " and values = floats\n"
+            f"\t- model: {key_model}\n"
+            f"\t- variables: {lvar}\n"
+            f"Provided:\n{dscales}\n"
         )
         raise Exception(msg)
 
-    return {
-        k0: dict(v0) if isinstance(v0, dict) else v0
-        for k0, v0 in din.items()
-    }
+    return dscales
 
+
+#############################################
+#############################################
+#       get scale from data
+#############################################
+
+
+def _get_scale(
+    key_model=None,
+    key=None,
+    typ=None,
+    var=None,
+):
+
+    # ------------
+    # bck
+    # ------------
+
+    if typ == 'linear':
+
+        if var == 'c0':
+            pass
+
+        if var == 'c1':
+            pass
+
+        else:
+            err = True
+
+    # ------------
+    # exp
+    # ------------
+
+    elif typ == 'exp':
+
+        indbck = (data > np.nanmean(data, axis=1)[:, None]) | (~indok)
+        bcky = np.array(np.ma.masked_where(indbck, data).mean(axis=1))
+        bckstd = np.array(np.ma.masked_where(indbck, data).std(axis=1))
+
+        iok = (bcky > 0) & (bckstd > 0)
+        if (bck_rate is None or nbck_amp is None) and not np.any(iok):
+            bcky = 0.1*np.array(np.ma.masked_where(~indbck, data).mean(axis=1))
+            bckstd = 0.1*bcky
+        elif not np.all(iok):
+            bcky[~iok] = np.mean(bcky[iok])
+            bckstd[~iok] = np.mean(bckstd[iok])
+
+        # bck_rate
+        if bck_rate is None:
+            bck_rate = (
+                np.log((bcky + bckstd)/bcky) / (lamb.max()-lamb.min())
+            )
+        if bck_amp is None:
+            # Assuming bck = A*exp(rate*(lamb-lamb.min()))
+            bck_amp = bcky
+
+        dscales = _fit12d_filldef_dscalesx0_float(
+            din=dscales, din_name='dscales', key='bck_amp',
+            vref=bck_amp, nspect=nspect,
+        )
+
+        if var == 'amp':
+            pass
+
+        elif var == 'rate':
+            pass
+
+        else:
+            err = True
+
+    # ------------
+    # gauss
+    # ------------
+
+    elif typ == 'gauss':
+
+        if var == 'amp':
+            pass
+
+        elif var == 'w2':
+            pass
+
+        elif var == 'x0':
+            pass
+
+        else:
+            err = True
+
+    # ------------
+    # lorentz
+    # ------------
+
+    elif typ == 'lorentz':
+
+        if var == 'amp':
+            pass
+
+        elif var == 'gamma':
+            pass
+
+        elif var == 'x0':
+            pass
+
+        else:
+            err = True
+
+    # ------------
+    # pvoigt
+    # ------------
+
+    elif typ == 'pvoigt':
+
+        if var == 'amp':
+            pass
+
+        elif var == 'gamma':
+            pass
+
+        elif var == 'x0':
+            pass
+
+        elif var == 'w2':
+            pass
+
+        elif var == 't':
+            pass
+
+        else:
+            err = True
+
+    # ------------
+    # voigt
+    # ------------
+
+    # ------------
+    # error
+    # ------------
+
+    if err is True:
+        msg = (
+            f"Spectral model '{key_model}', issue with variable '{key}':\n"
+            f"unknown variable '{var}' for type '{typ}'"
+        )
+        raise Exception(msg)
+
+    return val
 
 
 #############################################
