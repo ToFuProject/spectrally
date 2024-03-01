@@ -41,7 +41,7 @@ def _dmodel(
 
     wsm = coll._which_model
     key = ds._generic_check._obj_key(
-        d0=coll.get(wsm, {}),
+        d0=coll.dobj.get(wsm, {}),
         short='sm',
         key=key,
         ndigits=2,
@@ -279,6 +279,7 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
         if show is None or k1 in show
     ]
 
+    lar0 = []
     for k0 in lkey:
 
         # initialize with key
@@ -287,15 +288,17 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
         # add nb of func of each type
         dmod = coll.dobj[which][k0]['dmodel']
         for k1 in _LMODEL_ORDER:
-            nn = len([k2 for k2, v2 in dmod.items() if v2['type'] == k1])
+            nn = str(len([k2 for k2, v2 in dmod.items() if v2['type'] == k1]))
             arr.append(nn)
 
         # add nb of constraints
         dconst = coll.dobj[which][k0]['dconstraints']['dconst']
-        nn = len([k1 for k1, v1 in dconst.items() if len(v1) > 1])
+        nn = str(len([k1 for k1, v1 in dconst.items() if len(v1) > 1]))
         arr.append(nn)
 
-        lar.append(arr)
+        lar0.append(arr)
+
+    lar.append(lar0)
 
     return lcol, lar
 
