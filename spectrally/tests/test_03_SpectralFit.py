@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from ._setup_teardown import setup_module0, teardown_module0
 from .._class01_SpectralFit import SpectralFit as Collection
 from .._saveload import load
+from . import _spectralfit_input as _inputs
 
 
 _PATH_HERE = os.path.dirname(__file__)
@@ -56,57 +57,24 @@ class Test00_Populate():
         pass
 
     def setup_method(self):
+
+        # instanciate
         self.coll = Collection()
-        self.dmodel = {
-            'model00': {
-                'bck0': 'linear',
-                'l00': 'gauss',
-                'l01': 'gauss',
-                'l02': 'lorentz',
-            },
-            'model01': {
-                'bck0': 'exp',
-                'l00': 'gauss',
-                'l01': 'lorentz',
-                'l02': 'pvoigt',
-            },
-            'model02': {
-                'bck0': 'exp',
-                'l00': 'gauss',
-                'l01': 'lorentz',
-                'l02': 'voigt',
-            },
-        }
+
+        # add data
+        _inputs.add_data(self.coll)
 
     # ------------------------
     #   Populating
     # ------------------------
 
     def test00_add_spectral_model(self):
+        _inputs.add_models(self.coll)
 
-        # no constraints
-        self.coll.add_spectral_model(
-            key='model00',
-            dmodel=self.dmodel['model00'],
-            dconstraints=None,
-        )
+    def test01_add_spectral_fit_1d(self):
 
-        # with constraints
-        self.coll.add_spectral_model(
-            key='model01',
-            dmodel=self.dmodel['model01'],
-            dconstraints={
-                'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
-                'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
-            },
-        )
+        if self.coll.dobj.get('spect_model') is None:
+            _inputs.add_models(self.coll)
 
-        # with voigt
-        self.coll.add_spectral_model(
-            key='model02',
-            dmodel=self.dmodel['model02'],
-            dconstraints={
-                'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
-                'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
-            },
-        )
+        # add spectral fit
+        _inputs.add_fit1d(self.coll)

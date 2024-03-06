@@ -31,18 +31,22 @@ from . import _class01_valid as _valid
 
 def _check(
     coll=None,
-    # keys
+    # key
     key=None,
+    # model
     key_model=None,
+    # data and noise
     key_data=None,
+    key_sigma=None,
+    # wavelength and phi
     key_lamb=None,
+    key_bs_vect=None,
+    key_bs=None,
     # dict
     dparams=None,
     dvalid=None,
-    mask=None,
-    domain=None,
-    # optional 2d fit
-    key_bs=None,
+    # compute options
+    chain=None,
 ):
 
     # ---------------------
@@ -50,16 +54,20 @@ def _check(
     # ---------------------
 
     (
-         key,
-         key_model,
-         key_data,
-         key_sigma,
-         key_lamb,
-         key_bs,
-         key_bs_vect,
-         # derived
-         ref,
-         axis_lamb,
+        key,
+        key_model,
+        key_data,
+        key_sigma,
+        key_lamb,
+        key_bs_vect,
+        key_bs,
+        # derived
+        ref,
+        ref0,
+        shape,
+        shape0,
+        axis_lamb,
+        axis_bs,
     ) = _check_keys(**locals())
 
     # ---------------------
@@ -67,17 +75,32 @@ def _check(
     # ---------------------
 
     # prepare ddata
-    ddata = {'lamb': coll.ddata[key]['data']}
+    ddata = {
+        'lamb': {
+            'data': coll.ddata[key_lamb]['data'],
+            'ref': coll.ddata[key_lamb]['ref'][0],
+        }
+    }
     if key_bs is not None:
-        ddata.update({key_bs_vect: coll.ddata[key_bs_vect]['data']})
+        ddata.update({
+            key_bs_vect: {
+                'data': coll.ddata[key_bs_vect]['data'],
+                'ref': coll.ddata[key_bs_vect]['ref'][0],
+            },
+        })
 
     # ---------------------
     # mask & domain
     # ---------------------
 
     dvalid = _valid.mask_domain(
+        coll=coll,
+        key_data=key_data,
         ddata=ddata,
-        domain=domain,
+        dvalid=dvalid,
+        ref=ref,
+        ref0=ref0,
+        shape0=shape0,
     )
 
     # ---------------------
@@ -93,18 +116,19 @@ def _check(
     # dparams
     # ---------------------
 
-    if dparams is None:
-        dparams = _dparams.main()
+    # if dparams is None:
+        # dparams = _dparams.main()
 
-    # -------- BACKUP ------------
-    # Add dscales, dx0 and dbounds
+    # # -------- BACKUP ------------
+    # # Add dscales, dx0 and dbounds
 
-    dinput['dscales'] = fit12d_dscales(dscales=dscales, dinput=dinput)
-    dinput['dbounds'] = fit12d_dbounds(dbounds=dbounds, dinput=dinput)
-    dinput['dx0'] = fit12d_dx0(dx0=dx0, dinput=dinput)
-    dinput['dconstants'] = fit12d_dconstants(
-        dconstants=dconstants, dinput=dinput,
-    )
+    # dinput['dscales'] = fit12d_dscales(dscales=dscales, dinput=dinput)
+    # dinput['dbounds'] = fit12d_dbounds(dbounds=dbounds, dinput=dinput)
+    # dinput['dx0'] = fit12d_dx0(dx0=dx0, dinput=dinput)
+    # dinput['dconstants'] = fit12d_dconstants(
+        # dconstants=dconstants,
+        # dinput=dinput,
+    # )
 
     # ---------------------
     # store
@@ -119,7 +143,7 @@ def _check(
                 'key_sigma': key_sigma,
                 'key_lamb': key_lamb,
                 'key_bs': key_bs,
-                'dparams', dparams,
+                'dparams': dparams,
                 'dvalid': dvalid,
                 'sol': None,
             },
@@ -141,7 +165,9 @@ def _check_keys(
     key=None,
     key_model=None,
     key_data=None,
+    key_sigma=None,
     key_lamb=None,
+    key_bs_vect=None,
     key_bs=None,
     # unused
     **kwdargs,
@@ -153,7 +179,7 @@ def _check_keys(
 
     wsf = coll._which_fit
     key = ds._generic_check._obj_key(
-        d0=coll.get(wsf, {}),
+        d0=coll.dobj.get(wsf, {}),
         short='sf',
         key=key,
         ndigits=2,
@@ -185,6 +211,7 @@ def _check_keys(
 
     # derive refs
     ref = coll.ddata[key_data]['ref']
+    shape = coll.ddata[key_data]['shape']
 
     # -------------
     # key_lamb
@@ -194,7 +221,7 @@ def _check_keys(
     lok = [
         k0 for k0, v0 in coll.ddata.items()
         if v0['monot'] == (True,)
-        and v0['ref'] in ref
+        and v0['ref'][0] in ref
     ]
     key_lamb = ds._generic_check._check_var(
         key_lamb, 'key_lamb',
@@ -203,18 +230,49 @@ def _check_keys(
     )
 
     # axis_lamb
-    axis_lamb = ref.index(coll.ddata[key_lamb]['ref'][0])
+    ref_lamb = coll.ddata[key_lamb]['ref'][0]
+    axis_lamb = ref.index(ref_lamb)
 
     # -------------
     # key_bs
     # -------------
 
-    if key_bs is not None:
+    c0 = (
+        len(ref) >= 2
+        and key_bs_vect is not None
+    )
+    if c0:
 
+        # key_bs_vect
+        lok = [
+            k0 for k0, v0 in coll.ddata.items()
+            if v0['monot'] == (True,)
+            and v0['ref'][0] in ref
+            and v0['ref'][0] != coll.ddata[key_lamb]['ref'][0]
+        ]
+        key_bs_vect = ds._generic_check._check_var(
+            key_bs_vect, 'key_bs_vect',
+            types=str,
+            allowed=lok,
+        )
+
+        axis_bs = ref.index(coll.ddata[key_bs_vect]['ref'][0])
+
+        # units, dim
+        units = coll.ddata[key_bs_vect]['units']
+        quant = coll.ddata[key_bs_vect]['quant']
+        dim = coll.ddata[key_bs_vect]['dim']
+
+        # key_bs
         wbs = coll._which_bsplines
         lok = [
             k0 for k0, v0 in coll.dobj.get(wbs, {}).items()
             if len(v0['shape']) == 1
+            and (
+                coll.ddata[v0['apex'][0]]['units'] == units
+                or coll.ddata[v0['apex'][0]]['quant'] == quant
+                or coll.ddata[v0['apex'][0]]['dim'] == dim
+            )
         ]
         key_bs = ds._generic_check._check_var(
             key_bs, 'key_bs',
@@ -222,19 +280,40 @@ def _check_keys(
             allowed=lok,
         )
 
-    # -------------
-    # dict
-    # -------------
+        # ref0
+        ref0 = tuple([
+            rr for ii, rr in enumerate(ref)
+            if ii in [axis_lamb, axis_bs]
+        ])
+
+        # shape0
+        shape0 = tuple([
+            ss for ii, ss in enumerate(shape)
+            if ii in [axis_lamb, axis_bs]
+        ])
+
+    else:
+        key_bs_vect = None
+        key_bs = None
+        axis_bs = None
+        shape0 = (shape[axis_lamb],)
+        ref0 = (ref_lamb,)
 
     return (
         key,
         key_model,
         key_data,
+        key_sigma,
         key_lamb,
+        key_bs_vect,
         key_bs,
         # derived
         ref,
+        ref0,
+        shape,
+        shape0,
         axis_lamb,
+        axis_bs,
     )
 
 
@@ -269,10 +348,10 @@ def _check_domain(
 # ###########################################
 
 
-def _check_dscales(
-    coll=None,
-    key_model=None,
-    key_data=None,
-    key_lamb=None,
-    dscales=None,
-):
+# def _check_dscales(
+    # coll=None,
+    # key_model=None,
+    # key_data=None,
+    # key_lamb=None,
+    # dscales=None,
+# ):

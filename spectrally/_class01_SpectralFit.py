@@ -11,6 +11,7 @@ from bsplines2d import BSplines2D as Previous
 from ._class00_SpectralLines import SpectralLines as Previous
 from . import _class01_check_model as _check_model
 from . import _class01_check_constraints as _check_constraints
+from . import _class01_check_fit as _check_fit
 
 
 __all__ = ['SpectralFit']
@@ -137,20 +138,38 @@ class SpectralFit(Previous):
         key_model=None,
         key_data=None,
         key_sigma=None,
+        # wavelength
         key_lamb=None,
-        # fit parameters
-        dparam=None,
-        mask=None,
         # optional 2d fit
         key_bs=None,
+        key_bs_vect=None,
+        # fit parameters
+        dparams=None,
+        dvalid=None,
         # compute options
         chain=None,
     ):
 
-        _check_fit._check()
+        _check_fit._check(
+            coll=self,
+            # keys
+            key_model=key_model,
+            key_data=key_data,
+            key_sigma=key_sigma,
+            # wavelength
+            key_lamb=key_lamb,
+            # optional 2d fit
+            key_bs=key_bs,
+            key_bs_vect=key_bs_vect,
+            # fit parameters
+            dparams=dparams,
+            dvalid=dvalid,
+            # compute options
+            chain=chain,
+        )
 
 
-        _compute_fit._compute()
+        # _compute_fit._compute()
 
 
         return
