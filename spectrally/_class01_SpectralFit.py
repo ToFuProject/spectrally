@@ -5,13 +5,11 @@
 import copy
 
 
-from bsplines2d import BSplines2D as Previous
-
-
 from ._class00_SpectralLines import SpectralLines as Previous
 from . import _class01_check_model as _check_model
 from . import _class01_check_constraints as _check_constraints
 from . import _class01_check_fit as _check_fit
+# from . import _class01_plot_validity as _plot_validity
 
 
 __all__ = ['SpectralFit']
@@ -171,5 +169,18 @@ class SpectralFit(Previous):
 
         # _compute_fit._compute()
 
-
         return
+
+    # -------------------
+    # plot spectral fit
+    # -------------------
+
+    def plot_spectral_fit_input_validity(
+        self,
+        key=None,
+    ):
+
+        return _plot_validity.plot(
+            coll=self,
+            key=key,
+        )
