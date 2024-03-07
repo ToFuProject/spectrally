@@ -6,10 +6,10 @@ Created on Tue Feb 20 17:33:22 2024
 """
 
 
+import os
 import copy
 
 
-import itertools as itt
 import numpy as np
 import datastock as ds
 
@@ -438,3 +438,214 @@ def _check_mask(
         )
 
     return dmask
+
+
+#############################################
+#############################################
+#       validity
+#############################################
+
+
+def valid(
+    coll=None,
+    dvalid=None,
+):
+
+    # -----------------
+    # check inputs
+    # -----------------
+
+    # check nsigma, fraction, focus
+    dvalid = _check_dvalid_valid(dvalid)
+
+    # -----------------
+    # prepare
+    # -----------------
+
+    iok = dvalid['iok']
+    data = None
+
+    # -----------------
+    # nan, neg, inf
+    # -----------------
+
+    if dvalid['positive'] is True:
+        data[data < 0] = np.nan
+
+    iokb = ((iok == 0) & (~np.isfinite(data)))
+    iok[iokb] = -3
+
+    # update iokb
+    iokb = (iok == 0)
+
+    # -----------------
+    # Recompute domain
+    # -----------------
+
+    if dvalid['update_domain'] is True:
+        for k0, v0 in dvalid['domain'].items():
+            domain[k0]['minmax'] = [
+                np.nanmin(lamb[np.any(indok_bool, axis=0)]),
+                np.nanmax(lamb[np.any(indok_bool, axis=0)]),
+            ]
+
+    # --------------
+    # Intermediate safety checks
+    # --------------
+
+    if np.any(np.isnan(data[iokb])):
+        msg = (
+            "Some NaNs in data not caught by iok!"
+        )
+        raise Exception(msg)
+
+    if np.sum(iokb) == 0:
+        msg = "There does not seem to be any usable data (no indok)"
+        raise Exception(msg)
+
+    # -----------------
+    # validity
+    # -----------------
+
+    # Get indices of pts with enough signal
+    ind = np.zeros(data.shape, dtype=bool)
+    isafe = np.isfinite(data)
+    isafe[isafe] = data[isafe] >= 0.
+    if indok_bool is not None:
+        isafe &= indok_bool
+
+    # Ok with and w/o binning if data provided as counts
+    ind[isafe] = np.sqrt(data[isafe]) > valid_nsigma
+
+    # Derive indt and optionally dphi and indknots
+    indbs, ldphi = False, False
+    if focus is False:
+        lambok = np.ones(tuple(np.r_[lamb.shape, 1]), dtype=bool)
+        indall = ind[..., None]
+    else:
+        # TBC
+        lambok = np.rollaxis(
+            np.array([np.abs(lamb - ff[0]) < ff[1] for ff in focus]),
+            0,
+            lamb.ndim + 1,
+        )
+        indall = ind[..., None] & lambok[None, ...]
+    nfocus = lambok.shape[-1]
+
+    # ------------------------
+    # more backup
+    # ------------------------
+
+    # Update indok with non-valid phi
+    # non-valid = ok but out of dphi
+    for ii in range(dinput['dprepare']['indok'].shape[0]):
+        iphino = dinput['dprepare']['indok'][ii, ...] == 0
+        for jj in range(len(dinput['valid']['ldphi'][ii])):
+            iphino &= (
+                (
+                    dinput['dprepare']['phi']
+                    < dinput['valid']['ldphi'][ii][jj][0]
+                )
+                | (
+                    dinput['dprepare']['phi']
+                    >= dinput['valid']['ldphi'][ii][jj][1]
+                )
+            )
+
+        # valid, but excluded (out of dphi)
+        iphi = (
+            (dinput['dprepare']['indok'][ii, ...] == 0)
+            & (dinput['valid']['ind'][ii, ...])
+            & (iphino)
+        )
+        dinput['dprepare']['indok'][ii, iphi] = -5
+
+        # non-valid, included (in dphi)
+        iphi = (
+            (dinput['dprepare']['indok'][ii, ...] == 0)
+            & (~dinput['valid']['ind'][ii, ...])
+            & (~iphino)
+        )
+        dinput['dprepare']['indok'][ii, iphi] = -6
+
+        # non-valid, excluded (out of dphi)
+        iphi = (
+            (dinput['dprepare']['indok'][ii, ...] == 0)
+            & (~dinput['valid']['ind'][ii, ...])
+            & (iphino)
+        )
+        dinput['dprepare']['indok'][ii, iphi] = -7
+
+    # indok_bool True if indok == 0 or -5 (because ...)
+    dinput['dprepare']['indok_bool'] = (
+        (dinput['dprepare']['indok'] == 0)
+        | (dinput['dprepare']['indok'] == -6)
+    )
+
+    # add lambmin for bck
+    dinput['lambmin_bck'] = np.min(dinput['dprepare']['lamb'])
+
+    # -----------------
+    # store
+    # -----------------
+
+    dvalid['iok'] = iok
+
+    return dvalid
+
+
+#############################################
+#############################################
+#       validity - check dvalid
+#############################################
+
+
+def _check_dvalid_valid(dvalid=None):
+
+    if not isinstance(dvalid, dict):
+        msg = "Arg dvalid must be a dict\nProvided:\n{dvalid}"
+        raise Exception(msg)
+
+    # ---------------
+    # positive
+    # ---------------
+
+    dvalid['positive'] = ds._generic_check._check_var(
+        dvalid.get('positive'), "dvalid['positive']",
+        types=bool,
+        default=True,
+    )
+
+    # ---------------
+    # update_domain
+    # ---------------
+
+    dvalid['update_domain'] = ds._generic_check._check_var(
+        dvalid.get('update_domain'), "dvalid['update_domain']",
+        types=bool,
+        default=True,
+    )
+
+    # ---------------
+    # nsigma
+    # ---------------
+
+    dvalid['nsigma'] = float(ds._generic_check._check_var(
+        dvalid.get('nsigma'), "dvalid['nsigma']",
+        types=(int, float),
+        default=6,
+        sign=">=0",
+    ))
+
+    # ---------------
+    # fraction
+    # ---------------
+
+    dvalid['fraction'] = float(ds._generic_check._check_var(
+        dvalid.get('fraction'), "dvalid['fraction']",
+        types=(int, float),
+        default=0.51,
+        sign=">=0",
+    ))
+
+    return dvalid
