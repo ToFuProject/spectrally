@@ -19,9 +19,10 @@ _DINDOK = {
     -1: 'mask',
     -2: 'out of domain',
     -3: 'neg, inf or NaN',
-    -4: 'S/N valid, excluded',
-    -5: 'S/N non-valid, included',
-    -6: 'S/N non-valid, excluded',
+    -4: 'S/N valid, excluded (fraction',
+    -5: 'S/N non-valid, included (fraction)',
+    -6: 'S/N valid, excluded (bs)',
+    -7: 'S/N non-valid, included (bs)',
 }
 
 
@@ -32,9 +33,12 @@ _DINDOK = {
 
 
 def mask_domain(
+        # resources
     coll=None,
     key_data=None,
-    ddata=None,
+    key_lamb=None,
+    key_bs_vect=None,
+    # options
     dvalid=None,
     ref=None,
     ref0=None,
@@ -53,23 +57,28 @@ def mask_domain(
 
     domain = _check_domain(
         domain=dvalid.get('domain'),
-        ddata=ddata,
+        key_lamb=key_lamb,
+        key_bs_vect=key_bs_vect,
     )
 
     # ----------
     # Apply
     # ----------
 
+    lk = [k0 for k0 in [key_lamb, key_bs_vect] if k0 is not None]
     ind = np.zeros(shape0, dtype=bool)
-    for k0, v0 in domain.items():
+    for k0 in lk:
 
         # initialize
-        indin = np.zeros(ddata[k0]['data'].shape, dtype=bool)
-        indout = np.zeros(ddata[k0]['data'].shape, dtype=bool)
+        indin = np.zeros(coll.ddata[k0]['data'].shape, dtype=bool)
+        indout = np.zeros(coll.ddata[k0]['data'].shape, dtype=bool)
 
         # loop on domain bits
-        for v1 in v0['spec']:
-            indi = (ddata[k0]['data'] >= v1[0]) & (ddata[k0]['data'] <= v1[1])
+        for v1 in domain[k0]['spec']:
+            indi = (
+                (coll.ddata[k0]['data'] >= v1[0])
+                & (coll.ddata[k0]['data'] <= v1[1])
+            )
             if isinstance(v1, tuple):
                 indout |= indi
             else:
@@ -81,7 +90,7 @@ def mask_domain(
 
         # apply to ind
         sli = tuple([
-            indi if ii == ref0.index(ddata[k0]['ref']) else slice(None)
+            indi if ii == ref0.index(coll.ddata[k0]['ref']) else slice(None)
             for ii in range(len(ref0))
         ])
         ind[sli] = True
@@ -132,11 +141,15 @@ def mask_domain(
     # store in dvalid
     # -----------------
 
+    lindok = [0, -1, -2, -3, -4, -5]
+    if key_bs_vect is not None:
+        lindok.append([-6, -7])
+
     dvalid = {
         'domain': domain,
         'mask': dmask,
         'iok': iok,
-        'meaning': _DINDOK,
+        'meaning': {k0: v0 for k0, v0 in _DINDOK.items() if k0 in lindok},
     }
 
     return dvalid
@@ -181,30 +194,9 @@ def _check_dvalid(dvalid=None):
 
 def _check_domain(
     domain=None,
-    ddata=None,
+    key_lamb=None,
+    key_bs_vect=None,
 ):
-
-    # ----------------
-    # check ddata
-    # ----------------
-
-    c0 = (
-        isinstance(ddata, dict)
-        and all([
-            isinstance(k0, str)
-            and isinstance(v0, dict)
-            and isinstance(v0['data'], np.ndarray)
-            and v0['data'].ndim == 1
-            for k0, v0 in ddata.items()
-        ])
-    )
-    if not c0:
-        msg = (
-            "Arg ddata must be a dict of shape:\n"
-            "{'lamb': {'data': 1d np.ndarray, 'ref': str}}\n"
-            f"Provided:\n{ddata}\n"
-        )
-        raise Exception(msg)
 
     # --------------
     # check domain
@@ -213,19 +205,20 @@ def _check_domain(
     # ------------
     # special case
 
-    if len(ddata) == 1 and not isinstance(domain, dict):
-        domain = {list(ddata.keys())[0]: domain}
+    if key_bs_vect is None and not isinstance(domain, dict):
+        domain = {key_lamb: domain}
 
     # --------
     # if None
 
+    lk = [k0 for k0 in [key_lamb, key_bs_vect] if k0 is not None]
     if domain is None:
         domain = {
             k0: {
                 'spec': [np.inf*np.r_[-1., 1.]],
                 'minmax': np.inf*np.r_[-1., 1.],
             }
-            for k0 in ddata.keys()
+            for k0 in lk
         }
 
     # ----------
@@ -233,12 +226,12 @@ def _check_domain(
 
     c0 = (
         isinstance(domain, dict)
-        and all([k0 in ddata.keys() for k0 in domain.keys()])
+        and all([k0 in lk for k0 in domain.keys()])
     )
     if not c0:
         msg = (
             "Arg domain must be a dict with keys:\n"
-            + "\n".join([f"\t- {k0}" for k0 in ddata.keys()])
+            + "\n".join([f"\t- {k0}" for k0 in lk])
             + "\nProvided:\n{domain}\n"
         )
         raise Exception(msg)
@@ -247,7 +240,7 @@ def _check_domain(
     # loop on keys
     # ------------
 
-    for k0, v0 in ddata.items():
+    for k0 in lk:
 
         # -------
         # trivial
@@ -448,7 +441,12 @@ def _check_mask(
 
 def valid(
     coll=None,
+    key_data=None,
+    key_lamb=None,
+    key_bs=None,
     dvalid=None,
+    ref=None,
+    ref0=None,
 ):
 
     # -----------------
@@ -463,7 +461,8 @@ def valid(
     # -----------------
 
     iok = dvalid['iok']
-    data = None
+    data = coll.ddata[key_data]['data']
+    lamb = coll.ddata[key_lamb]['data']
 
     # -----------------
     # nan, neg, inf
@@ -478,15 +477,17 @@ def valid(
     # update iokb
     iokb = (iok == 0)
 
-    # -----------------
-    # Recompute domain
-    # -----------------
+    # ----------------------------
+    # Recompute domain min, max form valid data
+    # ----------------------------
 
     if dvalid['update_domain'] is True:
         for k0, v0 in dvalid['domain'].items():
-            domain[k0]['minmax'] = [
-                np.nanmin(lamb[np.any(indok_bool, axis=0)]),
-                np.nanmax(lamb[np.any(indok_bool, axis=0)]),
+            refi = coll.ddata[k0]['ref'][0]
+            axis = tuple([ii for ii, rr in enumerate(ref) if rr != refi])
+            dvalid['domain'][k0]['minmax'] = [
+                np.nanmin(coll.ddata[k0]['data'][np.any(iokb, axis=axis)]),
+                np.nanmax(coll.ddata[k0]['data'][np.any(iokb, axis=axis)]),
             ]
 
     # --------------
@@ -504,19 +505,73 @@ def valid(
         raise Exception(msg)
 
     # -----------------
-    # validity
+    # validity vs nsigma
     # -----------------
 
-    # Get indices of pts with enough signal
-    ind = np.zeros(data.shape, dtype=bool)
-    isafe = np.isfinite(data)
-    isafe[isafe] = data[isafe] >= 0.
-    if indok_bool is not None:
-        isafe &= indok_bool
-
     # Ok with and w/o binning if data provided as counts
-    ind[isafe] = np.sqrt(data[isafe]) > valid_nsigma
+    indv = np.zeros(data.shape, dtype=bool)
+    indv[iokb] = np.sqrt(data[iokb]) > dvalid['nsigma']
 
+    # update iokb
+
+    # -----------------
+    # validity vs faction
+    # -----------------
+
+    refi = coll.ddata[key_lamb]['ref'][0]
+    axis = tuple([ii for ii, rr in enumerate(ref) if rr != refi])
+
+    nlamb = coll.ddata[key_lamb]['data'].size
+
+    axis = ref.index(refi)
+    if dvalid.get('focus') is None:
+        nlamb = coll.ddata[key_lamb]['data'].size
+        frac = np.sum(indv, axis=axis, keepdims=True) / nlamb
+        iout = frac < dvalid['fraction']
+
+    else:
+        iout = np.zeros(data.shape, dtype=bool)
+        sli = [slice(None) for ii in ref]
+        for ii, ff in enumerate(dvalid['focus']):
+            ilambok = np.abs(lamb - ff[0]) < ff[1]
+            nlambi =np.sum(ilambok)
+            sli[axis] = ilambok
+            frac = np.sum(indv[tuple(sli)], axis=axis, keepdims=True) / nlambi
+            iout |= frac < dvalid['fraction']
+
+    # reshape
+    iout = np.repeat(iout, nlamb, axis=axis)
+
+    # valid, excluded
+    iokb = indv & iout
+    iok[iokb] = -4
+
+    # non-valid, included
+    iokb = (~indv) & (iok == 0) & (~iout)
+    iok[iokb] = -5
+
+    # non-valid, excluded
+    iokb = (~indv) & (iok == 0) & (iout)
+    iok[iokb] = -6
+
+    # -----------------
+    # validity vs bspline mesh
+    # -----------------
+
+    if key_bs is None:
+
+        raise NotImplementedError()
+
+
+
+
+
+
+    # ------------------------
+    # more backup
+    # ------------------------
+
+    """
     # Derive indt and optionally dphi and indknots
     indbs, ldphi = False, False
     if focus is False:
@@ -531,6 +586,58 @@ def valid(
         )
         indall = ind[..., None] & lambok[None, ...]
     nfocus = lambok.shape[-1]
+
+    # -----------
+    # backup
+
+    if data2d is True:
+        # Code ok with and without binning :-)
+
+        # Get knots intervals that are ok
+        fract = np.full((nspect, knots.size-1, nfocus), np.nan)
+        for ii in range(knots.size - 1):
+            iphi = (phi >= knots[ii]) & (phi < knots[ii + 1])
+            fract[:, ii, :] = (
+                np.sum(np.sum(indall & iphi[None, ..., None],
+                              axis=1), axis=1)
+                / np.sum(np.sum(iphi[..., None] & lambok,
+                                axis=0), axis=0)
+            )
+        indknots = np.all(fract > valid_fraction, axis=2)
+
+        # Deduce ldphi
+        ldphi = [[] for ii in range(nspect)]
+        for ii in range(nspect):
+            for jj in range(indknots.shape[1]):
+                if indknots[ii, jj]:
+                    if jj == 0 or not indknots[ii, jj-1]:
+                        ldphi[ii].append([knots[jj]])
+                    if jj == indknots.shape[1] - 1:
+                        ldphi[ii][-1].append(knots[jj+1])
+                else:
+                    if jj > 0 and indknots[ii, jj-1]:
+                        ldphi[ii][-1].append(knots[jj])
+
+        # Safety check
+        assert all([
+            all([len(dd) == 2 and dd[0] < dd[1] for dd in ldphi[ii]])
+            for ii in range(nspect)
+        ])
+
+        # Deduce indbs that are ok
+        nintpbs = nknotsperbs - 1
+        indbs = np.zeros((nspect, nbs), dtype=bool)
+        for ii in range(nbs):
+            ibk = np.arange(max(0, ii-(nintpbs-1)), min(knots.size-1, ii+1))
+            indbs[:, ii] = np.any(indknots[:, ibk], axis=1)
+
+        assert np.all(
+            (np.sum(indbs, axis=1) == 0) | (np.sum(indbs, axis=1) >= deg + 1)
+        )
+
+        # Deduce indt
+        indt = np.any(indbs, axis=1)
+
 
     # ------------------------
     # more backup
@@ -584,6 +691,7 @@ def valid(
 
     # add lambmin for bck
     dinput['lambmin_bck'] = np.min(dinput['dprepare']['lamb'])
+    """
 
     # -----------------
     # store
@@ -647,5 +755,18 @@ def _check_dvalid_valid(dvalid=None):
         default=0.51,
         sign=">=0",
     ))
+
+    # ---------------
+    # focus
+    # ---------------
+
+    if dvalid.get('focus') is not None:
+
+        dvalid['focus'] = float(ds._generic_check._check_var(
+            dvalid.get('fraction'), "dvalid['fraction']",
+            types=(int, float),
+            default=0.51,
+            sign=">=0",
+        ))
 
     return dvalid

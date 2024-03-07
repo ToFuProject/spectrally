@@ -76,7 +76,7 @@ def _check(
 
     # prepare ddata
     ddata = {
-        'lamb': {
+        key_lamb: {
             'data': coll.ddata[key_lamb]['data'],
             'ref': coll.ddata[key_lamb]['ref'][0],
         }
@@ -94,9 +94,12 @@ def _check(
     # ---------------------
 
     dvalid = _valid.mask_domain(
+        # resources
         coll=coll,
         key_data=key_data,
-        ddata=ddata,
+        key_lamb=key_lamb,
+        key_bs_vect=key_bs_vect,
+        # options
         dvalid=dvalid,
         ref=ref,
         ref0=ref0,
