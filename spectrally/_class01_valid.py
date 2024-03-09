@@ -90,7 +90,7 @@ def mask_domain(
 
         # apply to ind
         sli = tuple([
-            indi if ii == ref0.index(coll.ddata[k0]['ref']) else slice(None)
+            indi if ii == ref0.index(coll.ddata[k0]['ref'][0]) else slice(None)
             for ii in range(len(ref0))
         ])
         ind[sli] = True
@@ -558,13 +558,9 @@ def valid(
     # validity vs bspline mesh
     # -----------------
 
-    if key_bs is None:
+    if key_bs is not None:
 
         raise NotImplementedError()
-
-
-
-
 
 
     # ------------------------
