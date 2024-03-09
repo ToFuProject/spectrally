@@ -99,6 +99,8 @@ class SpectralFit(Previous):
     def _get_show_obj(self, which=None):
         if which == self._which_model:
             return _check_model._show
+        elif which == self._which_fit:
+            return _check_fit._show
         else:
             return super()._get_show_obj()
 

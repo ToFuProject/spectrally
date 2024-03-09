@@ -21,6 +21,10 @@ from . import _class01_valid as _valid
 #############################################
 
 
+_LFIT_ORDER = [
+    'model', 'data', 'sigma', 'lamb', 'bs', 'sol',
+    'positive', 'nsigma', 'fraction', 'mask',
+]
 
 
 #############################################
@@ -112,7 +116,12 @@ def _check(
 
     dvalid = _valid.valid(
         coll=coll,
+        key_data=key_data,
+        key_lamb=key_lamb,
+        key_bs=key_bs,
         dvalid=dvalid,
+        ref=ref,
+        ref0=ref0,
     )
 
     # ---------------------
@@ -146,12 +155,15 @@ def _check(
                 'key_sigma': key_sigma,
                 'key_lamb': key_lamb,
                 'key_bs': key_bs,
+                'key_sol': None,
                 'dparams': dparams,
                 'dvalid': dvalid,
                 'sol': None,
             },
         },
     }
+
+    coll.update(dobj=dobj)
 
     return
 
@@ -320,29 +332,53 @@ def _check_keys(
     )
 
 
-# ###########################################
-# ###########################################
-#        check domain
-# ###########################################
+#############################################
+#############################################
+#       Show
+#############################################
 
 
-def _check_domain(
-    coll=None,
-    key_lamb=None,
-    domain=None,
-):
+def _show(coll=None, which=None, lcol=None, lar=None, show=None):
 
-    indok = np.zeros(data.shape, dtype=np.int8)
-    if mask is not None:
-        indok[:, ~mask] = -1
+    # ---------------------------
+    # column names
+    # ---------------------------
 
-    inddomain, domain = apply_domain(lamb, domain=domain)
-    if mask is not None:
-        indok[:, (~inddomain) & mask] = -2
-    else:
-        indok[:, ~inddomain] = -2
+    lcol.append([which] + _LFIT_ORDER)
 
-    return ind_domain
+    # ---------------------------
+    # data
+    # ---------------------------
+
+    lkey = [
+        k1 for k1 in coll._dobj.get(which, {}).keys()
+        if show is None or k1 in show
+    ]
+
+    lar0 = []
+    for k0 in lkey:
+
+        # initialize with key
+        arr = [k0]
+
+        # add nb of func of each type
+        dfit = coll.dobj[which][k0]
+        for k1 in _LFIT_ORDER:
+
+            if k1 in ['model', 'data', 'sigma', 'lamb', 'bs', 'sol']:
+                nn = '' if dfit[f"key_{k1}"] is None else dfit[f"key_{k1}"]
+            elif k1 in ['nsigma', 'fraction', 'positive']:
+                nn = str(dfit['dvalid'][k1])
+            elif k1 in ['mask']:
+                nn = str(dfit['dvalid']['mask']['key'] is not None)
+
+            arr.append(nn)
+
+        lar0.append(arr)
+
+    lar.append(lar0)
+
+    return lcol, lar
 
 
 # ###########################################
