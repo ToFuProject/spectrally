@@ -155,6 +155,7 @@ def _check(
                 'key_sigma': key_sigma,
                 'key_lamb': key_lamb,
                 'key_bs': key_bs,
+                'key_bs_vect': key_bs_vect,
                 'key_sol': None,
                 'dparams': dparams,
                 'dvalid': dvalid,
