@@ -10,6 +10,9 @@ import itertools as itt
 import datastock as ds
 
 
+import numpy as np
+
+
 # local
 from . import _class01_valid as _valid
 
@@ -22,8 +25,10 @@ from . import _class01_valid as _valid
 
 
 _LFIT_ORDER = [
-    'model', 'data', 'sigma', 'lamb', 'bs', 'sol',
-    'positive', 'nsigma', 'fraction', 'mask',
+    'sol',
+    'model', 'data', 'sigma', 'lamb', 'bs',
+    'positive', 'nsigma', 'fraction',
+    'mask', 'domain',
 ]
 
 
@@ -116,6 +121,7 @@ def _check(
 
     dvalid = _valid.valid(
         coll=coll,
+        key=key,
         key_data=key_data,
         key_lamb=key_lamb,
         key_bs=key_bs,
@@ -368,10 +374,23 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
 
             if k1 in ['model', 'data', 'sigma', 'lamb', 'bs', 'sol']:
                 nn = '' if dfit[f"key_{k1}"] is None else dfit[f"key_{k1}"]
+
             elif k1 in ['nsigma', 'fraction', 'positive']:
                 nn = str(dfit['dvalid'][k1])
+
             elif k1 in ['mask']:
                 nn = str(dfit['dvalid']['mask']['key'] is not None)
+
+            elif k1 in ['domain']:
+                c0 = all([
+                    len(v0['spec']) == 1
+                    and np.allclose(v0['spec'][0], np.inf*np.r_[-1,1])
+                    for k0, v0 in dfit['dvalid']['domain'].items()
+                ])
+                nn = str(not c0)
+
+            elif k1 in ['focus']:
+                nn = ''
 
             arr.append(nn)
 
