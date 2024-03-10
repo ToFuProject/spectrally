@@ -34,7 +34,7 @@ _DINDOK = {
 
 
 def mask_domain(
-        # resources
+    # resources
     coll=None,
     key_data=None,
     key_lamb=None,
@@ -71,17 +71,29 @@ def mask_domain(
     for k0 in lk:
 
         # initialize
-        indin = np.zeros(coll.ddata[k0]['data'].shape, dtype=bool)
+        c0 = (
+            len(domain[k0]['spec']) == 1
+            or all([isinstance(v1, tuple) for v1 in domain[k0]['spec']])
+        )
+        if c0 is True:
+            indin = np.ones(coll.ddata[k0]['data'].shape, dtype=bool)
+        else:
+            indin = np.zeros(coll.ddata[k0]['data'].shape, dtype=bool)
         indout = np.zeros(coll.ddata[k0]['data'].shape, dtype=bool)
 
         # loop on domain bits
         for v1 in domain[k0]['spec']:
+
             indi = (
                 (coll.ddata[k0]['data'] >= v1[0])
                 & (coll.ddata[k0]['data'] <= v1[1])
             )
+
+            # tuple => excluded
             if isinstance(v1, tuple):
                 indout |= indi
+
+            # list => included
             else:
                 indin |= indi
 
@@ -241,6 +253,9 @@ def _check_domain(
         )
         raise Exception(msg)
 
+    # deepcopy to avoid modifying in place
+    domain = copy.deepcopy(domain)
+
     # ------------
     # loop on keys
     # ------------
@@ -276,7 +291,7 @@ def _check_domain(
             msg = (
                 f"Arg domain['{k0}'] must be a dict with keys:\n"
                 + "\n".join([f"\t- {k0}" for k0 in ['spec', 'minmax']])
-                + "\nProvided:\n{domain[k0]}\n"
+                + f"\nProvided:\n{domain[k0]}\n"
             )
             raise Exception(msg)
 
@@ -466,6 +481,7 @@ def valid(
     # prepare
     # -----------------
 
+    wsf = coll._which_fit
     iok = dvalid['iok']
     data = coll.ddata[key_data]['data']
     lamb = coll.ddata[key_lamb]['data']
@@ -482,6 +498,18 @@ def valid(
 
     # update iokb
     iokb = (iok == 0)
+
+    # safety check
+    if not np.any(iokb):
+        msg = (
+            "Not a single valid data point for\n"
+            f"\t- {wsf}: '{key}'\n"
+            f"\t- key_data: '{key_data}'\n"
+            f"\t- key_lamb: '{key_lamb}'\n"
+            f"\t- mask: {dvalid['mask']['key']}\n"
+            f"\t- domain: {dvalid['domain']}\n"
+        )
+        raise Exception(msg)
 
     # ----------------------------
     # Recompute domain min, max form valid data
