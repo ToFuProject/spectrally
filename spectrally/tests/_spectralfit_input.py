@@ -1,7 +1,27 @@
 # -*- coding: utf-8 -*-
 
 
+import os
+import traceback
+import itertools as itt
+
+
 import numpy as np
+
+
+# ###################################################
+# ###################################################
+#               DEFAULTS
+# ###################################################
+
+
+# PATH
+_PATH_HERE = os.path.dirname(__file__)
+_PATH_INPUT = os.path.join(_PATH_HERE, 'input')
+
+
+# PFE
+_MASK_1D = os.path.join(_PATH_INPUT, 'mask1d.npy')
 
 
 # ###################################################
@@ -179,14 +199,50 @@ def add_models(coll=None):
 
 def add_fit1d(coll=None):
 
-    coll.add_spectral_fit(
-        key_model='model00',
-        key_data='data1d',
-        key_sigma=None,
-        key_lamb='lamb',
-        # params
-        dparams=None,
-        dvalid=None,
-    )
+    # -------------------
+    # add 1d
+
+    mask = [None, _MASK_1D]
+    domain = [
+        None,
+        {'lamb': [(3.96e-10, 3.97e-10)]},
+        {'lamb': [
+            [3.91e-10, 3.94e-10],
+            (3.96e-10, 3.97e-10),
+            [3.965e-10, 3.995e-10]
+        ]},
+    ]
+    focus = [
+        None,
+    ]
+
+    for ii, ind in enumerate(itt.product(mask, domain, focus)):
+
+        try:
+            coll.add_spectral_fit(
+                key=None,
+                key_model='model00',
+                key_data='data1d',
+                key_sigma=None,
+                key_lamb='lamb',
+                # params
+                dparams=None,
+                dvalid={
+                    'mask': ind[0],
+                    'domain': ind[1],
+                    'focus': ind[2],
+                },
+            )
+
+        except Exception as err:
+            msg = (
+                "Failed add_spectral_fit for 'data1d':\n"
+                f"\t- ii = {ii}\n"
+                f"\t- mask = {ind[0]}\n"
+                f"\t- domain = {ind[1]}\n"
+                + "-"*20 + "\n"
+            )
+            print(msg)
+            raise err
 
     return
