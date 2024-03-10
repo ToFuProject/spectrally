@@ -17,7 +17,7 @@ def add_data(coll=None):
     # ------------------
 
     # lamb
-    nlamb = 150
+    nlamb = 300
     coll.add_ref('nlamb', size=nlamb)
     lamb = np.linspace(3.9, 4, nlamb)*1e-10
     coll.add_data(
@@ -43,7 +43,7 @@ def add_data(coll=None):
     )
 
     # time
-    nt = 20
+    nt = 50
     coll.add_ref('nt', size=nt)
     t = np.linspace(0, 10, nt)
     coll.add_data(
@@ -60,29 +60,35 @@ def add_data(coll=None):
     # ------------------
 
     # lamb0
-    amp0 = 1000
+    amp0 = 700
     Dlamb = lamb[-1] - lamb[0]
-    lamb0 = lamb[0] + Dlamb * np.r_[0.25, 0.55, 0.7]
-    width = Dlamb * np.r_[0.1, 0.05, 0.02]
+    lamb0 = lamb[0] + Dlamb * np.r_[0.25, 0.55, 0.75]
+    width = Dlamb * np.r_[0.015, 0.035, 0.025]
     amp = amp0 * np.r_[1, 0.5, 2]
 
+    amp1 = np.max(amp) * 0.10
+    amp2 = np.max(amp) * 0.02
+    dlamb = -(lamb[0] - lamb[-1]) / np.log(amp1/amp2)
+    A = amp1 / np.exp(-lamb[0]/dlamb)
+
     # data 1d
-    data = (
-        amp0 * 0.1
+    data = np.random.poisson(
+        A * np.exp(-lamb / dlamb)
         + np.sum(
             [
                 amp[ii] * np.exp(-(lamb-lamb0[ii])**2 / (2*width[ii]**2))
                 for ii in range(len(lamb0))
             ],
         axis=0,
-        )
-    ) + amp0 * 0.05 * np.random.random((nlamb,))
+        ),
+        size=nlamb,
+    ).astype(float) # + amp0 * 0.10 * np.random.random((nlamb,))
 
     coll.add_data(
         'data1d',
         data=data,
         ref='nlamb',
-        units='ph/s',
+        units='ph',
     )
 
     # ------------------
