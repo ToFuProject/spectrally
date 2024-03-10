@@ -19,7 +19,7 @@ import datastock as ds
 #       main
 #############################################
 
-
+"""
 def main(
     coll=None,
     dparams=None,
@@ -614,3 +614,4 @@ def fit12d_dscales(dscales=None, dinput=None):
         indbs=dinput['valid']['indbs'],
     )
     return dscales
+"""
