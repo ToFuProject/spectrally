@@ -135,6 +135,7 @@ class SpectralFit(Previous):
     def add_spectral_fit(
         self,
         # keys
+        key=None,
         key_model=None,
         key_data=None,
         key_sigma=None,
@@ -153,6 +154,7 @@ class SpectralFit(Previous):
         _check_fit._check(
             coll=self,
             # keys
+            key=key,
             key_model=key_model,
             key_data=key_data,
             key_sigma=key_sigma,
@@ -180,9 +182,27 @@ class SpectralFit(Previous):
     def plot_spectral_fit_input_validity(
         self,
         key=None,
+        # options
+        dprop=None,
+        vmin=None,
+        vmax=None,
+        # figure
+        dax=None,
+        fs=None,
+        dmargin=None,
+        tit=None,
     ):
 
         return _plot_valid.plot(
             coll=self,
             key=key,
+            # options
+            dprop=dprop,
+            vmin=vmin,
+            vmax=vmax,
+            # figure
+            dax=dax,
+            fs=fs,
+            dmargin=dmargin,
+            tit=tit,
         )
