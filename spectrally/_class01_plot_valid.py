@@ -317,7 +317,7 @@ def _get_dax_1d(
 
     if dmargin is None:
         dmargin = {
-            'left': 0.08, 'right': 0.75,
+            'left': 0.07, 'right': 0.78,
             'bottom': 0.08, 'top': 0.90,
             'wspace': 0.10, 'hspace': 0.10,
         }

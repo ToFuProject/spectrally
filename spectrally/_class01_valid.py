@@ -19,10 +19,11 @@ _DINDOK = {
     -1: 'mask',
     -2: 'out of domain',
     -3: 'neg, inf or NaN',
-    -4: 'S/N valid, excluded (fraction',
-    -5: 'S/N non-valid, included (fraction)',
-    -6: 'S/N valid, excluded (bs)',
-    -7: 'S/N non-valid, included (bs)',
+    -4: 'S/N valid, excl. (fract.)',
+    -5: 'S/N non-valid, incl. (fract.)',
+    -6: 'S/N non-valid, excl. (fract.)',
+    -7: 'S/N valid, excl. (bs)',
+    -8: 'S/N non-valid, incl. (bs)',
 }
 
 
@@ -141,15 +142,19 @@ def mask_domain(
     # store in dvalid
     # -----------------
 
-    lindok = [0, -1, -2, -3, -4, -5]
-    if key_bs_vect is not None:
-        lindok.append([-6, -7])
+    if key_bs_vect is None:
+        lindok = sorted([
+            k0 for k0, v0 in _DINDOK.items()
+            if '(bs)' not in v0
+        ])[::-1]
+    else:
+        lindok = sorted(_DINDOK.keys())[::-1]
 
     dvalid = {
         'domain': domain,
         'mask': dmask,
         'iok': iok,
-        'meaning': {k0: v0 for k0, v0 in _DINDOK.items() if k0 in lindok},
+        'meaning': {k0: _DINDOK[k0] for k0 in lindok},
     }
 
     return dvalid
@@ -441,6 +446,7 @@ def _check_mask(
 
 def valid(
     coll=None,
+    key=None,
     key_data=None,
     key_lamb=None,
     key_bs=None,
@@ -693,7 +699,33 @@ def valid(
     # store
     # -----------------
 
-    dvalid['iok'] = iok
+    # iok
+    kiok = f"{key}_iok"
+    dvalid['iok'] = kiok
+    coll.add_data(
+        key=kiok,
+        data=iok,
+        ref=ref,
+        unit='',
+        dim='bool',
+    )
+
+    # frac
+    if data.ndim == 1:
+        dvalid['frac'] = frac
+
+    else:
+        kfrac = f"{key}_frac"
+        dvalid['frac'] = kfrac
+        ref_lamb = coll.ddata[key_lamb]['ref'][0]
+        ref_frac = tuple([rr for rr in ref if rr != ref_lamb])
+        coll.add_data(
+            key=kfrac,
+            data=frac,
+            ref=ref_frac,
+            unit='',
+            dim='bool',
+        )
 
     return dvalid
 
@@ -737,7 +769,7 @@ def _check_dvalid_valid(dvalid=None):
     dvalid['nsigma'] = float(ds._generic_check._check_var(
         dvalid.get('nsigma'), "dvalid['nsigma']",
         types=(int, float),
-        default=6,
+        default=10,
         sign=">=0",
     ))
 
