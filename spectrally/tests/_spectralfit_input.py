@@ -7,6 +7,7 @@ import itertools as itt
 
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # ###################################################
@@ -278,3 +279,22 @@ def add_fit1d(coll=None, key_data=None):
             raise err
 
     return
+
+
+# ###################################################
+# ###################################################
+#           plot spectral fit input validity
+# ###################################################
+
+
+def _plot_input_validity_1d(coll=None):
+
+    lk = [
+        k0 for k0, v0 in coll.dobj['spect_fit'].items()
+        if v0['key_data'] == 'data1d'
+    ]
+
+    for k0 in lk:
+        _ = coll.plot_spectral_fit_input_validity(k0)
+
+    plt.close('all')
