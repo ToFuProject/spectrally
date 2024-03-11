@@ -104,6 +104,7 @@ def add_data(coll=None):
         size=nlamb,
     ).astype(float) # + amp0 * 0.10 * np.random.random((nlamb,))
 
+    # store
     coll.add_data(
         'data1d',
         data=data,
@@ -112,15 +113,45 @@ def add_data(coll=None):
     )
 
     # ------------------
-    # data 1d vs t
+    # data 2d (1d vs t)
+    # ------------------
+
+    ampt = np.exp(-(t-np.mean(t))**2 / (0.3*(t[-1] - t[0]))**2)
+    At = A * ampt[:, None]
+    lambt = lamb[None, :]
+    dv = np.r_[0.1, -0.05, 0.08]
+
+    # data 1d
+    data = np.random.poisson(
+        At * np.exp(-lambt / dlamb)
+        + ampt[:, None] * np.sum(
+            [
+                amp[ii]
+                * np.exp(
+                    - (lambt-lamb0[ii] - dv[ii] * Dlamb * ampt[:, None])**2
+                    / (2*ampt[:, None] * width[ii]**2)
+                )
+                for ii in range(len(lamb0))
+            ],
+        axis=0,
+        ),
+        size=(nt, nlamb),
+    ).astype(float) # + amp0 * 0.10 * np.random.random((nlamb,))
+
+    # store
+    coll.add_data(
+        'data2d',
+        data=data,
+        ref=('nt', 'nlamb'),
+        units='ph',
+    )
+
+    # ------------------
+    # data 2d (1d + bs)
     # ------------------
 
     # ------------------
-    # data 2d
-    # ------------------
-
-    # ------------------
-    # data 2d vs t
+    # data 3d (1d + bs + t)
     # ------------------
 
     return
@@ -197,7 +228,7 @@ def add_models(coll=None):
 # ###################################################
 
 
-def add_fit1d(coll=None):
+def add_fit1d(coll=None, key_data=None):
 
     # -------------------
     # add 1d
@@ -214,6 +245,7 @@ def add_fit1d(coll=None):
     ]
     focus = [
         None,
+        [[3.91e-10, 3.93e-10], [3.96e-10, 3.99e-10]],
     ]
 
     for ii, ind in enumerate(itt.product(mask, domain, focus)):
@@ -222,7 +254,7 @@ def add_fit1d(coll=None):
             coll.add_spectral_fit(
                 key=None,
                 key_model='model00',
-                key_data='data1d',
+                key_data=key_data,
                 key_sigma=None,
                 key_lamb='lamb',
                 # params

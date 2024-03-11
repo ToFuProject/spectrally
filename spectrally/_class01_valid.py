@@ -162,12 +162,12 @@ def mask_domain(
     else:
         lindok = sorted(_DINDOK.keys())[::-1]
 
-    dvalid = {
+    dvalid.update({
         'domain': domain,
         'mask': dmask,
         'iok': iok,
         'meaning': {k0: _DINDOK[k0] for k0 in lindok},
-    }
+    })
 
     return dvalid
 
@@ -475,7 +475,10 @@ def valid(
     # -----------------
 
     # check nsigma, fraction, focus
-    dvalid = _check_dvalid_valid(dvalid)
+    dvalid = _check_dvalid_valid(
+        dvalid=dvalid,
+        key_lamb=key_lamb,
+    )
 
     # -----------------
     # prepare
@@ -559,16 +562,18 @@ def valid(
 
     axis = ref.index(refi)
     if dvalid.get('focus') is None:
-        nlamb = coll.ddata[key_lamb]['data'].size
-        frac = np.sum(indv, axis=axis, keepdims=True) / nlamb
+        nlambi = np.sum(iokb, axis=axis, keepdims=True)
+        frac = np.sum(indv, axis=axis, keepdims=True) / nlambi
         iout = frac < dvalid['fraction']
 
     else:
-        iout = np.zeros(data.shape, dtype=bool)
+        shape = list(data.shape)
+        shape[axis] = 1
+        iout = np.zeros(tuple(shape), dtype=bool)
         sli = [slice(None) for ii in ref]
         for ii, ff in enumerate(dvalid['focus']):
-            ilambok = np.abs(lamb - ff[0]) < ff[1]
-            nlambi =np.sum(ilambok)
+            ilambok = (lamb >= ff[0]) & (lamb <= ff[1])
+            nlambi = np.sum(ilambok)
             sli[axis] = ilambok
             frac = np.sum(indv[tuple(sli)], axis=axis, keepdims=True) / nlambi
             iout |= frac < dvalid['fraction']
@@ -749,7 +754,7 @@ def valid(
         ref_frac = tuple([rr for rr in ref if rr != ref_lamb])
         coll.add_data(
             key=kfrac,
-            data=frac,
+            data=frac.squeeze(),
             ref=ref_frac,
             unit='',
             dim='bool',
@@ -764,7 +769,10 @@ def valid(
 #############################################
 
 
-def _check_dvalid_valid(dvalid=None):
+def _check_dvalid_valid(
+    dvalid=None,
+    key_lamb=None,
+):
 
     if not isinstance(dvalid, dict):
         msg = "Arg dvalid must be a dict\nProvided:\n{dvalid}"
@@ -818,11 +826,10 @@ def _check_dvalid_valid(dvalid=None):
 
     if dvalid.get('focus') is not None:
 
-        dvalid['focus'] = float(ds._generic_check._check_var(
-            dvalid.get('fraction'), "dvalid['fraction']",
-            types=(int, float),
-            default=0.51,
-            sign=">=0",
-        ))
+        dvalid['focus'] = _check_domain(
+            domain=dvalid['focus'],
+            key_lamb=key_lamb,
+            key_bs_vect=None,
+        )[key_lamb]['spec']
 
     return dvalid

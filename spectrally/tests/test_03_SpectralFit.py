@@ -77,4 +77,12 @@ class Test00_Populate():
             _inputs.add_models(self.coll)
 
         # add spectral fit
-        _inputs.add_fit1d(self.coll)
+        _inputs.add_fit1d(self.coll, key_data='data1d')
+
+    def test02_add_spectral_fit_2d(self):
+
+        if self.coll.dobj.get('spect_model') is None:
+            _inputs.add_models(self.coll)
+
+        # add spectral fit
+        _inputs.add_fit1d(self.coll, key_data='data2d')

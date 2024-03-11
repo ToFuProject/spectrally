@@ -286,6 +286,11 @@ def _plot_1d(
             transform=trans,
         )
 
+        # focus
+        if dvalid.get('focus') is not None:
+            for ff in dvalid['focus']:
+                ax.axvspan(ff[0], ff[1], fc=(0.8, 0.8, 0.8, 0.5))
+
         # vmin vmax
         if vmin is not None:
             ax.set_ylim(bottom=vmin)

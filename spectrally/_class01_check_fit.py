@@ -28,7 +28,7 @@ _LFIT_ORDER = [
     'sol',
     'model', 'data', 'sigma', 'lamb', 'bs',
     'positive', 'nsigma', 'fraction',
-    'mask', 'domain',
+    'mask', 'domain', 'focus',
 ]
 
 
@@ -384,13 +384,26 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
             elif k1 in ['domain']:
                 c0 = all([
                     len(v0['spec']) == 1
-                    and np.allclose(v0['spec'][0], np.inf*np.r_[-1,1])
+                    and np.allclose(v0['spec'][0], np.inf*np.r_[-1, 1])
                     for k0, v0 in dfit['dvalid']['domain'].items()
                 ])
-                nn = str(not c0)
+                if c0:
+                    nn = ''
+                else:
+                    lk = list(dfit['dvalid']['domain'].keys())
+                    if len(lk) == 2 and lk[0] != dfit['key_lamb']:
+                        lk = [lk[1], lk[0]]
+
+                    nn = ', '.join([
+                        str(len(dfit['dvalid']['domain'][k0]['spec']))
+                        for k0 in lk
+                    ])
 
             elif k1 in ['focus']:
-                nn = ''
+                if dfit['dvalid'].get('focus') is None:
+                    nn = ''
+                else:
+                    nn = str(len(dfit['dvalid']['focus']))
 
             arr.append(nn)
 
