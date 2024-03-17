@@ -245,8 +245,10 @@ def add_fit1d(coll=None, key_data=None):
         ]},
     ]
     focus = [
-        None,
-        [[3.91e-10, 3.93e-10], [3.96e-10, 3.99e-10]],
+        (None, None),
+        ([[3.925e-10, 3.94e-10], [3.97e-10, 3.99e-10]], 'min'),
+        ([[3.925e-10, 3.94e-10], [3.97e-10, 3.99e-10]], 'max'),
+        ([[3.925e-10, 3.94e-10], [3.97e-10, 3.99e-10]], 'sum'),
     ]
 
     for ii, ind in enumerate(itt.product(mask, domain, focus)):
@@ -263,7 +265,8 @@ def add_fit1d(coll=None, key_data=None):
                 dvalid={
                     'mask': ind[0],
                     'domain': ind[1],
-                    'focus': ind[2],
+                    'focus': ind[2][0],
+                    'focus_logic': ind[2][1],
                 },
             )
 
@@ -287,11 +290,11 @@ def add_fit1d(coll=None, key_data=None):
 # ###################################################
 
 
-def _plot_input_validity_1d(coll=None):
+def _plot_input_validity_1d(coll=None, key_data=None):
 
     lk = [
         k0 for k0, v0 in coll.dobj['spect_fit'].items()
-        if v0['key_data'] == 'data1d'
+        if v0['key_data'] == key_data
     ]
 
     for k0 in lk:

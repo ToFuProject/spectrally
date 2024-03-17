@@ -76,7 +76,7 @@ class Test00_Populate():
         if self.coll.dobj.get('spect_model') is None:
             _inputs.add_models(self.coll)
 
-        # add spectral fit
+        # add spectral fit 1d
         _inputs.add_fit1d(self.coll, key_data='data1d')
 
     def test02_plot_spectral_fit_input_validity_1d(self):
@@ -85,13 +85,22 @@ class Test00_Populate():
             _inputs.add_models(self.coll)
             _inputs.add_fit1d(self.coll, key_data='data1d')
 
-        # plot
-        _inputs._plot_input_validity_1d(self.coll)
+        # plot 1d
+        _inputs._plot_input_validity_1d(self.coll, key_data='data1d')
 
     def test03_add_spectral_fit_2d(self):
 
         if self.coll.dobj.get('spect_model') is None:
             _inputs.add_models(self.coll)
 
-        # add spectral fit
+        # add spectral fit 2d
         _inputs.add_fit1d(self.coll, key_data='data2d')
+
+    def test04_plot_spectral_fit_input_validity_2d(self):
+
+        if self.coll.dobj.get('spect_model') is None:
+            _inputs.add_models(self.coll)
+            _inputs.add_fit2d(self.coll, key_data='data2d')
+
+        # plot 2d
+        _inputs._plot_input_validity_1d(self.coll, key_data='data2d')
