@@ -569,14 +569,28 @@ def valid(
     else:
         shape = list(data.shape)
         shape[axis] = 1
+        shape.append(len(dvalid['focus']))
         iout = np.zeros(tuple(shape), dtype=bool)
+        frac = np.zeros(tuple(shape), dtype=float)
+        nl = np.zeros(tuple(shape), dtype=int)
         sli = [slice(None) for ii in ref]
         for ii, ff in enumerate(dvalid['focus']):
             ilambok = (lamb >= ff[0]) & (lamb <= ff[1])
             nlambi = np.sum(ilambok)
             sli[axis] = ilambok
-            frac = np.sum(indv[tuple(sli)], axis=axis, keepdims=True) / nlambi
-            iout |= frac < dvalid['fraction']
+            frac[..., ii] = (
+                np.sum(indv[tuple(sli)], axis=axis, keepdims=True) / nlambi
+            )
+            nl[..., ii] = nlambi
+
+        if dvalid['focus_logic'] == 'min':
+            frac = np.min(frac, axis=-1)
+        elif dvalid['focus_logic'] == 'max':
+            frac = np.max(frac, axis=-1)
+        else:
+            frac = np.sum(frac * nl, axis=-1) / np.sum(nl, axis=-1)
+
+        iout = frac < dvalid['fraction']
 
     # reshape
     iout = np.repeat(iout, nlamb, axis=axis)
@@ -831,5 +845,13 @@ def _check_dvalid_valid(
             key_lamb=key_lamb,
             key_bs_vect=None,
         )[key_lamb]['spec']
+
+        # logic
+        dvalid['focus_logic'] = ds._generic_check._check_var(
+            dvalid.get('focus_logic'), "dvalid['focus_logic']",
+            types=str,
+            default='min',
+            allowed=['min', 'max', 'sum'],
+        )
 
     return dvalid

@@ -403,7 +403,8 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
                 if dfit['dvalid'].get('focus') is None:
                     nn = ''
                 else:
-                    nn = str(len(dfit['dvalid']['focus']))
+                    nn = len(dfit['dvalid']['focus'])
+                    nn = f"{nn} / {dfit['dvalid']['focus_logic']}"
 
             arr.append(nn)
 
