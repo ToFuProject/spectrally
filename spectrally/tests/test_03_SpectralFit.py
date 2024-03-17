@@ -100,7 +100,7 @@ class Test00_Populate():
 
         if self.coll.dobj.get('spect_model') is None:
             _inputs.add_models(self.coll)
-            _inputs.add_fit2d(self.coll, key_data='data2d')
+            _inputs.add_fit1d(self.coll, key_data='data2d')
 
         # plot 2d
         _inputs._plot_input_validity_1d(self.coll, key_data='data2d')
