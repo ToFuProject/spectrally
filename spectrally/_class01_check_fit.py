@@ -6,7 +6,6 @@ Created on Tue Feb 20 14:44:51 2024
 """
 
 
-import itertools as itt
 import datastock as ds
 
 
@@ -15,7 +14,6 @@ import numpy as np
 
 # local
 from . import _class01_valid as _valid
-
 
 
 #############################################

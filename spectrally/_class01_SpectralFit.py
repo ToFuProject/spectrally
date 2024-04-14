@@ -170,8 +170,27 @@ class SpectralFit(Previous):
             chain=chain,
         )
 
+        return
 
-        # _compute_fit._compute()
+    # -------------------
+    # compute spectral fit
+    # -------------------
+
+    def compute_spectral_fit(
+        self,
+        key=None,
+    ):
+
+        return
+
+    # -------------------
+    # get func details, cost, jac
+    # -------------------
+
+    def get_spectral_fit_func(
+        self,
+        key=None,
+    ):
 
         return
 
