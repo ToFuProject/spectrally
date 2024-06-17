@@ -16,14 +16,47 @@ import datastock as ds
 
 
 _DMODEL = {
+
+    # ----------
+    # background
     'linear': {'var': ['c0', 'c1']},
     'exp': {'var': ['amp', 'rate']},
-    'gauss': {'var': ['amp', 'x0', 'width']},
-    'lorentz': {'var': ['amp', 'x0', 'gamma']},
-    'pvoigt': {'var': ['amp', 'x0', 'width', 't', 'gamma']},
-    'voigt': {'var': ['amp', 'x0', 'width', 'gamma']},
+
+    # --------------
+    # spectral lines
+    'gauss': {
+        'var': ['amp', 'x0', 'width'],
+        'param': {'lamb0': float},
+    },
+    'lorentz': {
+        'var': ['amp', 'x0', 'gamma'],
+        'param': {'lamb0': float},
+    },
+    'pvoigt': {
+        'var': ['amp', 'x0', 'width', 't', 'gamma'],
+        'param': {'lamb0': float},
+    },
+    'voigt': {
+        'var': ['amp', 'x0', 'width', 'gamma'],
+        'param': {'lamb0': float},
+    },
+
+    # -----------
+    # pulse shape
+    'pulse1': {'var': ['amp', 't0', 't_up', 't_down']},
+    'pulse2': {'var': ['amp', 't0', 't_up', 't_down']},
+    'lognorm': {'var': ['amp', 't0', 'mu', 'sigma']},
 }
-_LMODEL_ORDER = ['linear', 'exp', 'gauss', 'lorentz', 'pvoigt', 'voigt']
+
+
+_LMODEL_ORDER = [
+    # background
+    'linear', 'exp',
+    # spectral lines
+    'gauss', 'lorentz', 'pvoigt', 'voigt',
+    # pulse shape
+    'pulse1', 'pulse2', 'lognorm',
+]
 
 
 #############################################
@@ -86,14 +119,30 @@ def _dmodel(
 
 
 def _dmodel_err(key, dmodel):
+
+    # prepare list of str
+    lstr = []
+    for ii, (k0, v0) in enumerate(_DMODEL.items()):
+        if v0.get('param') is None:
+            stri = f"\t- 'f{ii}': '{k0}'"
+        else:
+            dpar = v0['param']
+            pstr = ", ".join([f"'{k1}': {v1}" for k1, v1 in dpar.items()])
+            stri = f"\t- 'f{ii}': " + "{" + f"'type': '{k0}', {pstr}" + "}"
+
+        if k0 == 'linear':
+            lstr.append("\t# background-oriented")
+        elif k0 == 'gauss':
+            lstr.append("\t# spectral lines-oriented")
+        elif k0 == 'pulse1':
+            lstr.append("\t# pulse-oriented")
+        lstr.append(stri)
+
+    # concatenate msg
     return (
-        f"For model '{key}' dmodel must be  dict of the form:\n"
-        "\t'bck': 'exp',\n"
-        "\t'l0': 'gauss',\n"
-        "\t'l1': 'lorentz',\n"
-        "\t...: ...,\n"
-        "\t'ln': 'pvoigt',\n"
-        f"Provided:\n{dmodel}"
+        f"For model '{key}' dmodel must be a dict of the form:\n"
+         + "\n".join(lstr)
+         + f"\n\nProvided:\n{dmodel}"
     )
 
 
@@ -116,6 +165,9 @@ def _check_dmodel(
     if not isinstance(dmodel, dict):
         raise Exception(_dmodel_err(key, dmodel))
 
+    # prepare for extracting lamb0
+    wsl = coll._which_lines
+
     # ------------
     # check dict
     # ------------
@@ -125,7 +177,7 @@ def _check_dmodel(
     ibck, il = 0, 0
     for k0, v0 in dmodel.items():
 
-        # ----------
+        # -----------------
         # check str vs dict
 
         if isinstance(v0, dict):
@@ -134,8 +186,10 @@ def _check_dmodel(
             else:
                 dout[k0] = v0
                 continue
+
         elif isinstance(v0, str):
             typ = v0
+
         else:
             dout[k0] = v0
             continue
@@ -160,7 +214,48 @@ def _check_dmodel(
         else:
             k1 = k0
 
+        # ---------------------------
+        # check parameter (if needed)
+
+        haspar = _DMODEL[typ].get('param') is not None
+        if haspar is True:
+
+            dpar = _DMODEL[typ]['param']
+            c0 = (
+                isinstance(v0, dict)
+                and all([
+                    isinstance(v0.get(kpar), vpar)
+                    for kpar, vpar in dpar.items()
+                ])
+            )
+
+            # all parameters properly defined
+            if c0:
+                dpar = {kpar: dmodel[kpar] for kpar in dpar.keys()}
+
+            else:
+
+                # check if lamb0 can be extracted from existing lines
+                c1 = (
+                    typ in ['gauss', 'Lorentz', 'pvoigt', 'voigt']
+                    and len(dpar) == 1
+                    and k1 in coll.dobj.get(wsl, {}).keys()
+                )
+                if c1:
+                    dpar = {'lamb0': coll.dobj[wsl][k1]['lamb0']}
+
+                else:
+                    dout[k0] = v0
+                    continue
+
+        # ----------------
+        # assemble
+
         dmod2[k1] = {'type': typ, 'var': _DMODEL[typ]['var']}
+
+        # add parameter
+        if haspar is True:
+            dmod2[k1]['param'] = dpar
 
     # ---------------
     # raise error
