@@ -63,11 +63,11 @@ def _dconstraints(
 
 def _err(key, dconstraints, lvar):
     return (
-        f"For model '{key}' dmodel must be  dict of the form:\n"
+        f"For model '{key}' dconstraints must be  dict of the form:\n"
         "\t'g0': {'ref': var0, vari: [c0, c1, c2], varj: [c0, c1, c2]},\n"
-        "\t'g1': {'ref': varn, varh: [c0, c1, c2], vark: [c0, c1, c2]},\n"
-        "Where [c0, c1, c2] are coefficnients of a quadratic polynom of ref:\n"
-        "\t\t vari = c0 + c1 * ref + c2 * ref**2\n"
+        "\t'g1': {'ref': varn, varh: [c0, c1, c2], vark: [c0, c1, c2]},\n\n"
+        "Where [c0, c1, c2] are coefficients of a quadratic polynom of ref:\n"
+        "\t\t vari = c0 + c1 * ref + c2 * ref**2\n\n"
         "Where the var are keys to existing model function:\n"
         f"\t- available keys: {sorted(lvar)}\n\n"
         "Each key can only be used once\n"

@@ -172,6 +172,15 @@ def add_models(coll=None):
     if coll.dobj.get('spect_model') is not None:
         return
 
+    # --------------------------------------------------------------
+    # add spectral lines just for testing automated loading of lamb0
+
+    coll.add_spectral_line(
+        key='sl00',
+        ion='Ar16+',
+        lamb0=3.96e-10,
+    )
+
     # ---------------
     # dmodels
 
@@ -191,7 +200,7 @@ def add_models(coll=None):
         'model01': {
             'bck0': 'exp',
             'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
-            'l01': {'type': 'lorentz', 'lamb0': 3.95e-10},
+            'sl00': 'lorentz',
             'l02': {'type': 'pvoigt', 'lamb0': 3.97e-10},
         },
         'model02': {
@@ -229,8 +238,8 @@ def add_models(coll=None):
         key='model01',
         dmodel=dmodel['model01'],
         dconstraints={
-            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
-            'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
+            'g00': {'ref': 'l00_amp', 'sl00_amp': [0, 1, 0]},
+            'g01': {'ref': 'l00_width', 'sl00_gamma': [0, 1, 0]},
         },
     )
 

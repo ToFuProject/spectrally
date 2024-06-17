@@ -110,9 +110,8 @@ class SpectralLines(Previous):
         """
         _check_lines.add_lines(
             coll=self,
-            which=self._which_lines,
             key=key,
-            lambda0=lamb0,
+            lamb0=lamb0,
             pec=pec,
             source=source,
             transition=transition,

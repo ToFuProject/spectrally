@@ -237,7 +237,7 @@ def _check_dmodel(
 
                 # check if lamb0 can be extracted from existing lines
                 c1 = (
-                    typ in ['gauss', 'Lorentz', 'pvoigt', 'voigt']
+                    typ in ['gauss', 'lorentz', 'pvoigt', 'voigt']
                     and len(dpar) == 1
                     and k1 in coll.dobj.get(wsl, {}).keys()
                 )
