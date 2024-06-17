@@ -176,28 +176,46 @@ def add_models(coll=None):
     # dmodels
 
     dmodel = {
-        'model00': {
+        'model-1': {
             'bck0': 'linear',
             'l00': 'gauss',
             'l01': 'gauss',
             'l02': 'lorentz',
         },
+        'model00': {
+            'bck0': 'linear',
+            'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
+            'l01': {'type': 'gauss', 'lamb0': 3.95e-10},
+            'l02': {'type': 'lorentz', 'lamb0': 3.97e-10},
+        },
         'model01': {
             'bck0': 'exp',
-            'l00': 'gauss',
-            'l01': 'lorentz',
-            'l02': 'pvoigt',
+            'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
+            'l01': {'type': 'lorentz', 'lamb0': 3.95e-10},
+            'l02': {'type': 'pvoigt', 'lamb0': 3.97e-10},
         },
         'model02': {
             'bck0': 'exp',
-            'l00': 'gauss',
-            'l01': 'lorentz',
-            'l02': 'voigt',
+            'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
+            'l01': {'type': 'lorentz', 'lamb0': 3.95e-10},
+            'l02': {'type': 'voigt', 'lamb0': 3.97e-10},
         },
     }
 
     # ---------------
     # add models
+
+    # check err
+    try:
+        coll.add_spectral_model(
+            key='model-1',
+            dmodel=dmodel['model-1'],
+            dconstraints=None,
+        )
+        raise Exception('sucess')
+    except Exception as err:
+        if "For model" not in str(err):
+            raise Exception("Wrong error raised!")
 
     # no constraints
     coll.add_spectral_model(

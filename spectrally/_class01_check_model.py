@@ -231,7 +231,7 @@ def _check_dmodel(
 
             # all parameters properly defined
             if c0:
-                dpar = {kpar: dmodel[kpar] for kpar in dpar.keys()}
+                dpar = {kpar: v0[kpar] for kpar in dpar.keys()}
 
             else:
 
