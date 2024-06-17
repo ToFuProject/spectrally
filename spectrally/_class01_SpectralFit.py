@@ -126,6 +126,17 @@ class SpectralFit(Previous):
             concatenate=concatenate,
         )
 
+    def get_spectral_model_variables_dind(
+        self,
+        key=None,
+    ):
+        """ Get ordered list of individual variable names """
+
+        return _check_model._get_var_dind(
+            coll=self,
+            key=key,
+        )
+
     # ###################
     # -------------------
     # Spectral fits

@@ -3,6 +3,9 @@
 
 
 import itertools as itt
+
+
+import numpy as np
 import datastock as ds
 
 
@@ -239,7 +242,7 @@ def _get_var(
                         and f"{k0}_{k1}" in lref
                     )
                 or (
-                    all_free_tied == 'free'
+                    all_free_tied == 'tied'
                     and f"{k0}_{k1}" not in lref
                 )
             ]
@@ -254,6 +257,103 @@ def _get_var(
         lvar = list(itt.chain.from_iterable(lvar))
 
     return lvar
+
+
+#############################################
+#############################################
+#       Get variables dind
+#############################################
+
+
+def _get_var_dind(
+    coll=None,
+    key=None,
+):
+
+    # --------------
+    # check key
+    # -------------
+
+    # key
+    wsm = coll._which_model
+    lok = list(coll.dobj.get(wsm, {}).keys())
+    key = ds._generic_check._check_var(
+        key, 'key',
+        types=str,
+        allowed=lok,
+    )
+
+    # keys and dmodel
+    keys = coll.dobj[wsm][key]['keys']
+    dmodel = coll.dobj[wsm][key]['dmodel']
+
+    # -------------
+    # get lvar
+    # -------------
+
+    x_all = coll.get_spectral_model_variables(key, all_free_tied='all')
+
+    # ---------------
+    # derive dind
+    # ---------------
+
+    types = sorted(set([v0['type'] for v0 in dmodel.values()]))
+
+    dind = {}
+    for ktype in types:
+
+        # list functions with corresponding model type
+        lf = [k0 for k0 in keys if dmodel[k0]['type'] == ktype]
+
+        # populate
+        dind[ktype] = {
+            k1: {
+                'ind': np.array([x_all.index(f"{kf}_{k1}") for kf in lf]),
+                'keys': [f"{kf}_{k1}" for kf in lf],
+            }
+            for k1 in dmodel[lf[0]]['var']
+        }
+
+    # ---------------
+    # safety checks
+    # ---------------
+
+    # aggregate all variables
+    lvar = tuple(itt.chain.from_iterable([
+        list(itt.chain.from_iterable([
+            v1['keys']
+            for k1, v1 in vtype.items()
+        ]))
+        for ktype, vtype in dind.items()
+    ]))
+
+    # check all indices are unique
+    lind = tuple(itt.chain.from_iterable([
+        list(itt.chain.from_iterable([
+            v1['ind']
+            for k1, v1 in vtype.items()
+        ]))
+        for ktype, vtype in dind.items()
+    ]))
+
+    # check all variable are represented
+    nn = len(x_all)
+    c0 = (
+        (tuple(sorted(lvar)) == tuple(sorted(x_all)))
+        and np.allclose(sorted(lind), np.arange(nn))
+        and (tuple([lvar[ii] for ii in np.argsort(lind)]) == tuple(x_all))
+    )
+    if not c0:
+        msg = (
+            "dind corrupted!\n"
+            f"\t- x_all: {x_all}\n"
+            f"\t- lvar: {lvar}\n"
+            f"\t- lind: {lind}\n"
+            f"\ndind:\n{dind}\n"
+        )
+        raise Exception(msg)
+
+    return dind
 
 
 #############################################
