@@ -22,8 +22,8 @@ from . import _class01_fit_func_1d as _1d
 
 _DFUNC = {
     '1d': {
-        'cost': _1d._get_func_val,
-        'cost': _1d._get_func_cost,
+        'val': _1d._get_func_val,
+        # 'cost': _1d._get_func_cost,
     },
 }
 
@@ -44,14 +44,17 @@ def main(
     # check inputs
     # ----------------
 
-    key, key_bs, func = _check(
+    key, key_bs, key_model, func = _check(
         coll=coll,
         key=key,
         func=func,
     )
 
-    xall= coll.get_spectral_model_variables(key_model, all_free_tied='all')
+    x_all = coll.get_spectral_model_variables(key_model, all_free_tied='all')
+    x_free = coll.get_spectral_model_variables(key_model, all_free_tied='free')
+    x_tied = coll.get_spectral_model_variables(key_model, all_free_tied='tied')
 
+    dind = coll.get_spectral_model_variables_dind(key_model)
 
     # ----------------
     # get func
@@ -120,6 +123,12 @@ def _check(
     if key in lok_2d:
         key_bs = coll.dobj[wsf][key]['key_bs']
 
+    # key_model
+    if key in lok_m:
+        key_model = key
+    else:
+        key_model = coll.dobj[wsf][key]['key_model']
+
     # -------------
     # func
     # -------------
@@ -136,4 +145,20 @@ def _check(
         allowed=lok,
     )
 
-    return key, key_bs, func
+    return key, key_bs, key_model, func
+
+
+#############################################
+#############################################
+#       dind
+#############################################
+
+
+def _get_dind_var():
+
+    # --------------
+    #
+    # --------------
+
+
+    return dind

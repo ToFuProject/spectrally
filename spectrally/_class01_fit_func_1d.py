@@ -26,16 +26,27 @@ import datastock as ds
 def _get_func_val(
     x_all=None,
     x_free=None,
-    dmodel=None,
     dconstraints=None,
-    dconst=None,
+    dind=None,
 ):
 
     # --------------
     # prepare
     # --------------
 
-    dfunc = _get_dfunc()
+    # ------------
+    # constraints
+
+    c0 = dconstraints['c0']
+    c1 = dconstraints['c1']
+    c2 = dconstraints['c2']
+
+    n_all = len(x_all)
+    if np.allclose(c0, 0) and np.allclose(c1, 0.) and np.allclose(c2, 0.):
+        assert c0.shape == (n_all,), c0.shape
+        assert c1.shape == (n_all, n_all), c1.shape
+        assert c2.shape == (n_all, n_all), c2.shape
+        c0, c1, c2 = None, None, None
 
     # --------------
     # prepare
@@ -43,39 +54,104 @@ def _get_func_val(
 
     for k0, v0 in dmodel.items():
 
-
-
-        dfunc[k0] = None
-
-
         def func(
-            x=None,
+            x_free=None,
             lamb=None,
-            xall=xall,
+            n_all=n_all,
+            c0=c0,
+            c1=c1,
+            c2=c2,
+            dind=dind,
         ):
 
             # ----------
             # initialize
 
             val = np.zeros(lamb.shape, dtype=float)
-            x_full = np.zeros((len(x_all),), dtype=float)
 
             # ----------------------------
             # get x_full from constraints
 
+            if c0 is None:
+                x_full = x_free
+            else:
+                x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
+
+            # -------------------
+            # rescale
 
 
-            # ----------
-            # sum
 
-            for k0, v0 in dmodel.items():
+            # ------------------
+            # sum all linear
 
-                if v0['type'] == 'gauss':
-                    amp = x_full[ind]
-                    w2 = x_full[ind]
-                    shift = x_full[ind]
+            kfunc = 'linear'
+            if dind.get(kfunc) is not None:
 
-                    val += amp * np.exp(-(lambnorm - (1 + shift)**2)/w2)
+                a0 = x_full[dind[kfunc]['a0']]
+                a1 = x_full[dind[kfunc]['a1']]
+
+                val += a0 * lamb + a1
+
+            # --------------------
+            # sum all exponentials
+
+            kfunc = 'exp'
+            if dind.get(kfunc) is not None:
+
+                amp = x_full[dind[kfunc]['amp']]
+                rate = x_full[dind[kfunc]['rate']]
+
+                val += amp * np.exp(lamb * rate)
+
+            # ------------------
+            # sum all pulse_exp
+
+            kfunc = 'pulse_exp'
+            if dind.get(kfunc) is not None:
+
+                pass
+
+            # -----------------
+            # sum all gaussians
+
+            kfunc = 'gauss'
+            if dind.get(kfunc) is not None:
+
+                amp = x_full[dind[kfunc]['amp']]
+                width = x_full[dind[kfunc]['width']]
+                shift = x_full[dind[kfunc]['shift']]
+                lamb0 = x_full[dind[kfunc]['lamb0']]
+
+                val += amp * np.exp(-(lamb - lamb0*(1 + shift)**2)/width**2)
+
+            # -------------------
+            # sum all Lorentzians
+
+            kfunc = 'lorentz'
+            if dind.get(kfunc) is not None:
+
+                amp = x_full[dind[kfunc]['amp']]
+                gam = x_full[dind[kfunc]['gamma']]
+                shift = x_full[dind[kfunc]['shift']]
+                lamb0 = x_full[dind[kfunc]['lamb0']]
+
+                val += (
+                    amp * (0.5/np.pi) * gam
+                    / ((lamb - lamb0*(1 + shift))**2 + (0.5*gam)**2)
+                )
+
+
+            # --------------------
+            # sum all pseudo-voigt
+
+            kfunc = 'pvoigt'
+            if dind.get(kfunc) is not None:
+
+                pass
+
+
+
 
 
 
@@ -89,6 +165,8 @@ def _get_func_val(
             )
 
         return val
+
+        dfunc[k0] = None
 
     return func
 
