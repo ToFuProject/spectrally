@@ -167,6 +167,12 @@ def add_data(coll=None):
 def add_models(coll=None):
 
     # ---------------
+    # check
+
+    if coll.dobj.get('spect_model') is not None:
+        return
+
+    # ---------------
     # dmodels
 
     dmodel = {
@@ -225,11 +231,24 @@ def add_models(coll=None):
 
 # ###################################################
 # ###################################################
-#               spectral fit
+#               spectral fit - add
 # ###################################################
 
 
-def add_fit1d(coll=None, key_data=None):
+def add_fit(coll=None, key_data=None):
+
+    # ---------------
+    # check
+
+    add_models(coll)
+
+    if coll.dobj.get('spect_fit') is not None:
+        lk = [
+            k0 for k0, v0 in coll.dobj['spect_fit'].items()
+            if v0['key_data'] == key_data
+        ]
+        if len(lk) > 0:
+            return
 
     # -------------------
     # add 1d
@@ -290,14 +309,63 @@ def add_fit1d(coll=None, key_data=None):
 # ###################################################
 
 
-def _plot_input_validity_1d(coll=None, key_data=None):
+def plot_input_validity(coll=None, key_data=None):
+
+    # ---------------
+    # check
+
+    add_models(coll)
+    add_fit(coll, key_data=key_data)
+
+    # ---------------
+    # select data
 
     lk = [
         k0 for k0, v0 in coll.dobj['spect_fit'].items()
         if v0['key_data'] == key_data
     ]
 
+    # ---------------
+    # plot
+
     for k0 in lk:
         _ = coll.plot_spectral_fit_input_validity(k0)
 
+    # close
     plt.close('all')
+    return
+
+
+# ###################################################
+# ###################################################
+#               spectral fit - compute
+# ###################################################
+
+
+def compute_fit(coll=None, key_data=None):
+
+    # ---------------
+    # check
+
+    add_models(coll)
+    add_fit(coll, key_data=key_data)
+
+    # ---------------
+    # select data
+
+    lk = [
+        k0 for k0, v0 in coll.dobj['spect_fit'].items()
+        if v0['key_data'] == key_data
+    ]
+
+    # ---------------
+    # compute
+
+    for k0 in lk:
+        coll.compute_spectral_fit(
+            key=k0,
+            verb=None,
+            timing=None,
+        )
+
+    return

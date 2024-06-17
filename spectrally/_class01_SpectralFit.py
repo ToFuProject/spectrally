@@ -9,6 +9,8 @@ from ._class00_SpectralLines import SpectralLines as Previous
 from . import _class01_check_model as _check_model
 from . import _class01_check_constraints as _check_constraints
 from . import _class01_check_fit as _check_fit
+from . import _class01_fit_func as _fit_func
+from . import _class01_compute_fit as _compute_fit
 from . import _class01_plot_valid as _plot_valid
 
 
@@ -54,7 +56,8 @@ class SpectralFit(Previous):
 
         Defined by a set of functions and constraints.
             - dmodel: dict of (key, function type) pairs
-            - dconstraints: dict of (key, {'ref': k0, k1: [c0, c1], k2: [c0, c1]})
+            - dconstraints: dict of:
+                'key': {'ref': k0, k1: [c0, c1], k2: [c0, c1]}
 
         Available function types for dmodel are:
             - 'linear': typically a linear background
@@ -173,24 +176,42 @@ class SpectralFit(Previous):
         return
 
     # -------------------
-    # compute spectral fit
-    # -------------------
-
-    def compute_spectral_fit(
-        self,
-        key=None,
-    ):
-
-        return
-
-    # -------------------
     # get func details, cost, jac
     # -------------------
 
     def get_spectral_fit_func(
         self,
         key=None,
+        func=None,
     ):
+        """ Return the fitting functions for a given model
+        """
+
+        return _fit_func.main(
+            coll=self,
+            key=key,
+            func=func,
+        )
+
+    # -------------------
+    # compute spectral fit
+    # -------------------
+
+    def compute_spectral_fit(
+        self,
+        key=None,
+        # options
+        verb=None,
+        timing=None,
+    ):
+
+        _compute_fit.main(
+            coll=self,
+            key=key,
+            # options
+            verb=verb,
+            timing=timing,
+        )
 
         return
 

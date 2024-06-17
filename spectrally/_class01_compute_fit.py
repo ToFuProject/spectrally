@@ -5,16 +5,15 @@ Created on Tue Feb 20 14:44:51 2024
 @author: dvezinet
 """
 
+# #!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
-import itertools as itt
-import datetime as dtm
 
-
-import numpy as np
 import datastock as ds
 
 
 # local
+from . import _class01_compute_fit_1d as _compute_fit_1d
 
 
 #############################################
@@ -25,24 +24,28 @@ import datastock as ds
 
 #############################################
 #############################################
-#       Compute fit 1d
+#       Main
 #############################################
 
 
-def fit1d(
+def main(
     coll=None,
     key=None,
     # options
     verb=None,
     timing=None,
 ):
+    """ Compute the fit of any previously added spectral fit
+
+    """
 
     # ------------
     # check inputs
     # ------------
 
     (
-        key,
+        key, is1d,
+        key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
         shape_data, axis,
@@ -56,35 +59,25 @@ def fit1d(
     )
 
     # ------------
-    # prepare
+    # fit
     # ------------
 
-    # iok_all
-    iok_all = get_iok_all(
+    if is1d is True:
+        compute = _compute_fit_1d.main
+
+    else:
+        pass
+
+    dout = compute(
         coll=coll,
         key=key,
-        axis=axis,
-    )
-
-    # func_cost, func_jac
-    func_cost, func_jac = coll.get_spectral_fit_func(
-        key=key,
-    )
-
-    # ------------
-    # Main loop
-    # ------------
-
-    dout = _loop(
-        coll=coll,
-        key=key,
+        key_model=key_model,
+        key_data=key_data,
+        key_lamb=key_lamb,
+        ref_data=ref_data,
+        ref_lamb=ref_lamb,
         shape_data=shape_data,
         axis=axis,
-        iok_all=iok_all,
-        # func
-        fun_cost=func_cost,
-        func_jac=func_jac,
-        # options
         verb=verb,
         timing=timing,
     )
@@ -93,6 +86,10 @@ def fit1d(
     # store
     # ------------
 
+    _store(
+        coll=coll,
+        dout=dout,
+    )
 
     return
 
@@ -116,19 +113,31 @@ def _check(
     # --------------
 
     wsf = coll._which_fit
-    lok = [
-        k0 for k0, v0 in coll.dobj.get(wsf, {}).keys()
+    lok_1d = [
+        k0 for k0, v0 in coll.dobj.get(wsf, {}).items()
         if v0['key_bs'] is None
+    ]
+    lok_2d = [
+        k0 for k0, v0 in coll.dobj.get(wsf, {}).items()
+        if v0['key_bs'] is not None
     ]
     key = ds._generic_check._check_var(
         key, 'key',
         types=str,
-        allowed=lok,
+        allowed=lok_1d + lok_2d,
     )
+
+    # is1d
+    is1d = key in lok_1d
+
+    if not is1d:
+        msg = "2d fit not implemented yet"
+        raise NotImplementedError(msg)
 
     # -----------
     # derive keys
 
+    key_model = coll.dobj[wsf][key]['key_model']
     key_data = coll.dobj[wsf][key]['key_data']
     key_lamb = coll.dobj[wsf][key]['key_lamb']
     shape_data = coll.ddata[key_data]['data'].shape
@@ -160,7 +169,8 @@ def _check(
     )
 
     return (
-        key,
+        key, is1d,
+        key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
         shape_data, axis,
@@ -170,214 +180,13 @@ def _check(
 
 #############################################
 #############################################
-#       get iok
+#       store
 #############################################
 
 
-def get_iok_all(
+def _store(
     coll=None,
-    key=None,
-    axis=None,
+    dout=None,
 ):
 
-    # ----------
-    # prepare
-    # ----------
-
-    wsf = coll._which_fit
-    kiok = coll.dobj[wsf][key]['dvalid']['iok']
-    iok = coll.ddata[kiok]['data']
-    meaning = coll.dobj[wsf][key]['dvalid']['meaning']
-
-    # ----------
-    # iok_all
-    # ----------
-
-    # get list of valid indices
-    lind_valid = [
-        k0 for k0, v0 in meaning.items()
-        if any([ss in k0 for ss in ['ok', 'incl']])
-    ]
-
-    # iok_all
-    iok_all = (iok == lind_valid[0])
-    for k0 in lind_valid[1:]:
-        iok_all = np.logical_or(iok_all, (iok == k0))
-
-    # -------------
-    # safety check
-    # -------------
-
-    c0 = np.all(iok_all, axis=axis)
-
-    return iok_all
-
-
-#############################################
-#############################################
-#       Main loop
-#############################################
-
-
-def _loop(
-    coll=None,
-    key=None,
-    shape_data=None,
-    axis=None,
-    iok_all=None,
-    # func
-    func_cost=None,
-    func_jac=None,
-    # options
-    verb=None,
-    timing=None,
-):
-
-
-    # -----------------
-    # prepare
-    # -----------------
-
-    # shape_reduced
-    shape_reduced = tuple([
-        ss for ii, ss in enumerate(shape_data)
-        if ii != axis
-    ])
-
-    # shape_sol
-    shape_sol = []
-
-    # lind
-    lind = [range(ss) for ss in shape_reduced]
-
-    # nspect
-    nspect = int(np.prod(shape_reduced))
-
-    # verb init
-    if verb is not False:
-        end = '\r'
-
-    # timing init
-    if timing is True:
-        t0 = dtm.datetime.now()
-
-    # -----------------
-    # initialize
-    # -----------------
-
-    validity = np.zeros(shape_reduced, dtype=int)
-    cost = np.full(shape_reduced, np.nan)
-    nfev = np.full(shape_reduced, np.nan)
-    time = np.full(shape_reduced, np.nan)
-    sol = np.full(shape_sol, np.nan)
-
-    # ----------
-    # slice_sol
-
-    sli_sol = [
-        slice(None) if ii == axis else 0
-        for ii, ss in enumerate(shape_data)
-    ]
-
-    # -----------------
-    # main loop
-    # -----------------
-
-    for ii, ind in enumerate(itt.product(*lind)):
-
-        # -------------
-        # check iok_all
-
-        if not iok_all(ind):
-            validity[ind] = -1
-            continue
-
-        # -------
-        # slices
-
-
-        sli_sol = tuple([])
-
-        # ------
-        # verb
-
-        if verb == 3:
-            msg = f"\nspect {ii+1} / {nspect}"
-            print(msg)
-
-        # -----------
-        # try solving
-
-        try:
-            dti = None
-            t0i = dtm.datetime.now()     # DB
-
-            # optimization
-            res = scpopt.least_squares(
-                func_cost,
-                x0[ii, indx],
-                jac=func_jac,
-                bounds=bounds[:, indx],
-                method=method,
-                ftol=ftol,
-                xtol=xtol,
-                gtol=gtol,
-                x_scale=1.0,
-                f_scale=1.0,
-                loss=loss,
-                diff_step=None,
-                tr_solver=tr_solver,
-                tr_options=tr_options,
-                jac_sparsity=None,
-                max_nfev=max_nfev,
-                verbose=verbscp,
-                args=(),
-                kwargs={
-                    'data': datacost[ii, :],
-                    'scales': scales[ii, :],
-                    'const': const[ii, :],
-                    'indok': dprepare['indok_bool'][ii, :],
-                },
-            )
-            dti = (dtm.datetime.now() - t0i).total_seconds()
-
-            if chain is True and ii < nspect-1:
-                x0[ii+1, indx] = res.x
-
-            # cost, message, time
-            success[ind] = res.success
-            cost[ind] = res.cost
-            nfev[ind] = res.nfev
-            message[ii] = res.message
-            time[ind] = round(
-                (dtm.datetime.now()-t0i).total_seconds(),
-                ndigits=3,
-            )
-            sol_x[ii, indx] = res.x
-            sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]
-
-        # ---------------
-        # manage failures
-
-        except Exception as err:
-            if strict:
-                raise err
-            else:
-                errmsg[ii] = str(err)
-                validity[ii] = -2
-
-    # --------------
-    # prepare output
-    # --------------
-
-    dout = {
-        'validity': validity,
-        'sol': sol,
-        'msg': message,
-        'nfev': nfev,
-        'cost': cost,
-        'success': success,
-        'time': time,
-    }
-
-    return dout
+    return

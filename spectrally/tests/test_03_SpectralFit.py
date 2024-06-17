@@ -9,13 +9,13 @@ import os
 
 
 # Standard
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 # spectrally-specific
 from ._setup_teardown import setup_module0, teardown_module0
 from .._class01_SpectralFit import SpectralFit as Collection
-from .._saveload import load
+# from .._saveload import load
 from . import _spectralfit_input as _inputs
 
 
@@ -68,39 +68,34 @@ class Test00_Populate():
     #   Populating
     # ------------------------
 
+    # -------------
+    # add models
+
     def test00_add_spectral_model(self):
         _inputs.add_models(self.coll)
 
+    # ---------------
+    # 1d spectral fit
+
     def test01_add_spectral_fit_1d(self):
-
-        if self.coll.dobj.get('spect_model') is None:
-            _inputs.add_models(self.coll)
-
         # add spectral fit 1d
-        _inputs.add_fit1d(self.coll, key_data='data1d')
+        _inputs.add_fit(self.coll, key_data='data1d')
 
     def test02_plot_spectral_fit_input_validity_1d(self):
-
-        if self.coll.dobj.get('spect_model') is None:
-            _inputs.add_models(self.coll)
-            _inputs.add_fit1d(self.coll, key_data='data1d')
-
         # plot 1d
-        _inputs._plot_input_validity_1d(self.coll, key_data='data1d')
+        _inputs.plot_input_validity(self.coll, key_data='data1d')
 
-    def test03_add_spectral_fit_2d(self):
+    def test03_compute_spectral_fit_1d(self):
+        # compute 1d
+        _inputs.compute_fit(self.coll, key_data='data1d')
 
-        if self.coll.dobj.get('spect_model') is None:
-            _inputs.add_models(self.coll)
+    # ---------------
+    # 2d spectral fit
 
+    def test04_add_spectral_fit_2d(self):
         # add spectral fit 2d
-        _inputs.add_fit1d(self.coll, key_data='data2d')
+        _inputs.add_fit(self.coll, key_data='data2d')
 
-    def test04_plot_spectral_fit_input_validity_2d(self):
-
-        if self.coll.dobj.get('spect_model') is None:
-            _inputs.add_models(self.coll)
-            _inputs.add_fit1d(self.coll, key_data='data2d')
-
+    def test05_plot_spectral_fit_input_validity_2d(self):
         # plot 2d
-        _inputs._plot_input_validity_1d(self.coll, key_data='data2d')
+        _inputs.plot_input_validity(self.coll, key_data='data2d')

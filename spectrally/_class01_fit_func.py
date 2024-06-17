@@ -1,3 +1,4 @@
+# #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
 created on tue feb 20 14:44:51 2024
@@ -6,14 +7,11 @@ created on tue feb 20 14:44:51 2024
 """
 
 
-import itertools as itt
-
-
-import numpy as np
 import datastock as ds
 
 
 # local
+from . import _class01_fit_func_1d as _1d
 
 
 #############################################
@@ -24,18 +22,19 @@ import datastock as ds
 
 _DFUNC = {
     '1d': {
-        'cost': None,
+        'cost': _1d._get_func_val,
+        'cost': _1d._get_func_cost,
     },
 }
 
 
 #############################################
 #############################################
-#       get func 1d
+#       main
 #############################################
 
 
-def fit1d(
+def main(
     coll=None,
     key=None,
     func=None,
@@ -50,6 +49,9 @@ def fit1d(
         key=key,
         func=func,
     )
+
+    xall= coll.get_spectral_model_variables(key_model, all_free_tied='all')
+
 
     # ----------------
     # get func
@@ -66,12 +68,16 @@ def fit1d(
 
     else:
         dout = {
-            k0: _DFUNC['bs'][k0](
+            k0: _DFUNC['2d'][k0](
                 coll=coll,
                 key=key,
             )
             for k0 in func
         }
+
+    # ----------------
+    # return
+    # ----------------
 
     return dout
 
@@ -92,24 +98,37 @@ def _check(
     # key
     # -------------
 
+    wsm = coll._which_model
     wsf = coll._which_fit
-    lok = list(coll.dobj.get(wsf, {}).keys())
+    lok_m = list(coll.dobj.get(wsm, {}).keys())
+    lok_1d = [
+        k0 for k0, v0 in coll.dobj.get(wsf, {}).items()
+        if v0['key_bs'] is None
+    ]
+    lok_2d = [
+        k0 for k0, v0 in coll.dobj.get(wsf, {}).items()
+        if v0['key_bs'] is not None
+    ]
     key = ds._generic_check._check_var(
         key, 'key',
         types=str,
-        allowed=lok,
+        allowed=lok_m + lok_1d + lok_2d,
     )
 
     # key_bs
-    key_bs = coll.dobj[wsf][key]['key_bs']
+    key_bs = None
+    if key in lok_2d:
+        key_bs = coll.dobj[wsf][key]['key_bs']
 
     # -------------
     # func
     # -------------
 
+    if func is None:
+        func = ['val']
     if isinstance(func, str):
         func = [func]
-    lok = ['cost', 'details', 'jac']
+    lok = ['val', 'cost', 'details', 'jac']
     func = ds._generic_check._check_var_iter(
         func, 'func',
         types=list,
@@ -118,71 +137,3 @@ def _check(
     )
 
     return key, key_bs, func
-
-
-#############################################
-#############################################
-#       model 1d
-#############################################
-
-
-def _get_func_cost_1d():
-
-    def func(
-        x,
-        xscale=xscale,
-        indx=indx,
-        lambrel=lambrel,
-        lambnorm=lambnorm,
-        ibckax=ibckax,
-        ibckrx=ibckrx,
-        ial=ial,
-        iwl=iwl,
-        ishl=ishl,
-        idratiox=idratiox,
-        idshx=idshx,
-        scales=None,
-        coefsal=coefsal[None, :],
-        coefswl=coefswl[None, :],
-        coefssl=coefssl[None, :],
-        offsetal=offsetal[None, :],
-        offsetwl=offsetwl[None, :],
-        offsetsl=offsetsl[None, :],
-        double=dinput['double'],
-        indok=None,
-        const=None,
-        data=np.zeros((x.size,)),
-    ):
-
-        if indok is None:
-            indok = np.ones(lambrel.shape, dtype=bool)
-
-        # xscale = x*scales   !!! scales ??? !!! TBC
-        xscale[indx] = x*scales[indx]
-        xscale[~indx] = const
-
-        # make sure iwl is 2D to get all lines at once
-        amp = xscale[ial] * coefsal + offsetal
-        inv_2wi2 = 1./(2.*(xscale[iwl] * coefswl + offsetwl))
-        shift = xscale[ishl] * coefssl + offsetsl
-
-        # ----------
-        # sum
-
-        y = (
-            np.nansum(
-                amp * np.exp(-(lambnorm[indok, :]-(1 + shift))**2 * inv_2wi2),
-                axis=1,
-            )
-            + xscale[ibckax] * np.exp(xscale[ibckrx] * lambrel[indok])
-        )
-
-        # ----------
-        # return
-
-        return y - data[iok]
-
-    # -----------
-    # return func
-
-    return func
