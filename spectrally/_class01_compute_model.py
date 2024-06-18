@@ -56,15 +56,18 @@ def main(
     data_in = coll.ddata[key_data]['data']
     ref_in = coll.ddata[key_data]['ref']
 
+    iref_nx = ref_in.index(ref_nx)
+    if details is True:
+        iref_nf = -1
+
     # -----------------------
     # prepare loop on indices
 
     key_bs = None
-    iref_model = ref_in.index(ref_nx)
     if key_bs is None:
         lind = [
             range(ss) for ii, ss in enumerate(data_in.shape)
-            if ii != iref_model
+            if ii != iref_nx
         ]
     else:
         raise NotImplementedError()
@@ -76,8 +79,8 @@ def main(
     shape_out = list(data_in.shape)
     ref_out = list(ref_in)
 
-    shape_out[iref_model] = lamb.size
-    ref_out[iref_model] = ref_lamb
+    shape_out[iref_nx] = lamb.size
+    ref_out[iref_nx] = ref_lamb
     if details is True:
         shape_out.append(coll.dref[ref_nf]['size'])
         ref_out.append(ref_nf)
@@ -94,6 +97,7 @@ def main(
             key=key_model,
             func='details',
         )
+
     else:
         func = coll.get_spectral_fit_func(
             key=key_model,
@@ -104,19 +108,29 @@ def main(
     # compute
     # ----------------
 
+    # --------------
+    # prepare slices
+
+    # slices
+    if details is True:
+        sli_in = tuple([])
+        sli_out = tuple([])
+    else:
+        sli_in = tuple([])
+        sli_out = tuple([])
+
+    # -------
+    # loop
+
     for ind in itt.product(*lind):
 
-        # slices
-        if details is True:
-            sli_in = tuple([])
-            sli_out = tuple([])
-        else:
-            sli_in = tuple([])
-            sli_out = tuple([])
+        # update slices
+        sli_in[] = ind
+        sli_out[] = ind
 
         # call func
-        data_out[sli_out] = func(
-            x_free=data_in[sli_in],
+        data_out[tuple(sli_out)] = func(
+            x_free=data_in[tuple(sli_in)],
             lamb=lamb,
         )
 
@@ -231,5 +245,9 @@ def _check(
 
 def _err_lamb(lamb):
     msg = (
+        "Arg lamb nust be either:\n"
+        "\t- 1d np.ndarray with finite values only\n"
+        "\t- str: a key to an existing 1d vector with finite values only\n"
+        "Provided:\n{lamb}"
     )
     raise Exception(msg)
