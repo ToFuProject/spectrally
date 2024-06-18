@@ -226,9 +226,48 @@ class SpectralFit(Previous):
 
         return
 
-    # -------------------
-    # plot spectral fit
-    # -------------------
+    # ----------------------------
+    # plot spectral modela and fit
+    # ----------------------------
+
+    def plot_spectral_model(
+        self,
+        key_model=None,
+        key_data=None,
+        lamb=None,
+        # options
+        dprop=None,
+        vmin=None,
+        vmax=None,
+        # figure
+        dax=None,
+        fs=None,
+        dmargin=None,
+        tit=None,
+    ):
+        """ Plot a spectral model using specified data
+
+        lamb can be:
+            - a key to an existing vector
+            - a user-provided vector (1d np.ndarray)
+
+        """
+
+        return _plot_model.main(
+            coll=self,
+            key_model=key_model,
+            key_data=key_data,
+            lamb=lamb,
+            # options
+            dprop=dprop,
+            vmin=vmin,
+            vmax=vmax,
+            # figure
+            dax=dax,
+            fs=fs,
+            dmargin=dmargin,
+            tit=tit,
+        )
 
     def plot_spectral_fit_input_validity(
         self,
