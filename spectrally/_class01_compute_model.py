@@ -33,7 +33,8 @@ def main(
     # -----------------
 
     (
-        key_model, ref_nfree, ref_nfunc, key_data,
+        key_model, ref_nx, ref_nf,
+        key_data,
         key_lamb, lamb, ref_lamb,
         details,
     ) = _check(
@@ -59,7 +60,7 @@ def main(
     # prepare loop on indices
 
     key_bs = None
-    iref_model = ref_in.index(ref_model)
+    iref_model = ref_in.index(ref_nx)
     if key_bs is None:
         lind = [
             range(ss) for ii, ss in enumerate(data_in.shape)
@@ -78,8 +79,8 @@ def main(
     shape_out[iref_model] = lamb.size
     ref_out[iref_model] = ref_lamb
     if details is True:
-        shape_out.append(coll.dref[ref_nfunc]['size'])
-        ref_out.append(ref_nfunc)
+        shape_out.append(coll.dref[ref_nf]['size'])
+        ref_out.append(ref_nf)
 
     # data_out
     data_out = np.full(tuple(shape_out), np.nan)
@@ -159,7 +160,8 @@ def _check(
     )
 
     # derive ref_model
-    ref_model = coll.dobj[wsm][key_model]['ref']
+    ref_nf = coll.dobj[wsm][key_model]['ref_nf']
+    ref_nx = coll.dobj[wsm][key_model]['ref_nx']
 
     # ----------
     # key_data
@@ -168,7 +170,7 @@ def _check(
     # list of acceptable values
     lok = [
         k0 for k0, v0 in coll.ddata.items()
-        if ref_model in v0['ref']
+        if ref_nx in v0['ref']
     ]
 
     # check
@@ -190,6 +192,9 @@ def _check(
         if not c0:
             _err_lamb(lamb)
 
+        key_lamb = None
+        ref_lamb = None
+
     elif isinstance(lamb, str):
         c0 = (
             lamb in coll.ddata.keys()
@@ -198,6 +203,10 @@ def _check(
         )
         if not c0:
             _err_lamb(lamb)
+
+        key_lamb = lamb
+        lamb = coll.ddata[key_lamb]['data']
+        ref_lamb = coll.ddata[key_lamb]['ref'][0]
 
     else:
         _err_lamb(lamb)
@@ -212,7 +221,12 @@ def _check(
         default=False,
     )
 
-    return key_model, ref_model, key_data, lamb, details
+    return (
+        key_model, ref_nx, ref_nf,
+        key_data,
+        key_lamb, lamb, ref_lamb,
+        details,
+    )
 
 
 def _err_lamb(lamb):
