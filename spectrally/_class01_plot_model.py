@@ -89,6 +89,11 @@ def main(
     ndim = data.ndim
 
     # -----------------
+    # compute
+    # -----------------
+
+
+    # -----------------
     # plot
     # -----------------
 
@@ -134,11 +139,13 @@ def main(
     # Complenent
     # -----------------
 
+    # get figure handle
     if isinstance(dax, dict):
         fig = list(dax.values())[0]['handle'].figure
     else:
         fig = list(dax.dax.values())[0]['handle'].figure
 
+    # add title
     if tit is not False:
         fig.suptitle(tit, size=14, fontweight='bold')
 
@@ -146,9 +153,11 @@ def main(
     # connect interactivity
     # ----------------------
 
+    # ndim = 1 => no interactivity
     if ndim == 1:
         return dax
 
+    # connect interactivity
     elif connect is True:
         dax.setup_interactivity(
             kinter='inter0', dgroup=dgroup, dinc=dinc,
@@ -159,6 +168,7 @@ def main(
         dax.show_commands(verb=show_commands)
         return dax
 
+    # interactivity not connected
     else:
         return dax, dgroup
 
@@ -190,12 +200,9 @@ def _check(
     tit=None,
 ):
 
-    # -----------------
-    # key
-    # -----------------
-
     # ----------
     # key_model
+    # ----------
 
     wsm = coll._which_model
     key_model = ds._generic_check._check_var(
@@ -211,25 +218,55 @@ def _check(
         concatenate=True,
     )['free']
 
+    # derive ref_model
+    ref_model = coll.dobj[wsm][key_model]['ref']
+
     # ----------
     # key_data
+    # ----------
 
+    # list of acceptable values
     lok = [
         k0 for k0, v0 in coll.ddata.items()
         if ref_model in v0['ref']
     ]
+
+    # check
     key_data = ds._generic_check._check_var(
         key_data, 'key_data',
         types=str,
         allowed=lok,
     )
 
+    # derive ndim
+    ndim = coll.ddata[key_data]['data'].ndim
+    if ndim > 1:
+        msg = "plot_spectral_model() not implemented for ndim > 1"
+        raise NotImplementedError(msg)
+
     # -----------------
     # lamb
     # -----------------
 
+    if isinstance(lamb, np.ndarray):
+        c0 = (
+            lamb.ndim == 1
+            and np.all(np.isifinite(lamb))
+        )
+        if not c0:
+            _err_lamb(lamb)
 
+    elif isinstance(lamb, str):
+        c0 = (
+            lamb in coll.ddata.keys()
+            and coll.ddata[lamb]['data'].ndim == 1
+            and np.all(np.isifinite(coll.ddata[lamb]['data']))
+        )
+        if not c0:
+            _err_lamb(lamb)
 
+    else:
+        _err_lamb(lamb)
 
     # -----------------
     # details
@@ -238,7 +275,7 @@ def _check(
     details = ds._generic_check._check_var(
         details, 'details',
         types=bool,
-        allowed=True,
+        default=True,
     )
 
     return (
@@ -247,6 +284,12 @@ def _check(
         details,
         dprop, vmin, vmax, tit,
     )
+
+
+def _err_lamb(lamb):
+    msg = (
+    )
+    raise Exception(msg)
 
 
 #############################################
@@ -272,13 +315,10 @@ def _plot_1d(
     # prepare
     # -----------------
 
-    wsf = coll._which_fit
-    lamb = coll.ddata[coll.dobj[wsf][key]['key_lamb']]['data']
-    data = coll.ddata[coll.dobj[wsf][key]['key_data']]['data']
-
-    dvalid = coll.dobj[wsf][key]['dvalid']
-    iok = coll.ddata[dvalid['iok']]['data']
-    frac = dvalid['frac'][0]
+    wsm = coll._which_model
+    if isinstance(lamb, str):
+        lamb = coll.ddata[lamb]['data']
+    data = coll.ddata[key_data]['data']
 
     # -----------------
     # prepare figure
@@ -415,20 +455,3 @@ def _get_dax_1d(
 #############################################
 #       plot 2d
 #############################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
