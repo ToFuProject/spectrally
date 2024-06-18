@@ -28,7 +28,7 @@ def _get_func_val(
     x_free=None,
     dconstraints=None,
     dind=None,
-    param=None,
+    param_val=None,
 ):
 
     # --------------
@@ -58,7 +58,7 @@ def _get_func_val(
         def func(
             x_free=None,
             lamb=None,
-            param=param,
+            param_val=param_val,
             n_all=n_all,
             c0=c0,
             c1=c1,
@@ -115,7 +115,7 @@ def _get_func_val(
                 amp = x_full[dind[kfunc]['amp']]
                 width = x_full[dind[kfunc]['width']]
                 shift = x_full[dind[kfunc]['shift']]
-                lamb0 = param[dind[kfunc]['lamb0']]
+                lamb0 = param_val[dind[kfunc]['lamb0']]
 
                 val += amp * np.exp(-(lamb - lamb0*(1 + shift)**2)/width**2)
 
@@ -128,7 +128,7 @@ def _get_func_val(
                 amp = x_full[dind[kfunc]['amp']]
                 gam = x_full[dind[kfunc]['gamma']]
                 shift = x_full[dind[kfunc]['shift']]
-                lamb0 = param[dind[kfunc]['lamb0']]
+                lamb0 = param_val[dind[kfunc]['lamb0']]
 
                 val += (
                     amp * (0.5/np.pi) * gam

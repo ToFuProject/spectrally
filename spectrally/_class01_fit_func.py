@@ -50,11 +50,11 @@ def main(
         func=func,
     )
 
-    param = coll.get_spectral_model_variables(
+    param_val = coll.get_spectral_model_variables(
         key_model,
-        returnas='param',
+        returnas='param_value',
         concatenate=True,
-    )['param']
+    )['param_value']
 
     dind = coll.get_spectral_model_variables_dind(key_model)
 
@@ -68,7 +68,7 @@ def main(
                 coll=coll,
                 key=key,
                 dind=dind,
-                param=param,
+                param_val=param_val,
             )
             for k0 in func
         }

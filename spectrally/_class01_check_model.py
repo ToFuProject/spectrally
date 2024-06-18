@@ -306,7 +306,7 @@ def _get_var(
         types=(list, tuple),
         types_iter=str,
         default=['all', 'param'],
-        allowed=['all', 'free', 'tied', 'param'],
+        allowed=['all', 'free', 'tied', 'param_key', 'param_value'],
     )
 
     # concatenate
@@ -360,9 +360,15 @@ def _get_var(
     # ---------------
     # parameters
 
-    if 'param' in returnas:
-        dout['param'] = [
+    if 'param_key' in returnas:
+        dout['param_key'] = [
             [f"{k0}_{k1}" for (k1, v1) in _DMODEL[dmodel[k0]['type']]['param']]
+            for k0 in keys if dmodel[k0].get('param') is not None
+        ]
+
+    if 'param_value' in returnas:
+        dout['param_value'] = [
+            [dmodel[k0]['param'][k1] for (k1, v1) in _DMODEL[dmodel[k0]['type']]['param']]
             for k0 in keys if dmodel[k0].get('param') is not None
         ]
 
@@ -373,6 +379,9 @@ def _get_var(
     if concatenate is True:
         for k0, v0 in dout.items():
             dout[k0] = list(itt.chain.from_iterable(v0))
+
+            if k0 == 'param_value':
+                dout[k0] = np.array(dout[k0])
 
     # ----------------
     # return
@@ -415,11 +424,11 @@ def _get_var_dind(
 
     dout = coll.get_spectral_model_variables(
         key,
-        returnas=['all', 'param'],
+        returnas=['all', 'param_key', 'param_value'],
         concatenate=True,
     )
     x_all = dout['all']
-    param = dout['param']
+    param_key = dout['param_key']
 
     # ---------------
     # derive dind
@@ -443,9 +452,12 @@ def _get_var_dind(
         }
 
         # add param
-        # if dmodel[lf[0]].get('param') is not None:
-        #     for kpar in dmodel[lf[0]]['param'].keys():
-        #         dind[kpar] = []
+        if dmodel[lf[0]].get('param') is not None:
+            for kpar in dmodel[lf[0]]['param'].keys():
+                dind[ktype][kpar] = [
+                    param_key.index(f"{kf}_{kpar}")
+                    for kf in lf
+                ]
 
     # ---------------
     # safety checks
@@ -456,6 +468,7 @@ def _get_var_dind(
         list(itt.chain.from_iterable([
             v1['keys']
             for k1, v1 in vtype.items()
+            if not isinstance(v1, list)
         ]))
         for ktype, vtype in dind.items()
     ]))
@@ -465,6 +478,7 @@ def _get_var_dind(
         list(itt.chain.from_iterable([
             v1['ind']
             for k1, v1 in vtype.items()
+            if not isinstance(v1, list)
         ]))
         for ktype, vtype in dind.items()
     ]))
