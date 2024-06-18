@@ -48,13 +48,13 @@ def _dconstraints(
     # store
     # --------------
 
-    # nfree_model
+    # add ref_nx (number of free parameters)
     knfree = f"nx_{key}"
-    coll.add_ref(knfree, size=len(dconstraints))
+    coll.add_ref(knfree, size=len(dconstraints['groups']))
 
     # dconstraints
     wsm = coll._which_model
-    coll._dobj[wsm][key]['ref'] = knfree
+    coll._dobj[wsm][key]['ref_nx'] = knfree
     coll._dobj[wsm][key]['dconstraints'] = dconstraints
 
     return

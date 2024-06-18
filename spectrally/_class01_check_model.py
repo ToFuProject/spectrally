@@ -97,12 +97,17 @@ def _dmodel(
     # store
     # --------------
 
+    # add ref_nfun
+    knfunc = f"nf_{key}"
+    coll.add_ref(knfunc, size=len(dmodel))
+
     # dmodel
     dobj = {
         wsm: {
             key: {
                 'keys': sorted(dmodel.keys()),
-                'ref': None,
+                'ref_nx': None,
+                'ref_nf': knfunc,
                 'dmodel': dmodel,
                 'dconstraints': None,
             },
