@@ -114,7 +114,7 @@ class SpectralFit(Previous):
     def get_spectral_model_variables(
         self,
         key=None,
-        all_free_tied=None,
+        returnas=None,
         concatenate=None,
     ):
         """ Get ordered list of individual variable names """
@@ -122,7 +122,7 @@ class SpectralFit(Previous):
         return _check_model._get_var(
             coll=self,
             key=key,
-            all_free_tied=all_free_tied,
+            returnas=returnas,
             concatenate=concatenate,
         )
 

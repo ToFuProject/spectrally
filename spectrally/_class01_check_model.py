@@ -19,26 +19,26 @@ _DMODEL = {
 
     # ----------
     # background
-    'linear': {'var': ['c0', 'c1']},
+    'linear': {'var': ['a0', 'a1']},
     'exp': {'var': ['amp', 'rate']},
 
     # --------------
     # spectral lines
     'gauss': {
-        'var': ['amp', 'x0', 'width'],
-        'param': {'lamb0': float},
+        'var': ['amp', 'shift', 'width'],
+        'param': [('lamb0', float)],
     },
     'lorentz': {
-        'var': ['amp', 'x0', 'gamma'],
-        'param': {'lamb0': float},
+        'var': ['amp', 'shift', 'gamma'],
+        'param': [('lamb0', float)],
     },
     'pvoigt': {
-        'var': ['amp', 'x0', 'width', 't', 'gamma'],
-        'param': {'lamb0': float},
+        'var': ['amp', 'shift', 'width', 't', 'gamma'],
+        'param': [('lamb0', float)],
     },
     'voigt': {
-        'var': ['amp', 'x0', 'width', 'gamma'],
-        'param': {'lamb0': float},
+        'var': ['amp', 'shift', 'width', 'gamma'],
+        'param': [('lamb0', float)],
     },
 
     # -----------
@@ -126,8 +126,8 @@ def _dmodel_err(key, dmodel):
         if v0.get('param') is None:
             stri = f"\t- 'f{ii}': '{k0}'"
         else:
-            dpar = v0['param']
-            pstr = ", ".join([f"'{k1}': {v1}" for k1, v1 in dpar.items()])
+            lpar = v0['param']
+            pstr = ", ".join([f"'{k1}': {v1}" for (k1, v1) in lpar])
             stri = f"\t- 'f{ii}': " + "{" + f"'type': '{k0}', {pstr}" + "}"
 
         if k0 == 'linear':
@@ -220,25 +220,25 @@ def _check_dmodel(
         haspar = _DMODEL[typ].get('param') is not None
         if haspar is True:
 
-            dpar = _DMODEL[typ]['param']
+            lpar = _DMODEL[typ]['param']
             c0 = (
                 isinstance(v0, dict)
                 and all([
                     isinstance(v0.get(kpar), vpar)
-                    for kpar, vpar in dpar.items()
+                    for (kpar, vpar) in lpar
                 ])
             )
 
             # all parameters properly defined
             if c0:
-                dpar = {kpar: v0[kpar] for kpar in dpar.keys()}
+                dpar = {kpar: v0[kpar] for (kpar, vpar) in lpar}
 
             else:
 
                 # check if lamb0 can be extracted from existing lines
                 c1 = (
                     typ in ['gauss', 'lorentz', 'pvoigt', 'voigt']
-                    and len(dpar) == 1
+                    and len(lpar) == 1
                     and k1 in coll.dobj.get(wsl, {}).keys()
                 )
                 if c1:
@@ -278,6 +278,7 @@ def _get_var(
     key=None,
     all_free_tied=None,
     concatenate=None,
+    returnas=None,
 ):
 
     # --------------
@@ -297,12 +298,15 @@ def _get_var(
     keys = coll.dobj[wsm][key]['keys']
     dmodel = coll.dobj[wsm][key]['dmodel']
 
-    # free_only
-    all_free_tied = ds._generic_check._check_var(
-        all_free_tied, 'all_free_tied',
-        types=str,
-        default='all',
-        allowed=['all', 'free', 'tied'],
+    # returnas
+    if isinstance(returnas, str):
+        returnas = [returnas]
+    returnas = ds._generic_check._check_var_iter(
+        returnas, 'returnas',
+        types=(list, tuple),
+        types_iter=str,
+        default=['all', 'param'],
+        allowed=['all', 'free', 'tied', 'param'],
     )
 
     # concatenate
@@ -316,32 +320,50 @@ def _get_var(
     # get lvar
     # -------------
 
+    dout = {}
+
+    # ---------------
     # all variables
-    if all_free_tied == 'all':
-        lvar = [
+
+    if 'all' in returnas:
+        dout['all'] = [
             [f"{k0}_{k1}" for k1 in dmodel[k0]['var']]
             for k0 in keys
         ]
 
-    # only free or only tied variables
-    else:
+    # -----------------------
+    # free or tied variables
+
+    if 'free' in returnas or 'tied' in returnas:
         dconstraints = coll.dobj[wsm][key]['dconstraints']
         lref = [v0['ref'] for v0 in dconstraints['dconst'].values()]
 
         # lvar
-        lvar = [
-            [
-                f"{k0}_{k1}" for k1 in dmodel[k0]['var']
-                if (
-                        all_free_tied == 'free'
-                        and f"{k0}_{k1}" in lref
-                    )
-                or (
-                    all_free_tied == 'tied'
-                    and f"{k0}_{k1}" not in lref
-                )
+        if 'free' in returnas:
+            dout['free'] = [
+                [
+                    f"{k0}_{k1}" for k1 in dmodel[k0]['var']
+                    if all_free_tied == 'free' and f"{k0}_{k1}" in lref
+                ]
+                for k0 in keys
             ]
-            for k0 in keys
+
+        if 'tied' in returnas:
+            dout['tied'] = [
+                [
+                    f"{k0}_{k1}" for k1 in dmodel[k0]['var']
+                    if all_free_tied == 'tied' and f"{k0}_{k1}" not in lref
+                ]
+                for k0 in keys
+            ]
+
+    # ---------------
+    # parameters
+
+    if 'param' in returnas:
+        dout['param'] = [
+            [f"{k0}_{k1}" for (k1, v1) in _DMODEL[dmodel[k0]['type']]['param']]
+            for k0 in keys if dmodel[k0].get('param') is not None
         ]
 
     # ----------------
@@ -349,9 +371,14 @@ def _get_var(
     # ----------------
 
     if concatenate is True:
-        lvar = list(itt.chain.from_iterable(lvar))
+        for k0, v0 in dout.items():
+            dout[k0] = list(itt.chain.from_iterable(v0))
 
-    return lvar
+    # ----------------
+    # return
+    # ----------------
+
+    return dout
 
 
 #############################################
@@ -383,10 +410,16 @@ def _get_var_dind(
     dmodel = coll.dobj[wsm][key]['dmodel']
 
     # -------------
-    # get lvar
+    # get lvar and param
     # -------------
 
-    x_all = coll.get_spectral_model_variables(key, all_free_tied='all')
+    dout = coll.get_spectral_model_variables(
+        key,
+        returnas=['all', 'param'],
+        concatenate=True,
+    )
+    x_all = dout['all']
+    param = dout['param']
 
     # ---------------
     # derive dind
@@ -408,6 +441,11 @@ def _get_var_dind(
             }
             for k1 in dmodel[lf[0]]['var']
         }
+
+        # add param
+        # if dmodel[lf[0]].get('param') is not None:
+        #     for kpar in dmodel[lf[0]]['param'].keys():
+        #         dind[kpar] = []
 
     # ---------------
     # safety checks
