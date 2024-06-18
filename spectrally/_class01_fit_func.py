@@ -50,9 +50,11 @@ def main(
         func=func,
     )
 
-    x_all = coll.get_spectral_model_variables(key_model, all_free_tied='all')
-    x_free = coll.get_spectral_model_variables(key_model, all_free_tied='free')
-    x_tied = coll.get_spectral_model_variables(key_model, all_free_tied='tied')
+    param = coll.get_spectral_model_variables(
+        key_model,
+        returnas='param',
+        concatenate=True,
+    )['param']
 
     dind = coll.get_spectral_model_variables_dind(key_model)
 
@@ -65,6 +67,8 @@ def main(
             k0: _DFUNC['1d'][k0](
                 coll=coll,
                 key=key,
+                dind=dind,
+                param=param,
             )
             for k0 in func
         }

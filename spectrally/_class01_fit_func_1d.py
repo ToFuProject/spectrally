@@ -28,6 +28,7 @@ def _get_func_val(
     x_free=None,
     dconstraints=None,
     dind=None,
+    param=None,
 ):
 
     # --------------
@@ -57,6 +58,7 @@ def _get_func_val(
         def func(
             x_free=None,
             lamb=None,
+            param=param,
             n_all=n_all,
             c0=c0,
             c1=c1,
@@ -104,14 +106,6 @@ def _get_func_val(
 
                 val += amp * np.exp(lamb * rate)
 
-            # ------------------
-            # sum all pulse_exp
-
-            kfunc = 'pulse_exp'
-            if dind.get(kfunc) is not None:
-
-                pass
-
             # -----------------
             # sum all gaussians
 
@@ -121,7 +115,7 @@ def _get_func_val(
                 amp = x_full[dind[kfunc]['amp']]
                 width = x_full[dind[kfunc]['width']]
                 shift = x_full[dind[kfunc]['shift']]
-                lamb0 = x_full[dind[kfunc]['lamb0']]
+                lamb0 = param[dind[kfunc]['lamb0']]
 
                 val += amp * np.exp(-(lamb - lamb0*(1 + shift)**2)/width**2)
 
@@ -134,7 +128,7 @@ def _get_func_val(
                 amp = x_full[dind[kfunc]['amp']]
                 gam = x_full[dind[kfunc]['gamma']]
                 shift = x_full[dind[kfunc]['shift']]
-                lamb0 = x_full[dind[kfunc]['lamb0']]
+                lamb0 = param[dind[kfunc]['lamb0']]
 
                 val += (
                     amp * (0.5/np.pi) * gam
@@ -151,8 +145,29 @@ def _get_func_val(
                 pass
 
 
+            # ------------------
+            # sum all pulse1
 
+            kfunc = 'pulse1'
+            if dind.get(kfunc) is not None:
 
+                pass
+
+            # ------------------
+            # sum all pulse2
+
+            kfunc = 'pulse2'
+            if dind.get(kfunc) is not None:
+
+                pass
+
+            # ------------------
+            # sum all lognorm
+
+            kfunc = 'lognorm'
+            if dind.get(kfunc) is not None:
+
+                pass
 
 
 

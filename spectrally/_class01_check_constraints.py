@@ -87,9 +87,9 @@ def _check(
 
     lvar = coll.get_spectral_model_variables(
         key,
-        all_free_tied='all',
+        returnas='all',
         concatenate=True,
-    )
+    )['all']
 
     # -------------
     # trivial
