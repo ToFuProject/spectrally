@@ -185,25 +185,25 @@ def add_models(coll=None):
     # dmodels
 
     dmodel = {
-        'model-1': {
+        'sm-1': {
             'bck0': 'linear',
             'l00': 'gauss',
             'l01': 'gauss',
             'l02': 'lorentz',
         },
-        'model00': {
+        'sm00': {
             'bck0': 'linear',
             'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
             'l01': {'type': 'gauss', 'lamb0': 3.95e-10},
             'l02': {'type': 'lorentz', 'lamb0': 3.97e-10},
         },
-        'model01': {
+        'sm01': {
             'bck0': 'exp',
             'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
             'sl00': 'lorentz',
             'l02': {'type': 'pvoigt', 'lamb0': 3.97e-10},
         },
-        'model02': {
+        'sm02': {
             'bck0': 'exp',
             'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
             'l01': {'type': 'lorentz', 'lamb0': 3.95e-10},
@@ -217,8 +217,8 @@ def add_models(coll=None):
     # check err
     try:
         coll.add_spectral_model(
-            key='model-1',
-            dmodel=dmodel['model-1'],
+            key='sm-1',
+            dmodel=dmodel['sm-1'],
             dconstraints=None,
         )
         raise Exception('sucess')
@@ -228,15 +228,15 @@ def add_models(coll=None):
 
     # no constraints
     coll.add_spectral_model(
-        key='model00',
-        dmodel=dmodel['model00'],
+        key='sm00',
+        dmodel=dmodel['sm00'],
         dconstraints=None,
     )
 
     # with constraints
     coll.add_spectral_model(
-        key='model01',
-        dmodel=dmodel['model01'],
+        key='sm01',
+        dmodel=dmodel['sm01'],
         dconstraints={
             'g00': {'ref': 'l00_amp', 'sl00_amp': [0, 1, 0]},
             'g01': {'ref': 'l00_width', 'sl00_gamma': [0, 1, 0]},
@@ -245,8 +245,8 @@ def add_models(coll=None):
 
     # with voigt
     coll.add_spectral_model(
-        key='model02',
-        dmodel=dmodel['model02'],
+        key='sm02',
+        dmodel=dmodel['sm02'],
         dconstraints={
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
             'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
@@ -302,7 +302,7 @@ def add_fit(coll=None, key_data=None):
         try:
             coll.add_spectral_fit(
                 key=None,
-                key_model='model00',
+                key_model='sm00',
                 key_data=key_data,
                 key_sigma=None,
                 key_lamb='lamb',

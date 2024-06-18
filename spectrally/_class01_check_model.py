@@ -97,10 +97,12 @@ def _dmodel(
     # store
     # --------------
 
+    # dmodel
     dobj = {
         wsm: {
             key: {
                 'keys': sorted(dmodel.keys()),
+                'ref': None,
                 'dmodel': dmodel,
                 'dconstraints': None,
             },

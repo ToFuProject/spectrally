@@ -10,7 +10,6 @@ import itertools as itt
 
 
 import numpy as np
-import datastock as ds
 
 
 #############################################
@@ -49,7 +48,13 @@ def _dconstraints(
     # store
     # --------------
 
+    # nfree_model
+    knfree = f"nx_{key}"
+    coll.add_ref(knfree, size=len(dconstraints))
+
+    # dconstraints
     wsm = coll._which_model
+    coll._dobj[wsm][key]['ref'] = knfree
     coll._dobj[wsm][key]['dconstraints'] = dconstraints
 
     return
