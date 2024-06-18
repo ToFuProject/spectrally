@@ -10,6 +10,7 @@ from . import _class01_check_model as _check_model
 from . import _class01_check_constraints as _check_constraints
 from . import _class01_check_fit as _check_fit
 from . import _class01_fit_func as _fit_func
+from . import _class01_compute_model as _compute_model
 from . import _class01_compute_fit as _compute_fit
 from . import _class01_plot_valid as _plot_valid
 
@@ -135,6 +136,47 @@ class SpectralFit(Previous):
         return _check_model._get_var_dind(
             coll=self,
             key=key,
+        )
+
+    # ----------------------
+    # interpolate spectral model
+    # ----------------------
+
+    def interpolate_spectral_model(
+        self,
+        key_model=None,
+        key_data=None,
+        lamb=None,
+        # options
+        details=None,
+    ):
+        """ Interpolate the spectral model at lamb using key_data
+
+
+        Parameters
+        ----------
+        key_model : str, optional
+            key to the desired spectral model
+        key_data : str, optional
+            key to the data to be used for the model's free variables
+                - has to have the model's ref in its own references
+        lamb : str/np.ndarray
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        dout : dict
+            output dict of interpolated data, with units and ref
+
+        """
+
+        return _compute_model.main(
+            coll=self,
+            key_model=key_model,
+            key_data=key_data,
+            lamb=lamb,
+            # options
+            details=details,
         )
 
     # ###################
