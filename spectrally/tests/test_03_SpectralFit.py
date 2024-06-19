@@ -74,28 +74,37 @@ class Test00_Populate():
     def test00_add_spectral_model(self):
         _inputs.add_models(self.coll)
 
+    def test01_get_spectral_model_func(self):
+        _inputs.get_spectral_model_func(self.coll)
+
+    def test02_interpolate_spectral_model(self):
+        _inputs.interpolate_spectral_model(self.coll)
+
+    def test03_plot_spectral_model(self):
+        _inputs.plot_spectral_model(self.coll)
+
     # ---------------
     # 1d spectral fit
 
-    def test01_add_spectral_fit_1d(self):
+    def test04_add_spectral_fit_1d(self):
         # add spectral fit 1d
         _inputs.add_fit(self.coll, key_data='data1d')
 
-    def test02_plot_spectral_fit_input_validity_1d(self):
+    def test05_plot_spectral_fit_input_validity_1d(self):
         # plot 1d
         _inputs.plot_input_validity(self.coll, key_data='data1d')
 
-    def test03_compute_spectral_fit_1d(self):
+    def test06_compute_spectral_fit_1d(self):
         # compute 1d
         _inputs.compute_fit(self.coll, key_data='data1d')
 
     # ---------------
     # 2d spectral fit
 
-    def test04_add_spectral_fit_2d(self):
+    def test07_add_spectral_fit_2d(self):
         # add spectral fit 2d
         _inputs.add_fit(self.coll, key_data='data2d')
 
-    def test05_plot_spectral_fit_input_validity_2d(self):
+    def test08_plot_spectral_fit_input_validity_2d(self):
         # plot 2d
         _inputs.plot_input_validity(self.coll, key_data='data2d')

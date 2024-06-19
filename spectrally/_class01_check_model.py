@@ -283,7 +283,6 @@ def _check_dmodel(
 def _get_var(
     coll=None,
     key=None,
-    all_free_tied=None,
     concatenate=None,
     returnas=None,
 ):
@@ -350,7 +349,7 @@ def _get_var(
             dout['free'] = [
                 [
                     f"{k0}_{k1}" for k1 in dmodel[k0]['var']
-                    if all_free_tied == 'free' and f"{k0}_{k1}" in lref
+                    if f"{k0}_{k1}" in lref
                 ]
                 for k0 in keys
             ]
@@ -359,7 +358,7 @@ def _get_var(
             dout['tied'] = [
                 [
                     f"{k0}_{k1}" for k1 in dmodel[k0]['var']
-                    if all_free_tied == 'tied' and f"{k0}_{k1}" not in lref
+                    if f"{k0}_{k1}" not in lref
                 ]
                 for k0 in keys
             ]

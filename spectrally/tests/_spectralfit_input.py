@@ -258,6 +258,189 @@ def add_models(coll=None):
 
 # ###################################################
 # ###################################################
+#               spectral model - func
+# ###################################################
+
+
+def get_spectral_model_func(coll=None):
+
+    # ---------------
+    # check
+
+    if coll.dobj.get('spect_model') is None:
+        add_models(coll)
+
+    # ---------------
+    # get func models
+
+    wsm = coll._which_model
+    for kmodel in coll.dobj[wsm].keys():
+
+        for ff in ['sum', 'cost']: # , 'details', 'jac']:
+
+            try:
+                _ = coll.get_spectral_fit_func(
+                    key=kmodel,
+                    func=ff,
+                )
+
+            except Exception as err:
+                msg = (
+                    "Could not get func for:\n"
+                    f"\t- spectral model: {kmodel}\n"
+                    f"\t- func: {ff}\n"
+                )
+                raise Exception(msg) from err
+
+    return
+
+
+# ###################################################
+# ###################################################
+#               spectral model - interpolate
+# ###################################################
+
+
+def interpolate_spectral_model(coll=None):
+
+    # ---------------
+    # check
+
+    if coll.dobj.get('spect_model') is None:
+        add_models(coll)
+
+    # -------------
+    # lamb
+
+    lamb = np.linspace(3.9, 4, 100)*1e-10
+
+    # --------------
+    # prepare xfree
+
+    # sm00
+    # 'bck0_a0', 'bck0_a1',
+    # 'l00_amp', 'l00_shift', 'l00_width',
+    # 'l01_amp', 'l01_shift', 'l01_width',
+    # 'l02_amp', 'l02_shift', 'l02_gamma'
+
+    # sm01
+    # 'bck0_amp', 'bck0_rate',
+    # 'l00_amp', 'l00_shift', 'l00_width',
+    # 'l02_amp', 'l02_shift', 'l02_width',
+    # 'l02_t', 'l02_gamma', 'sl00_shift'
+
+    # sm02
+    # 'bck0_amp', 'bck0_rate',
+    # 'l00_amp', 'l00_shift', 'l00_width',
+    # 'l01_shift', 'l02_amp', 'l02_shift',
+    # 'l02_width', 'l02_gamma'
+
+    t = coll.ddata['t']['data']
+
+    dxfree = {
+        'sm00': np.r_[
+            0., 0.1,
+            1, 0.01e-10, 0.001e-10,
+            0.8, -0.01e-10, 0.005e-10,
+            1.2, 0., 2,
+        ],
+        'sm01': np.r_[
+            0.1, 0.01,
+            1, 0.01e-10, 0.01e-10,
+            0.8, -0.01e-10, 0.1e-10,
+            1.2, 0., 0.05e-10,
+        ][None, :] * np.exp(-(t[:, None] - np.mean(t))**2 / 2**2),
+        'sm02': np.r_[
+            0.1, -0.01,
+            1, 0.01e-10, 0.01e-10,
+            -0.01e-10, 1, 0.1e-10,
+            0.05e-10, 0.1e-10,
+        ],
+    }
+
+    # ---------------
+    # add model data
+
+    wsm = coll._which_model
+    lkstore = []
+    for ii, kmodel in enumerate(coll.dobj[wsm].keys()):
+
+        # get nx, nf, ref_nx
+        nf, nx = coll.dobj[wsm][kmodel]['dconstraints']['c1'].shape
+        ref_nx = coll.dobj[wsm][kmodel]['ref_nx']
+
+        # xfree
+        xfree = dxfree[kmodel]
+        if xfree.ndim == 2:
+            ref = (coll.ddata['t']['ref'][0], ref_nx)
+        else:
+            ref = (ref_nx,)
+
+        # add_data
+        kdata = f"xfree_{kmodel}"
+        coll.add_data(
+            key=kdata,
+            data=xfree,
+            ref=ref,
+        )
+
+        # interpolate
+        for jj, details in enumerate([False]): # , True]:
+            for kk, store in enumerate([False, True]):
+
+                store_key = f'interp_{kmodel}_{jj}_{kk}'
+                lambi = ('lamb' if store else lamb)
+                dout = coll.interpolate_spectral_model(
+                    key_model=kmodel,
+                    key_data=kdata,
+                    lamb=lambi,
+                    # details
+                    details=details,
+                    # store
+                    returnas=None,
+                    store=store,
+                    store_key=store_key,
+                )
+
+                if store:
+                    lkstore.append(store_key)
+
+        # remove data
+        coll.remove_data(kdata)
+
+    # remove stored output
+    # for sk in lkstore::
+        # coll.remove_data(store_key)
+
+    return
+
+
+# ###################################################
+# ###################################################
+#               spectral model - plot
+# ###################################################
+
+
+def plot_spectral_model(coll=None):
+
+    # ---------------
+    # check
+
+    if coll.dobj.get('spect_model') is None:
+        add_models(coll)
+
+    # ---------------
+    # get func models
+
+    wsm = coll._which_model
+    for kmodel in coll.dobj[wsm].keys():
+        pass
+
+    return
+
+
+# ###################################################
+# ###################################################
 #               spectral fit - add
 # ###################################################
 

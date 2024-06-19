@@ -7,6 +7,7 @@ created on tue feb 20 14:44:51 2024
 """
 
 
+import numpy as np
 import datastock as ds
 
 
@@ -22,8 +23,10 @@ from . import _class01_fit_func_1d as _1d
 
 _DFUNC = {
     '1d': {
-        'val': _1d._get_func_val,
-        # 'cost': _1d._get_func_cost,
+        'sum': _1d._get_func_sum,
+        'cost': _1d._get_func_cost,
+        # 'details': _1d._get_func_details,
+        # 'jac': _1d._get_func_jac,
     },
 }
 
@@ -50,13 +53,51 @@ def main(
         func=func,
     )
 
+    # ----------------
+    # prepare
+    # ----------------
+
+    # n_all
+    n_all = len(coll.get_spectral_model_variables(
+        key=key_model,
+        returnas='all',
+        concatenate=True,
+    )['all'])
+
+    # param_val
     param_val = coll.get_spectral_model_variables(
         key_model,
         returnas='param_value',
         concatenate=True,
     )['param_value']
 
+    # dind
     dind = coll.get_spectral_model_variables_dind(key_model)
+
+    # ----------------
+    # dconstraints
+    # ----------------
+
+    # dconstraints
+    wsm = coll._which_model
+    dconstraints = coll.dobj[wsm][key_model]['dconstraints']
+
+    # coefs
+    c0 = dconstraints['c0']
+    c1 = dconstraints['c1']
+    c2 = dconstraints['c2']
+
+    # check is constraints
+    no_constraints = (
+        np.allclose(c0, 0)
+        and np.allclose(c1, 0.)
+        and np.allclose(c2, 0.)
+    )
+    if no_constraints:
+        assert c0.shape == (n_all,), c0.shape
+        assert c1.shape == (n_all, n_all), c1.shape
+        assert c2.shape == (n_all, n_all), c2.shape
+        c0, c1, c2 = None, None, None
 
     # ----------------
     # get func
@@ -65,8 +106,9 @@ def main(
     if key_bs is None:
         dout = {
             k0: _DFUNC['1d'][k0](
-                coll=coll,
-                key=key,
+                c0=c0,
+                c1=c1,
+                c2=c2,
                 dind=dind,
                 param_val=param_val,
             )
@@ -137,11 +179,12 @@ def _check(
     # func
     # -------------
 
+    lok = list(_DFUNC['1d'].keys())
     if func is None:
-        func = ['val']
+        func = lok[0]
     if isinstance(func, str):
         func = [func]
-    lok = ['val', 'cost', 'details', 'jac']
+
     func = ds._generic_check._check_var_iter(
         func, 'func',
         types=list,
@@ -150,19 +193,3 @@ def _check(
     )
 
     return key, key_bs, key_model, func
-
-
-#############################################
-#############################################
-#       dind
-#############################################
-
-
-def _get_dind_var():
-
-    # --------------
-    #
-    # --------------
-
-
-    return dind

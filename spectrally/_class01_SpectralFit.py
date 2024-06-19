@@ -149,6 +149,10 @@ class SpectralFit(Previous):
         lamb=None,
         # options
         details=None,
+        # others
+        returnas=None,
+        store=None,
+        store_key=None,
     ):
         """ Interpolate the spectral model at lamb using key_data
 
@@ -177,6 +181,10 @@ class SpectralFit(Previous):
             lamb=lamb,
             # options
             details=details,
+            # others
+            returnas=returnas,
+            store=store,
+            store_key=store_key,
         )
 
     # ###################

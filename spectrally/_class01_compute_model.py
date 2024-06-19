@@ -26,6 +26,10 @@ def main(
     lamb=None,
     # others
     details=None,
+    # others
+    returnas=None,
+    store=None,
+    store_key=None,
 ):
 
     # -----------------
@@ -37,6 +41,7 @@ def main(
         key_data,
         key_lamb, lamb, ref_lamb,
         details,
+        returnas, store, store_key,
     ) = _check(
         coll=coll,
         key_model=key_model,
@@ -44,6 +49,10 @@ def main(
         lamb=lamb,
         # others
         details=details,
+        # others
+        returnas=returnas,
+        store=store,
+        store_key=store_key,
     )
 
     # ----------------
@@ -55,6 +64,7 @@ def main(
 
     data_in = coll.ddata[key_data]['data']
     ref_in = coll.ddata[key_data]['ref']
+    ndim_in = data_in.ndim
 
     iref_nx = ref_in.index(ref_nx)
     if details is True:
@@ -96,13 +106,13 @@ def main(
         func = coll.get_spectral_fit_func(
             key=key_model,
             func='details',
-        )
+        )['details']
 
     else:
         func = coll.get_spectral_fit_func(
             key=key_model,
-            func='val',
-        )
+            func='sum',
+        )['sum']
 
     # ----------------
     # compute
@@ -111,38 +121,74 @@ def main(
     # --------------
     # prepare slices
 
-    # slices
-    if details is True:
-        sli_in = tuple([])
-        sli_out = tuple([])
+    if ndim_in > 1:
+        # slices
+        sli_in = list(data_in.shape)
+        sli_out = list(shape_out)
+
+        sli_in[iref_nx] = slice(None)
+        sli_out[iref_nx] = slice(None)
+
+        if details is True:
+            sli_out.append(slice(None))
+
+        # as array
+        sli_in = np.array(sli_in)
+        sli_out = np.array(sli_out)
+
+        # indices to change
+        ind0 = np.array(
+            [ii for ii in range(len(shape_out)) if ii != iref_nx],
+            dtype=int,
+        )
     else:
-        sli_in = tuple([])
-        sli_out = tuple([])
+        ind0 = None
 
     # -------
     # loop
 
-    for ind in itt.product(*lind):
-
-        # update slices
-        sli_in[] = ind
-        sli_out[] = ind
+    if ind0 is None:
 
         # call func
-        data_out[tuple(sli_out)] = func(
-            x_free=data_in[tuple(sli_in)],
+        data_out = func(
+            x_free=data_in,
             lamb=lamb,
         )
+
+    else:
+
+        for ind in itt.product(*lind):
+
+            # update slices
+            sli_in[ind0] = ind
+            sli_out[ind0] = ind
+
+            # call func
+            data_out[tuple(sli_out)] = func(
+                x_free=data_in[tuple(sli_in)],
+                lamb=lamb,
+            )
 
     # --------------
     # return
     # --------------
 
     dout = {
+        'key': store_key,
         'data': data_out,
         'ref': tuple(ref_out),
         'units': None,
     }
+
+    # --------------
+    # store
+    # --------------
+
+    if store is True:
+
+        coll.add_data(
+            **dout,
+        )
 
     return dout
 
@@ -160,6 +206,10 @@ def _check(
     lamb=None,
     # others
     details=None,
+    # others
+    returnas=None,
+    store=None,
+    store_key=None,
 ):
 
     # ----------
@@ -201,7 +251,7 @@ def _check(
     if isinstance(lamb, np.ndarray):
         c0 = (
             lamb.ndim == 1
-            and np.all(np.isifinite(lamb))
+            and np.all(np.isfinite(lamb))
         )
         if not c0:
             _err_lamb(lamb)
@@ -213,7 +263,7 @@ def _check(
         c0 = (
             lamb in coll.ddata.keys()
             and coll.ddata[lamb]['data'].ndim == 1
-            and np.all(np.isifinite(coll.ddata[lamb]['data']))
+            and np.all(np.isfinite(coll.ddata[lamb]['data']))
         )
         if not c0:
             _err_lamb(lamb)
@@ -235,11 +285,50 @@ def _check(
         default=False,
     )
 
+    # -----------------
+    # store
+    # -----------------
+
+    lok = [False]
+    if key_lamb is not None:
+        lok.append(True)
+    store = ds._generic_check._check_var(
+        store, 'store',
+        types=bool,
+        default=False,
+        allowed=lok,
+    )
+
+    # -----------------
+    # returnas
+    # -----------------
+
+    returnas = ds._generic_check._check_var(
+        returnas, 'returnas',
+        default=(not store),
+        allowed=[False, True, dict],
+    )
+
+    # -----------------
+    # store_key
+    # -----------------
+
+    if store is True:
+        lout = list(coll.ddata.keys())
+        store_key = ds._generic_check._check_var(
+            store_key, 'store_key',
+            types=str,
+            excluded=lout,
+        )
+    else:
+        store_key = None
+
     return (
         key_model, ref_nx, ref_nf,
         key_data,
         key_lamb, lamb, ref_lamb,
         details,
+        returnas, store, store_key,
     )
 
 
