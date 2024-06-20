@@ -185,7 +185,18 @@ def _compute_coefs_offset(
     # get matrix shape
     # ----------------
 
-    lg = sorted(dconstraints.keys())
+    lr = [
+        k0 for k0 in lvar
+        if any([vg['ref'] == k0 for vg in dconstraints.values()])
+    ]
+    lg = [
+        [
+            kg for kg, vg in dconstraints.items()
+            if vg['ref'] == k0
+        ][0]
+        for k0 in lr
+    ]
+
     ng = len(dconstraints)
     nvar = len(lvar)
 

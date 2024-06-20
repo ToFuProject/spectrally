@@ -108,6 +108,12 @@ class SpectralFit(Previous):
         else:
             return super()._get_show_obj()
 
+    def _get_show_details(self, which=None):
+        if which == self._which_model:
+            return _check_model._show_details
+        else:
+            super()._get_show_details()
+
     # -------------------
     # get spectral model
     # -------------------

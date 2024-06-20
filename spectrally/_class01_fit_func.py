@@ -90,13 +90,12 @@ def main(
     # check is constraints
     no_constraints = (
         np.allclose(c0, 0)
-        and np.allclose(c1, 0.)
-        and np.allclose(c2, 0.)
+        and c1.shape == (n_all, n_all)
+        and np.allclose(c1, np.eye(n_all))
+        and c2.shape == (n_all, n_all)
+        and np.allclose(c2, np.eye(n_all))
     )
     if no_constraints:
-        assert c0.shape == (n_all,), c0.shape
-        assert c1.shape == (n_all, n_all), c1.shape
-        assert c2.shape == (n_all, n_all), c2.shape
         c0, c1, c2 = None, None, None
 
     # ----------------

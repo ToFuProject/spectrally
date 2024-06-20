@@ -38,7 +38,7 @@ def add_data(coll=None):
     # ------------------
 
     # lamb
-    nlamb = 300
+    nlamb = 400
     coll.add_ref('nlamb', size=nlamb)
     lamb = np.linspace(3.9, 4, nlamb)*1e-10
     coll.add_data(
@@ -209,6 +209,12 @@ def add_models(coll=None):
             'l01': {'type': 'lorentz', 'lamb0': 3.95e-10},
             'l02': {'type': 'voigt', 'lamb0': 3.97e-10},
         },
+        'sm03': {
+            'bck0': 'linear',
+            'l00': {'type': 'pulse1'},
+            'l01': {'type': 'pulse2'},
+            'l02': {'type': 'lognorm'},
+        },
     }
 
     # ---------------
@@ -251,6 +257,12 @@ def add_models(coll=None):
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
             'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
         },
+    )
+
+    # with pulses
+    coll.add_spectral_model(
+        key='sm03',
+        dmodel=dmodel['sm03'],
     )
 
     return
@@ -326,35 +338,47 @@ def interpolate_spectral_model(coll=None):
     # sm01
     # 'bck0_amp', 'bck0_rate',
     # 'l00_amp', 'l00_shift', 'l00_width',
-    # 'l02_amp', 'l02_shift', 'l02_width',
-    # 'l02_t', 'l02_gamma', 'sl00_shift'
+    # 'l02_amp', 'l02_shift', 'l02_width', 'l02_t', 'l02_gamma',
+    # 'sl00_shift'
 
     # sm02
     # 'bck0_amp', 'bck0_rate',
     # 'l00_amp', 'l00_shift', 'l00_width',
-    # 'l01_shift', 'l02_amp', 'l02_shift',
-    # 'l02_width', 'l02_gamma'
+    # 'l01_shift',
+    # 'l02_amp', 'l02_shift', 'l02_width', 'l02_gamma'
+
+    # sm03
+    # 'bck0_a0', 'bck0_a1',
+    # 'l00_amp', 'l00_t0', 'l00_t_up', 'l00_t_down',
+    # 'l01_amp', 'l01_t0', 'l01_t_up', 'l01_t_down',
+    # 'l02_amp', 'l02_t0', 'l02_mu', 'l02_sigma'
 
     t = coll.ddata['t']['data']
 
     dxfree = {
         'sm00': np.r_[
-            0., 0.1,
-            1, 0.01e-10, 0.001e-10,
-            0.8, -0.01e-10, 0.005e-10,
-            1.2, 0., 2,
+            0.2, 0.,
+            1, 0.01e-10, 0.005e-10,
+            0.8, -0.01e-10, 0.001e-10,
+            1.2e-12, 0.01e-10, 0.,
         ],
         'sm01': np.r_[
             0.1, 0.01,
-            1, 0.01e-10, 0.01e-10,
-            0.8, -0.01e-10, 0.1e-10,
-            1.2, 0., 0.05e-10,
+            1, 0.01e-10, 0.005e-10,
+            0.8, -0.01e-10, 0.001e-10, 1.2, 0.,
+            0.01e-10,
         ][None, :] * np.exp(-(t[:, None] - np.mean(t))**2 / 2**2),
         'sm02': np.r_[
             0.1, -0.01,
-            1, 0.01e-10, 0.01e-10,
-            -0.01e-10, 1, 0.1e-10,
-            0.05e-10, 0.1e-10,
+            1, 0.01e-10, 0.002e-10,
+            -0.01e-10,
+            1, 0.1e-10, 0.05e-10, 0.1e-10,
+        ],
+        'sm03': np.r_[
+            0.1, 0.,
+            2, 3.91e-10, 0.001e-10, 0.004e-10,
+            1, 3.94e-10, 0.001e-10, 0.007e-10,
+            np.sqrt(2*np.pi)*3.98e-10*0.001, 3.8999e-10, np.log(0.08e-10), 0.05,
         ],
     }
 

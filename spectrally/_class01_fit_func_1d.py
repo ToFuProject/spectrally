@@ -67,7 +67,7 @@ def _get_func_sum(
             a0 = x_full[dind[kfunc]['a0']['ind']][:, None]
             a1 = x_full[dind[kfunc]['a1']['ind']][:, None]
 
-            val += np.sum(a0 * lamb + a1, axis=0)
+            val += np.sum(a0 + lamb * a1, axis=0)
 
         # --------------------
         # sum all exponentials
@@ -109,9 +109,12 @@ def _get_func_sum(
             shift = x_full[dind[kfunc]['shift']['ind']][:, None]
             lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
 
+            # https://en.wikipedia.org/wiki/Cauchy_distribution
+            # value at lamb0 = amp / (pi * gam)
+
             val += np.sum(
-                amp * (0.5/np.pi) * gam
-                / ((lamb - lamb0*(1 + shift))**2 + (0.5*gam)**2),
+                amp * gam
+                / (np.pi * ((lamb - lamb0*(1 + shift))**2 + gam**2)),
                 axis=0,
             )
 
@@ -129,7 +132,19 @@ def _get_func_sum(
         kfunc = 'pulse1'
         if dind.get(kfunc) is not None:
 
-            pass
+            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
+            t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
+            tup = x_full[dind[kfunc]['t_up']['ind']][:, None]
+            tdown = x_full[dind[kfunc]['t_down']['ind']][:, None]
+
+            ind0 = lamb > t0
+
+            val += np.sum(
+                amp * ind0 * (
+                    np.exp(-(lamb - t0)/tdown) - np.exp(-(lamb - t0)/tup)
+                ),
+                axis=0,
+            )
 
         # ------------------
         # sum all pulse2
@@ -137,7 +152,21 @@ def _get_func_sum(
         kfunc = 'pulse2'
         if dind.get(kfunc) is not None:
 
-            pass
+            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
+            t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
+            tup = x_full[dind[kfunc]['t_up']['ind']][:, None]
+            tdown = x_full[dind[kfunc]['t_down']['ind']][:, None]
+
+            indup = (lamb < t0)
+            inddown = (lamb >= t0)
+
+            val += np.sum(
+                amp * (
+                    indup * np.exp(-(lamb - t0)**2/tup**2)
+                    + inddown * np.exp(-(lamb - t0)**2/tdown**2)
+                ),
+                axis=0,
+            )
 
         # ------------------
         # sum all lognorm
@@ -145,7 +174,16 @@ def _get_func_sum(
         kfunc = 'lognorm'
         if dind.get(kfunc) is not None:
 
-            pass
+            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
+            t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
+            sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
+            mu = x_full[dind[kfunc]['mu']['ind']][:, None]
+
+            val += np.sum(
+                (amp / ((lamb - t0) * sigma * np.sqrt(2*np.pi)))
+                * np.exp( - (np.log(lamb - t0) - mu)**2 / (2.*sigma**2)),
+                axis=0,
+            )
 
         return val
 

@@ -556,6 +556,65 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
     return lcol, lar
 
 
+#############################################
+#############################################
+#       Show single model
+#############################################
+
+
+def _show_details(coll=None, key=None, lcol=None, lar=None, show=None):
+
+    # ---------------------------
+    # get dmodel
+    # ---------------------------
+
+    wsm = coll._which_model
+    dmodel = coll.dobj[wsm][key]['dmodel']
+    dconst = coll.dobj[wsm][key]['dconstraints']['dconst']
+
+    lkeys = coll.dobj[wsm][key]['keys']
+    llvar = [dmodel[kf]['var'] for kf in lkeys]
+
+    nvarmax = np.max([len(lvar) for lvar in llvar])
+    lfree = coll.get_spectral_model_variables(key, returnas='free')['free']
+
+    # ---------------------------
+    # column names
+    # ---------------------------
+
+    lvar = [f"var{ii}" for ii in range(nvarmax)]
+    lcol.append(['func', 'type', ' '] + lvar)
+
+    # ---------------------------
+    # data
+    # ---------------------------
+
+    lar0 = []
+    for kf in lkeys:
+
+        # initialize with key, type
+        arr = [kf, dmodel[kf]['type'], '|']
+
+        # add nb of func of each type
+        for ii, k1 in enumerate(dmodel[kf]['var']):
+            key = f"{kf}_{k1}"
+            if key in lfree:
+                nn = key
+            else:
+                gg = [kg for kg, vg in dconst.items() if key in vg.keys()][0]
+                nn = f"{key}({dconst[gg]['ref']})"
+            arr.append(nn)
+
+        # complement
+        arr += ['' for ii in range(nvarmax - ii - 1)]
+
+        lar0.append(arr)
+
+    lar.append(lar0)
+
+    return lcol, lar
+
+
 # =============================================================================
 # def _initial_from_from_model(
 #     coll=None,
