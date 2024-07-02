@@ -350,9 +350,9 @@ def _mask_err(mask, ref=None, shape=None, lok=None):
     return Exception(
         "Arg mask must be either:\n"
         "\t- a str (path/file.ext) to a valid .npy file\n"
-        "\t- a key to a known data array with ref = {ref}\n"
-        "\t\tavailable: {lok}\n"
-        "\t- a np.narray of bool and of shape = {shape}\n"
+        f"\t- a key to a known data array with ref = {ref}\n"
+        f"\t\tavailable: {lok}\n"
+        f"\t- a np.narray of bool and of shape = {shape}\n"
         f"Provided:\n{mask}\n"
     )
 

@@ -506,6 +506,30 @@ def _get_var_dind(
         )
         raise Exception(msg)
 
+    # ----------------
+    # add func
+    # ----------------
+
+    dind['func'] = {}
+    for ktype in types:
+
+        # list functions with corresponding model type
+        lf = [k0 for k0 in keys if dmodel[k0]['type'] == ktype]
+
+        # get indices
+        ind = [keys.index(ff) for ff in lf]
+
+        # store
+        dind['func'][ktype] = {
+            'keys': lf,
+            'ind': np.array(ind, dtype=int),
+        }
+
+    #-------------------------
+    # add total number of func
+
+    dind['nfunc'] = len(keys)
+
     return dind
 
 

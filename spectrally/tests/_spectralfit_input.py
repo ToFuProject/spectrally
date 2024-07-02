@@ -38,7 +38,7 @@ def add_data(coll=None):
     # ------------------
 
     # lamb
-    nlamb = 400
+    nlamb = 300
     coll.add_ref('nlamb', size=nlamb)
     lamb = np.linspace(3.9, 4, nlamb)*1e-10
     coll.add_data(

@@ -13,7 +13,7 @@ import datastock as ds
 
 
 # local
-from . import _class01_compute_fit_1d as _compute_fit_1d
+from . import _class02_compute_fit_1d as _compute_fit_1d
 
 
 #############################################
