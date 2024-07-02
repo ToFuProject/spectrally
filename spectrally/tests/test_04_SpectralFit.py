@@ -14,7 +14,7 @@ import os
 
 # spectrally-specific
 from ._setup_teardown import setup_module0, teardown_module0
-from .._class01_SpectralFit import SpectralFit as Collection
+from .._class02_SpectralFit import SpectralFit as Collection
 # from .._saveload import load
 from . import _spectralfit_input as _inputs
 
@@ -67,21 +67,6 @@ class Test00_Populate():
     # ------------------------
     #   Populating
     # ------------------------
-
-    # -------------
-    # add models
-
-    def test00_add_spectral_model(self):
-        _inputs.add_models(self.coll)
-
-    def test01_get_spectral_model_func(self):
-        _inputs.get_spectral_model_func(self.coll)
-
-    def test02_interpolate_spectral_model(self):
-        _inputs.interpolate_spectral_model(self.coll)
-
-    def test03_plot_spectral_model(self):
-        _inputs.plot_spectral_model(self.coll)
 
     # ---------------
     # 1d spectral fit

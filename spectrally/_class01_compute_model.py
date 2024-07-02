@@ -68,7 +68,10 @@ def main(
 
     iref_nx = ref_in.index(ref_nx)
     if details is True:
-        iref_nf = -1
+        iref_nf = 0
+        iref_nx_out = iref_nx + 1
+    else:
+        iref_nx_out = iref_nx
 
     # -----------------------
     # prepare loop on indices
@@ -86,14 +89,15 @@ def main(
     # initialize
 
     # shape_out, ref_out
-    shape_out = list(data_in.shape)
+    shape_in = data_in.shape
+    shape_out = list(shape_in)
     ref_out = list(ref_in)
 
     shape_out[iref_nx] = lamb.size
     ref_out[iref_nx] = ref_lamb
     if details is True:
-        shape_out.append(coll.dref[ref_nf]['size'])
-        ref_out.append(ref_nf)
+        shape_out.insert(0, coll.dref[ref_nf]['size'])
+        ref_out.insert(0, ref_nf)
 
     # data_out
     data_out = np.full(tuple(shape_out), np.nan)
@@ -122,15 +126,15 @@ def main(
     # prepare slices
 
     if ndim_in > 1:
+
         # slices
-        sli_in = list(data_in.shape)
+        sli_in = list(shape_in)
         sli_out = list(shape_out)
 
         sli_in[iref_nx] = slice(None)
-        sli_out[iref_nx] = slice(None)
-
+        sli_out[iref_nx_out] = slice(None)
         if details is True:
-            sli_out.append(slice(None))
+            sli_out[0] = slice(None)
 
         # as array
         sli_in = np.array(sli_in)
@@ -138,9 +142,16 @@ def main(
 
         # indices to change
         ind0 = np.array(
-            [ii for ii in range(len(shape_out)) if ii != iref_nx],
+            [ii for ii in range(len(shape_in)) if ii != iref_nx],
             dtype=int,
         )
+
+        # adjust for details
+        if details is True:
+            ind0_out = ind0 + 1
+        else:
+            ind0_out = ind0
+
     else:
         ind0 = None
 
@@ -161,7 +172,7 @@ def main(
 
             # update slices
             sli_in[ind0] = ind
-            sli_out[ind0] = ind
+            sli_out[ind0_out] = ind
 
             # call func
             data_out[tuple(sli_out)] = func(
@@ -177,7 +188,9 @@ def main(
         'key': store_key,
         'data': data_out,
         'ref': tuple(ref_out),
-        'units': None,
+        'dim': coll.ddata[key_data]['dim'],
+        'quant': coll.ddata[key_data]['quant'],
+        'units': coll.ddata[key_data]['units'],
     }
 
     # --------------

@@ -23,8 +23,6 @@ __all__ = ['SpectralFit']
 
 class SpectralFit(Previous):
 
-    _which_fit = 'spect_fit'
-
     _ddef = copy.deepcopy(Previous._ddef)
 
     # _show_in_summary_core = ['shape', 'ref', 'group']

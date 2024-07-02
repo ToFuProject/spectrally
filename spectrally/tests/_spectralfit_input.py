@@ -409,12 +409,13 @@ def interpolate_spectral_model(coll=None):
         )
 
         # interpolate
-        for jj, details in enumerate([False]): # , True]:
+        for jj, details in enumerate([False, True]):
             for kk, store in enumerate([False, True]):
 
                 store_key = f'interp_{kmodel}_{jj}_{kk}'
                 lambi = ('lamb' if store else lamb)
-                dout = coll.interpolate_spectral_model(
+
+                _ = coll.interpolate_spectral_model(
                     key_model=kmodel,
                     key_data=kdata,
                     lamb=lambi,
@@ -429,12 +430,11 @@ def interpolate_spectral_model(coll=None):
                 if store:
                     lkstore.append(store_key)
 
-        # remove data
-        coll.remove_data(kdata)
+        # remove data (but not model ref)
+        del coll._ddata[kdata]
 
     # remove stored output
-    # for sk in lkstore::
-        # coll.remove_data(store_key)
+    coll.remove_data(lkstore)
 
     return
 

@@ -24,6 +24,7 @@ __all__ = ['SpectralModel']
 class SpectralModel(Previous):
 
     _which_model = 'spect_model'
+    _which_fit = 'spect_fit'
 
     _ddef = copy.deepcopy(Previous._ddef)
 
