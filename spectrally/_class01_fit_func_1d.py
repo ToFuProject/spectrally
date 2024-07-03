@@ -105,7 +105,7 @@ def _get_func_sum(
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            gam = x_full[dind[kfunc]['gamma']['ind']][:, None]
+            gam = x_full[dind[kfunc]['gam']['ind']][:, None]
             shift = x_full[dind[kfunc]['shift']['ind']][:, None]
             lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
 
@@ -330,7 +330,7 @@ def _get_func_details(
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            gam = x_full[dind[kfunc]['gamma']['ind']][:, None]
+            gam = x_full[dind[kfunc]['gam']['ind']][:, None]
             shift = x_full[dind[kfunc]['shift']['ind']][:, None]
             lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
 

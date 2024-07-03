@@ -10,6 +10,7 @@ from . import _class01_check_model as _check_model
 from . import _class01_check_constraints as _check_constraints
 from . import _class01_fit_func as _fit_func
 from . import _class01_compute_model as _compute_model
+from . import _class01_plot as _plot
 
 
 __all__ = ['SpectralModel']
@@ -221,6 +222,8 @@ class SpectralModel(Previous):
         key_data=None,
         lamb=None,
         # options
+        details=None,
+        # plotting
         dprop=None,
         vmin=None,
         vmax=None,
@@ -238,12 +241,14 @@ class SpectralModel(Previous):
 
         """
 
-        return _plot_model.main(
+        return _plot.main(
             coll=self,
             key_model=key_model,
             key_data=key_data,
             lamb=lamb,
             # options
+            details=details,
+            # plotting
             dprop=dprop,
             vmin=vmin,
             vmax=vmax,

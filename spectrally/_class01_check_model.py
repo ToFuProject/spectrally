@@ -29,15 +29,15 @@ _DMODEL = {
         'param': [('lamb0', float)],
     },
     'lorentz': {
-        'var': ['amp', 'shift', 'gamma'],
+        'var': ['amp', 'shift', 'gam'],
         'param': [('lamb0', float)],
     },
     'pvoigt': {
-        'var': ['amp', 'shift', 'width', 't', 'gamma'],
+        'var': ['amp', 'shift', 'width', 't', 'gam'],
         'param': [('lamb0', float)],
     },
     'voigt': {
-        'var': ['amp', 'shift', 'width', 'gamma'],
+        'var': ['amp', 'shift', 'width', 'gam'],
         'param': [('lamb0', float)],
     },
 
@@ -545,7 +545,7 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
     # column names
     # ---------------------------
 
-    lcol.append([which] + _LMODEL_ORDER + ['constraints'])
+    lcol.append([which] + _LMODEL_ORDER + ['constraints', 'free var'])
 
     # ---------------------------
     # data
@@ -572,6 +572,11 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
         dconst = coll.dobj[which][k0]['dconstraints']['dconst']
         nn = str(len([k1 for k1, v1 in dconst.items() if len(v1) > 1]))
         arr.append(nn)
+
+        # add number of free variables
+        lfree = coll.get_spectral_model_variables(k0, returnas='free')['free']
+        lall = coll.get_spectral_model_variables(k0, returnas='all')['all']
+        arr.append(f"{len(lfree)} / {len(lall)}")
 
         lar0.append(arr)
 
@@ -627,6 +632,7 @@ def _show_details(coll=None, key=None, lcol=None, lar=None, show=None):
             else:
                 gg = [kg for kg, vg in dconst.items() if key in vg.keys()][0]
                 nn = f"{key}({dconst[gg]['ref']})"
+
             arr.append(nn)
 
         # complement

@@ -245,7 +245,7 @@ def add_models(coll=None):
         dmodel=dmodel['sm01'],
         dconstraints={
             'g00': {'ref': 'l00_amp', 'sl00_amp': [0, 1, 0]},
-            'g01': {'ref': 'l00_width', 'sl00_gamma': [0, 1, 0]},
+            'g01': {'ref': 'l00_width', 'sl00_gam': [0, 1, 0]},
         },
     )
 
@@ -255,7 +255,7 @@ def add_models(coll=None):
         dmodel=dmodel['sm02'],
         dconstraints={
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
-            'g01': {'ref': 'l00_width', 'l01_gamma': [0, 1, 0]},
+            'g01': {'ref': 'l00_width', 'l01_gam': [0, 1, 0]},
         },
     )
 
@@ -333,19 +333,19 @@ def interpolate_spectral_model(coll=None):
     # 'bck0_a0', 'bck0_a1',
     # 'l00_amp', 'l00_shift', 'l00_width',
     # 'l01_amp', 'l01_shift', 'l01_width',
-    # 'l02_amp', 'l02_shift', 'l02_gamma'
+    # 'l02_amp', 'l02_shift', 'l02_gam'
 
     # sm01
     # 'bck0_amp', 'bck0_rate',
     # 'l00_amp', 'l00_shift', 'l00_width',
-    # 'l02_amp', 'l02_shift', 'l02_width', 'l02_t', 'l02_gamma',
+    # 'l02_amp', 'l02_shift', 'l02_width', 'l02_t', 'l02_gam',
     # 'sl00_shift'
 
     # sm02
     # 'bck0_amp', 'bck0_rate',
     # 'l00_amp', 'l00_shift', 'l00_width',
     # 'l01_shift',
-    # 'l02_amp', 'l02_shift', 'l02_width', 'l02_gamma'
+    # 'l02_amp', 'l02_shift', 'l02_width', 'l02_gam'
 
     # sm03
     # 'bck0_a0', 'bck0_a1',
@@ -431,10 +431,10 @@ def interpolate_spectral_model(coll=None):
                     lkstore.append(store_key)
 
         # remove data (but not model ref)
-        del coll._ddata[kdata]
+        # del coll._ddata[kdata]
 
     # remove stored output
-    coll.remove_data(lkstore)
+    # coll.remove_data(lkstore)
 
     return
 

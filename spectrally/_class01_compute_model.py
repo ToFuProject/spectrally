@@ -186,6 +186,11 @@ def main(
 
     dout = {
         'key': store_key,
+        'key_data': key_data,
+        'key_model': key_model,
+        'key_lamb': key_lamb,
+        'lamb': lamb,
+        'details': details,
         'data': data_out,
         'ref': tuple(ref_out),
         'dim': coll.ddata[key_data]['dim'],
@@ -199,8 +204,9 @@ def main(
 
     if store is True:
 
+        lout = ['key_data', 'key_model', 'key_lamb', 'lamb', 'details']
         coll.add_data(
-            **dout,
+            **{k0: v0 for k0, v0 in dout.items() if k0 not in lout},
         )
 
     return dout
