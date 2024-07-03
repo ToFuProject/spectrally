@@ -2,11 +2,11 @@
 
 
 import os
-import traceback
 import itertools as itt
 
 
 import numpy as np
+import scipy.constants as scpct
 import matplotlib.pyplot as plt
 
 
@@ -193,9 +193,9 @@ def add_models(coll=None):
         },
         'sm00': {
             'bck0': 'linear',
-            'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
-            'l01': {'type': 'gauss', 'lamb0': 3.95e-10},
-            'l02': {'type': 'lorentz', 'lamb0': 3.97e-10},
+            'l00': {'type': 'gauss', 'lamb0': 3.92e-10, 'mz': 39.948*scpct.m_u},
+            'l01': {'type': 'gauss', 'lamb0': 3.95e-10, 'mz': 39.948*scpct.m_u},
+            'l02': {'type': 'lorentz', 'lamb0': 3.97e-10, 'mz': 39.948*scpct.m_u},
         },
         'sm01': {
             'bck0': 'exp',
@@ -245,7 +245,7 @@ def add_models(coll=None):
         dmodel=dmodel['sm01'],
         dconstraints={
             'g00': {'ref': 'l00_amp', 'sl00_amp': [0, 1, 0]},
-            'g01': {'ref': 'l00_width', 'sl00_gam': [0, 1, 0]},
+            'g01': {'ref': 'l00_sigma', 'sl00_gam': [0, 1, 0]},
         },
     )
 
@@ -255,7 +255,7 @@ def add_models(coll=None):
         dmodel=dmodel['sm02'],
         dconstraints={
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
-            'g01': {'ref': 'l00_width', 'l01_gam': [0, 1, 0]},
+            'g01': {'ref': 'l00_sigma', 'l01_gam': [0, 1, 0]},
         },
     )
 
@@ -329,58 +329,8 @@ def interpolate_spectral_model(coll=None):
     # --------------
     # prepare xfree
 
-    # sm00
-    # 'bck0_a0', 'bck0_a1',
-    # 'l00_amp', 'l00_shift', 'l00_width',
-    # 'l01_amp', 'l01_shift', 'l01_width',
-    # 'l02_amp', 'l02_shift', 'l02_gam'
-
-    # sm01
-    # 'bck0_amp', 'bck0_rate',
-    # 'l00_amp', 'l00_shift', 'l00_width',
-    # 'l02_amp', 'l02_shift', 'l02_width', 'l02_t', 'l02_gam',
-    # 'sl00_shift'
-
-    # sm02
-    # 'bck0_amp', 'bck0_rate',
-    # 'l00_amp', 'l00_shift', 'l00_width',
-    # 'l01_shift',
-    # 'l02_amp', 'l02_shift', 'l02_width', 'l02_gam'
-
-    # sm03
-    # 'bck0_a0', 'bck0_a1',
-    # 'l00_amp', 'l00_t0', 'l00_t_up', 'l00_t_down',
-    # 'l01_amp', 'l01_t0', 'l01_t_up', 'l01_t_down',
-    # 'l02_amp', 'l02_t0', 'l02_mu', 'l02_sigma'
-
     t = coll.ddata['t']['data']
-
-    dxfree = {
-        'sm00': np.r_[
-            0.2, 0.,
-            1, 0.01e-10, 0.005e-10,
-            0.8, -0.01e-10, 0.001e-10,
-            1.2e-12, 0.01e-10, 0.,
-        ],
-        'sm01': np.r_[
-            0.1, 0.01,
-            1, 0.01e-10, 0.005e-10,
-            0.8, -0.01e-10, 0.001e-10, 1.2, 0.,
-            0.01e-10,
-        ][None, :] * np.exp(-(t[:, None] - np.mean(t))**2 / 2**2),
-        'sm02': np.r_[
-            0.1, -0.01,
-            1, 0.01e-10, 0.002e-10,
-            -0.01e-10,
-            1, 0.1e-10, 0.05e-10, 0.1e-10,
-        ],
-        'sm03': np.r_[
-            0.1, 0.,
-            2, 3.91e-10, 0.001e-10, 0.004e-10,
-            1, 3.94e-10, 0.001e-10, 0.007e-10,
-            np.sqrt(2*np.pi)*3.98e-10*0.001, 3.8999e-10, np.log(0.08e-10), 0.05,
-        ],
-    }
+    dxfree = _get_dxfree(t)
 
     # ---------------
     # add model data
@@ -437,6 +387,62 @@ def interpolate_spectral_model(coll=None):
     # coll.remove_data(lkstore)
 
     return
+
+
+def _get_dxfree(t=None):
+
+    # sm00
+    # 'bck0_a0', 'bck0_a1',
+    # 'l00_amp', 'l00_vccos', 'l00_sigma',
+    # 'l01_amp', 'l01_vccos', 'l01_sigma',
+    # 'l02_amp', 'l02_vccos', 'l02_gam'
+
+    # sm01
+    # 'bck0_amp', 'bck0_rate',
+    # 'l00_amp', 'l00_vccos', 'l00_sigma',
+    # 'l02_amp', 'l02_vccos', 'l02_sigma', 'l02_gam',
+    # 'sl00_vccos'
+
+    # sm02
+    # 'bck0_amp', 'bck0_rate',
+    # 'l00_amp', 'l00_vccos', 'l00_sigma',
+    # 'l01_vccos',
+    # 'l02_amp', 'l02_vccos', 'l02_sigma', 'l02_gam'
+
+    # sm03
+    # 'bck0_a0', 'bck0_a1',
+    # 'l00_amp', 'l00_t0', 'l00_t_up', 'l00_t_down',
+    # 'l01_amp', 'l01_t0', 'l01_t_up', 'l01_t_down',
+    # 'l02_amp', 'l02_t0', 'l02_mu', 'l02_sigma'
+
+    dxfree = {
+        'sm00': np.r_[
+            0.2, 0.01,
+            1, 0.01e-10, 0.005e-10,
+            0.8, -0.01e-10, 0.001e-10,
+            1.2 * 0.005e-10**2, 0.01e-10, 0.005e-10,
+        ],
+        'sm01': np.r_[
+            0.1, 0.01,
+            1, 0.01e-10, 0.005e-10,
+            0.8, -0.01e-10, 0.001e-10, 0.,
+            0.01e-10,
+        ][None, :] * np.exp(-(t[:, None] - np.mean(t))**2 / 2**2),
+        'sm02': np.r_[
+            0.1, -0.01,
+            1, 0.01e-10, 0.002e-10,
+            -0.01e-10,
+            1, 0.1e-10, 0.05e-10, 0.1e-10,
+        ],
+        'sm03': np.r_[
+            0.1, 0.,
+            2, 3.91e-10, 0.001e-10, 0.004e-10,
+            1, 3.94e-10, 0.001e-10, 0.007e-10,
+            1 * 0.001e-10, 3.899e-10, 0.001e-10, 2*(0.001e-10 - np.log(1e-10)),
+        ],
+    }
+    return dxfree
+
 
 
 # ###################################################

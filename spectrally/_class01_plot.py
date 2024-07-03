@@ -84,6 +84,25 @@ def main(
 
     if ndim == 1:
         _plot_1d(coll2, dout=dout, dkeys=dkeys, dax=dax, details=details)
+    elif ndim == 2:
+        _plot_2d(coll2, dout=dout, dkeys=dkeys, dax=dax, details=details)
+
+    # -------------------
+    # finalize
+    # -------------------
+
+    _finalize_figure(
+        dax=dax,
+        dout=dout,
+        tit=tit,
+    )
+
+    # ---------------------
+    # connect interactivity
+    # ---------------------
+
+    if ndim > 1:
+        pass
 
     return dax
 
@@ -253,6 +272,47 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
 
 # ###############################################################
 # ###############################################################
+#               plot 2d
+# ###############################################################
+
+
+def _plot_2d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
+
+    # --------------
+    # plot fixed 2d
+    # --------------
+
+    dax2, dgroup = coll2.plot_as_array(
+        key=None,
+        keyX=None,
+        keyY=None,
+        dax=dax,
+        connect=False,
+    )
+
+    # --------------
+    # plot spectrum
+    # --------------
+
+    if details is True:
+        kax = 'spectrum'
+        lax = [vax['handle'] for vax in dax.values() if kax in vax['type']]
+        for ax in lax:
+
+            for ii in range(coll2.ddata[dkeys['details']]['data'].shape[0]):
+                ax.plot(
+                    coll2.ddata[dkeys['lamb']]['data'],
+                    coll2.ddata[dkeys['details']]['data'][ii, ...],
+                    ls='-',
+                    marker='None',
+                    lw=1.,
+                )
+
+    return
+
+
+# ###############################################################
+# ###############################################################
 #               dax
 # ###############################################################
 
@@ -287,14 +347,22 @@ def _get_dax_1d(
 ):
 
     # ---------------
-    # prepare figure
+    # check inputs
     # ---------------
 
-    dmargin = {
-        'left': 0.1, 'right': 0.95,
-        'bottom': 0.1, 'top': 0.95,
-        'wspace': 0.1, 'hspace': 0.1,
-    }
+    if fs is None:
+        fs = (10, 6)
+
+    if dmargin is None:
+        dmargin = {
+            'left': 0.10, 'right': 0.90,
+            'bottom': 0.1, 'top': 0.90,
+            'wspace': 0.1, 'hspace': 0.1,
+        }
+
+    # ---------------
+    # prepare figure
+    # ---------------
 
     fig = plt.figure(figsize=fs)
     gs = gridspec.GridSpec(1, 1, **dmargin)
@@ -316,3 +384,82 @@ def _get_dax_1d(
     return dax
 
 
+def _get_dax_2d(
+    fs=None,
+    dmargin=None,
+    tit=None,
+):
+
+    # ---------------
+    # check inputs
+    # ---------------
+
+    if fs is None:
+        fs = (10, 6)
+
+    if dmargin is None:
+        dmargin = {
+            'left': 0.10, 'right': 0.90,
+            'bottom': 0.1, 'top': 0.90,
+            'wspace': 0.1, 'hspace': 0.1,
+        }
+
+    # ---------------
+    # prepare figure
+    # ---------------
+
+    dax = {}
+    fig = plt.figure(figsize=fs)
+    gs = gridspec.GridSpec(2, 1, **dmargin)
+
+    # ------------
+    # add axes
+    # ------------
+
+    ax = fig.add_subplot(gs[:, 0])
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax = {'2d': {'handle': ax, 'type': '2d'}}
+
+    ax = fig.add_subplot(gs[0, 1])
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax = {'1d': {'handle': ax, 'type': 'spectrum'}}
+
+    return dax
+
+
+
+# ###############################################################
+# ###############################################################
+#               Finalize figure
+# ###############################################################
+
+
+def _finalize_figure(dax=None, dout=None, tit=None):
+
+    # -------------
+    # tit
+    # -------------
+
+    titdef = (
+        f"Spectral model '{dout['key_model']}'\n"
+        f"using data '{dout['key_data']}'"
+    )
+    tit = ds._generic_check._check_var(
+        tit, 'tit',
+        types=str,
+        default=titdef,
+    )
+
+    # -------------
+    # tit
+    # -------------
+
+    if isinstance(dax, dict):
+        fig = list(dax.values())[0]['handle'].figure
+
+    if tit is not None:
+        fig.suptitle(tit, size=12, fontweight='bold')
+
+    return

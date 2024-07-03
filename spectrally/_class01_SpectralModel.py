@@ -9,7 +9,8 @@ from ._class00_SpectralLines import SpectralLines as Previous
 from . import _class01_check_model as _check_model
 from . import _class01_check_constraints as _check_constraints
 from . import _class01_fit_func as _fit_func
-from . import _class01_compute_model as _compute_model
+from . import _class01_interpolate as _interpolate
+from . import _class01_moments as _moments
 from . import _class01_plot as _plot
 
 
@@ -176,7 +177,7 @@ class SpectralModel(Previous):
 
         """
 
-        return _compute_model.main(
+        return _interpolate.main(
             coll=self,
             key_model=key_model,
             key_data=key_data,
@@ -188,6 +189,51 @@ class SpectralModel(Previous):
             store=store,
             store_key=store_key,
         )
+
+    # ----------------------
+    # extract spectral model moments
+    # ----------------------
+
+    def get_spectral_model_moments(
+        self,
+        key_model=None,
+        key_data=None,
+        lamb=None,
+    ):
+        """
+
+        Given an array of solution for the model's free variables (key_data)
+        Returns, a dict with, for each function in the model:
+
+            - all variable values (claasified by type)
+            - some moments of interest:
+                - integral
+                - physics-derived (Te from exp, Ti from line width...)
+
+        Parameters
+        ----------
+        key_model : str
+            key to the desired spectral model
+        key_data : str
+            key to the data to be used as input for the model's free variables
+        lamb:str or 1d np.ndarray, optional
+            wavelenth vector to be used for computing limited integrals
+
+        Returns
+        -------
+        dout : dict
+            dict of all moments, classified per type and function
+
+        """
+
+        dout = _moments.main(
+            coll=self,
+            key_model=key_model,
+            key_data=key_data,
+            lamb=lamb,
+        )
+
+        return dout
 
     # ###################
     # -------------------

@@ -20,25 +20,25 @@ _DMODEL = {
     # ----------
     # background
     'linear': {'var': ['a0', 'a1']},
-    'exp': {'var': ['amp', 'rate']},
+    'exp_lamb': {'var': ['amp', 'rate']},
 
     # --------------
     # spectral lines
     'gauss': {
-        'var': ['amp', 'shift', 'width'],
-        'param': [('lamb0', float)],
+        'var': ['amp', 'vccos', 'sigma'],
+        'param': [('lamb0', float), ('mz', float)],
     },
     'lorentz': {
-        'var': ['amp', 'shift', 'gam'],
-        'param': [('lamb0', float)],
+        'var': ['amp', 'vccos', 'gam'],
+        'param': [('lamb0', float), ('mz', float)],
     },
     'pvoigt': {
-        'var': ['amp', 'shift', 'width', 't', 'gam'],
-        'param': [('lamb0', float)],
+        'var': ['amp', 'vccos', 'sigma', 'gam'],
+        'param': [('lamb0', float), ('mz', float)],
     },
     'voigt': {
-        'var': ['amp', 'shift', 'width', 'gam'],
-        'param': [('lamb0', float)],
+        'var': ['amp', 'vccos', 'sigma', 'gam'],
+        'param': [('lamb0', float), ('mz', float)],
     },
 
     # -----------
@@ -51,7 +51,7 @@ _DMODEL = {
 
 _LMODEL_ORDER = [
     # background
-    'linear', 'exp',
+    'linear', 'exp_lamb', 'exp_E',
     # spectral lines
     'gauss', 'lorentz', 'pvoigt', 'voigt',
     # pulse shape
@@ -145,11 +145,18 @@ def _dmodel_err(key, dmodel):
             lstr.append("\t# pulse-oriented")
         lstr.append(stri)
 
+    # Provided
+    if isinstance(dmodel, dict):
+        prov = "\n".join([f"\t'{k0}': {v0}," for k0, v0 in dmodel.items()])
+        prov = "{\n" + prov + "\n}"
+    else:
+        prov = str(dmodel)
+
     # concatenate msg
     return (
         f"For model '{key}' dmodel must be a dict of the form:\n"
          + "\n".join(lstr)
-         + f"\n\nProvided:\n{dmodel}"
+         + f"\n\nProvided:\n{prov}"
     )
 
 

@@ -68,7 +68,6 @@ def main(
 
     iref_nx = ref_in.index(ref_nx)
     if details is True:
-        iref_nf = 0
         iref_nx_out = iref_nx + 1
     else:
         iref_nx_out = iref_nx
@@ -353,9 +352,9 @@ def _check(
 
 def _err_lamb(lamb):
     msg = (
-        "Arg lamb nust be either:\n"
+        "Arg 'lamb' nust be either:\n"
         "\t- 1d np.ndarray with finite values only\n"
         "\t- str: a key to an existing 1d vector with finite values only\n"
-        "Provided:\n{lamb}"
+        f"Provided:\n{lamb}"
     )
     raise Exception(msg)

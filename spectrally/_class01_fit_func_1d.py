@@ -8,230 +8,8 @@ created on tue feb 20 14:44:51 2024
 
 
 import numpy as np
+import scipy.special as scpsp
 
-
-# ############################################
-# ############################################
-#       sum
-# ############################################
-
-
-def _get_func_sum(
-    c0=None,
-    c1=None,
-    c2=None,
-    dind=None,
-    param_val=None,
-):
-
-    # --------------
-    # prepare
-    # --------------
-
-    def func(
-        x_free=None,
-        lamb=None,
-        param_val=param_val,
-        c0=c0,
-        c1=c1,
-        c2=c2,
-        dind=dind,
-        scale=None,
-    ):
-
-        # ----------
-        # initialize
-
-        val = np.zeros(lamb.shape, dtype=float)
-
-        # ----------------------------
-        # get x_full from constraints
-
-        if c0 is None:
-            x_full = x_free
-        else:
-            x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
-
-        # -------------------
-        # rescale
-
-        if scale is not None:
-            pass
-
-        # ------------------
-        # sum all linear
-
-        kfunc = 'linear'
-        if dind.get(kfunc) is not None:
-
-            a0 = x_full[dind[kfunc]['a0']['ind']][:, None]
-            a1 = x_full[dind[kfunc]['a1']['ind']][:, None]
-
-            val += np.sum(a0 + lamb * a1, axis=0)
-
-        # --------------------
-        # sum all exponentials
-
-        kfunc = 'exp'
-        if dind.get(kfunc) is not None:
-
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            rate = x_full[dind[kfunc]['rate']['ind']][:, None]
-
-            val += np.sum(amp * np.exp(lamb * rate), axis=0)
-
-        # -----------------
-        # sum all gaussians
-
-        kfunc = 'gauss'
-        if dind.get(kfunc) is not None:
-
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            width = x_full[dind[kfunc]['width']['ind']][:, None]
-            shift = x_full[dind[kfunc]['shift']['ind']][:, None]
-            lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
-
-            val += np.sum(
-                amp * np.exp(
-                    -(lamb - lamb0*(1 + shift))**2/width**2
-                ),
-                axis=0,
-            )
-
-        # -------------------
-        # sum all Lorentzians
-
-        kfunc = 'lorentz'
-        if dind.get(kfunc) is not None:
-
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            gam = x_full[dind[kfunc]['gam']['ind']][:, None]
-            shift = x_full[dind[kfunc]['shift']['ind']][:, None]
-            lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
-
-            # https://en.wikipedia.org/wiki/Cauchy_distribution
-            # value at lamb0 = amp / (pi * gam)
-
-            val += np.sum(
-                amp * gam
-                / (np.pi * ((lamb - lamb0*(1 + shift))**2 + gam**2)),
-                axis=0,
-            )
-
-        # --------------------
-        # sum all pseudo-voigt
-
-        kfunc = 'pvoigt'
-        if dind.get(kfunc) is not None:
-
-            pass
-
-        # ------------------
-        # sum all pulse1
-
-        kfunc = 'pulse1'
-        if dind.get(kfunc) is not None:
-
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
-            tup = x_full[dind[kfunc]['t_up']['ind']][:, None]
-            tdown = x_full[dind[kfunc]['t_down']['ind']][:, None]
-
-            ind0 = lamb > t0
-
-            val += np.sum(
-                amp * ind0 * (
-                    np.exp(-(lamb - t0)/tdown) - np.exp(-(lamb - t0)/tup)
-                ),
-                axis=0,
-            )
-
-        # ------------------
-        # sum all pulse2
-
-        kfunc = 'pulse2'
-        if dind.get(kfunc) is not None:
-
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
-            tup = x_full[dind[kfunc]['t_up']['ind']][:, None]
-            tdown = x_full[dind[kfunc]['t_down']['ind']][:, None]
-
-            indup = (lamb < t0)
-            inddown = (lamb >= t0)
-
-            val += np.sum(
-                amp * (
-                    indup * np.exp(-(lamb - t0)**2/tup**2)
-                    + inddown * np.exp(-(lamb - t0)**2/tdown**2)
-                ),
-                axis=0,
-            )
-
-        # ------------------
-        # sum all lognorm
-
-        kfunc = 'lognorm'
-        if dind.get(kfunc) is not None:
-
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
-            sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
-            mu = x_full[dind[kfunc]['mu']['ind']][:, None]
-
-            val += np.sum(
-                (amp / ((lamb - t0) * sigma * np.sqrt(2*np.pi)))
-                * np.exp(-(np.log(lamb - t0) - mu)**2 / (2.*sigma**2)),
-                axis=0,
-            )
-
-        return val
-
-    return func
-
-
-# ############################################
-# ############################################
-#       cost
-# ############################################
-
-
-def _get_func_cost(
-    c0=None,
-    c1=None,
-    c2=None,
-    dind=None,
-    param_val=None,
-):
-
-    # --------------
-    # prepare
-    # --------------
-
-    func_sum = _get_func_sum(
-        c0=c0,
-        c1=c1,
-        c2=c2,
-        dind=dind,
-        param_val=param_val,
-    )
-
-    # ------------
-    # cost
-    # ------------
-
-    def func(
-        x_free=None,
-        lamb=None,
-        scale=None,
-        data=None,
-        # sum
-        func_sum=func_sum,
-    ):
-
-        return func_sum(x_free, lamb=lamb, scale=scale) - data
-
-    return func
 
 
 # ############################################
@@ -298,14 +76,14 @@ def _get_func_details(
         # --------------------
         # sum all exponentials
 
-        kfunc = 'exp'
+        kfunc = 'exp_lamb'
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
             rate = x_full[dind[kfunc]['rate']['ind']][:, None]
 
             ind = dind['func'][kfunc]['ind']
-            val[ind, ...] = amp * np.exp(lamb * rate)
+            val[ind, ...] = amp * np.exp(- rate / lamb) / lamb
 
         # -----------------
         # sum all gaussians
@@ -314,13 +92,13 @@ def _get_func_details(
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            width = x_full[dind[kfunc]['width']['ind']][:, None]
-            shift = x_full[dind[kfunc]['shift']['ind']][:, None]
+            sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
+            vccos = x_full[dind[kfunc]['vccos']['ind']][:, None]
             lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
 
             ind = dind['func'][kfunc]['ind']
             val[ind, ...] = (
-                amp * np.exp(-(lamb - lamb0*(1 + shift))**2/width**2)
+                amp * np.exp(-(lamb - lamb0*(1 + vccos))**2/(2*sigma**2))
             )
 
         # -------------------
@@ -331,7 +109,7 @@ def _get_func_details(
 
             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
             gam = x_full[dind[kfunc]['gam']['ind']][:, None]
-            shift = x_full[dind[kfunc]['shift']['ind']][:, None]
+            vccos = x_full[dind[kfunc]['vccos']['ind']][:, None]
             lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
 
             # https://en.wikipedia.org/wiki/Cauchy_distribution
@@ -339,8 +117,7 @@ def _get_func_details(
 
             ind = dind['func'][kfunc]['ind']
             val[ind, ...] = (
-                amp * gam
-                / (np.pi * ((lamb - lamb0*(1 + shift))**2 + gam**2))
+                amp / (1 + ((lamb - lamb0*(1 + vccos)) / gam)**2)
             )
 
         # --------------------
@@ -349,7 +126,53 @@ def _get_func_details(
         kfunc = 'pvoigt'
         if dind.get(kfunc) is not None:
 
-            pass
+            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
+            sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
+            gam = x_full[dind[kfunc]['gam']['ind']][:, None]
+            vccos = x_full[dind[kfunc]['vccos']['ind']][:, None]
+            lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
+
+            # https://en.wikipedia.org/wiki/Voigt_profile
+
+            fg = 2 * np.sqrt(2*np.log(2)) * sigma
+            fl = 2 * gam
+            ftot = (
+                fg**5 + 2.69269*fg**4*fl + 2.42843*fg**3*fl**2
+                + 4.47163*fg**2*fl**3 + 0.07842*fg*fl**4 + fl**5
+            ) ** (1./5.)
+            ratio = fl / ftot
+
+            # eta
+            eta = 1.36603 * ratio - 0.47719 * ratio**2 + 0.11116 * ratio**3
+
+            # update widths of gauss and Lorentz
+            sigma = ftot / (2 * np.sqrt(2*np.log(2)))
+            gam = ftot / 2.
+
+            # weighted sum
+            ind = dind['func'][kfunc]['ind']
+            val[ind, ...] = amp * (
+                eta / (1 + ((lamb - lamb0*(1 + vccos)) / gam)**2)
+                + (1-eta) * np.exp(-(lamb - lamb0*(1 + vccos))**2/(2*sigma**2))
+            )
+
+        # ------------
+
+        kfunc = 'voigt'
+        if dind.get(kfunc) is not None:
+
+            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
+            sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
+            gam = x_full[dind[kfunc]['gam']['ind']][:, None]
+            vccos = x_full[dind[kfunc]['vccos']['ind']][:, None]
+            lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
+
+            ind = dind['func'][kfunc]['ind']
+            val[ind, ...] = amp * scpsp.voigt_profile(
+                lamb - lamb0*(1 + vccos),
+                sigma,
+                gam,
+            )
 
         # ------------------
         # sum all pulse1
@@ -404,9 +227,12 @@ def _get_func_details(
             sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
             mu = x_full[dind[kfunc]['mu']['ind']][:, None]
 
+            # max at lamb - t0 = exp(sigma/2 * (mu-1))
+            # max = amp / mu
+
             ind = dind['func'][kfunc]['ind']
             val[ind, ...] = (
-                (amp / ((lamb - t0) * sigma * np.sqrt(2*np.pi)))
+                (amp / (lamb - t0))
                 * np.exp(-(np.log(lamb - t0) - mu)**2 / (2.*sigma**2))
             )
 
@@ -415,6 +241,101 @@ def _get_func_details(
     return func
 
 
+# ############################################
+# ############################################
+#       sum
+# ############################################
+
+
+def _get_func_sum(
+    c0=None,
+    c1=None,
+    c2=None,
+    dind=None,
+    param_val=None,
+):
+
+    # --------------
+    # prepare
+    # --------------
+
+    func_details = _get_func_details(
+        c0=c0,
+        c1=c1,
+        c2=c2,
+        dind=dind,
+        param_val=param_val,
+    )
+
+    # --------------
+    # prepare
+    # --------------
+
+    def func(
+        x_free=None,
+        lamb=None,
+        scale=None,
+    ):
+
+        return np.sum(func_details(x_free, lamb=lamb, scale=scale), axis=0)
+
+    return func
+
+
+# ############################################
+# ############################################
+#       cost
+# ############################################
+
+
+def _get_func_cost(
+    c0=None,
+    c1=None,
+    c2=None,
+    dind=None,
+    param_val=None,
+):
+
+    # --------------
+    # prepare
+    # --------------
+
+    func_sum = _get_func_sum(
+        c0=c0,
+        c1=c1,
+        c2=c2,
+        dind=dind,
+        param_val=param_val,
+    )
+
+    # ------------
+    # cost
+    # ------------
+
+    def func(
+        x_free=None,
+        lamb=None,
+        scale=None,
+        data=None,
+        # sum
+        func_sum=func_sum,
+    ):
+
+        return func_sum(x_free, lamb=lamb, scale=scale) - data
+
+    return func
+
+
+
+
+
+
+
+
+
+# ################################################
+# ################################################# ################################################
+# ################################################
 # ################################################
 # ################################################
 #               Back up
@@ -460,5 +381,3 @@ def _get_func_cost_1d_old():
     # return func
 
     return func
-
-
