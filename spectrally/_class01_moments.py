@@ -320,7 +320,7 @@ def _get_func_moments(
             dout[kfunc]['tdown'] = tdown
 
             # integral
-            dout[kfunc]['integ'] = None
+            dout[kfunc]['integ'] = amp * (tdown - tup)
 
         # ------------------
         # sum all pulse2
@@ -343,7 +343,7 @@ def _get_func_moments(
             dout[kfunc]['tdown'] = tdown
 
             # integral
-            dout[kfunc]['integ'] = None
+            dout[kfunc]['integ'] = amp/2 * np.sqrt(np.pi) * (tup + tdown)
 
         # ------------------
         # sum all lognorm

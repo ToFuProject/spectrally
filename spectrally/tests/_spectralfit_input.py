@@ -200,7 +200,7 @@ def add_models(coll=None):
         'sm01': {
             'bck0': 'exp',
             'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
-            'sl00': 'lorentz',
+            'l01': {'type': 'lorentz', 'lamb0': 3.95e-10},
             'l02': {'type': 'pvoigt', 'lamb0': 3.97e-10},
         },
         'sm02': {

@@ -26,19 +26,19 @@ _DMODEL = {
     # spectral lines
     'gauss': {
         'var': ['amp', 'vccos', 'sigma'],
-        'param': [('lamb0', float), ('mz', float)],
+        'param': [('lamb0', float), ('mz', float, np.nan)],
     },
     'lorentz': {
         'var': ['amp', 'vccos', 'gam'],
-        'param': [('lamb0', float), ('mz', float)],
+        'param': [('lamb0', float), ('mz', float, np.nan)],
     },
     'pvoigt': {
         'var': ['amp', 'vccos', 'sigma', 'gam'],
-        'param': [('lamb0', float), ('mz', float)],
+        'param': [('lamb0', float), ('mz', float, np.nan)],
     },
     'voigt': {
         'var': ['amp', 'vccos', 'sigma', 'gam'],
-        'param': [('lamb0', float), ('mz', float)],
+        'param': [('lamb0', float), ('mz', float, np.nan)],
     },
 
     # -----------
@@ -235,17 +235,28 @@ def _check_dmodel(
         if haspar is True:
 
             lpar = _DMODEL[typ]['param']
+
+            # loop on parameters
+            for tpar in lpar:
+
+                if len(tpar) == 2:
+                    pass
+
+                else:
+                    pass
+
+
             c0 = (
                 isinstance(v0, dict)
                 and all([
-                    isinstance(v0.get(kpar), vpar)
-                    for (kpar, vpar) in lpar
+                    isinstance(v0.get(tpar[0]), tpar[1])
+                    for tpar in lpar
                 ])
             )
 
             # all parameters properly defined
             if c0:
-                dpar = {kpar: v0[kpar] for (kpar, vpar) in lpar}
+                dpar = {tpar[0]: v0[tpar[1]] for tpar in lpar}
 
             else:
 
