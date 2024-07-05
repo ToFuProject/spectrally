@@ -19,6 +19,7 @@ def main(
     key_model=None,
     key_data=None,
     lamb=None,
+    keyY=None,
     # options
     details=None,
     # plotting
@@ -30,14 +31,18 @@ def main(
     fs=None,
     dmargin=None,
     tit=None,
+    connect=None,
+    dinc=None,
+    show_commands=None,
 ):
 
     # -------------------
     # check
     # -------------------
 
-    details = _check(
+    details, connect = _check(
         details=details,
+        connect=connect,
     )
 
     # -------------------
@@ -60,8 +65,10 @@ def main(
 
     coll2, dkeys, ndim = _extract_coll2(
         coll=coll,
+        key_model=key_model,
         dout=dout,
         details=details,
+        keyY=keyY,
     )
 
     # -------------------
@@ -83,9 +90,25 @@ def main(
     # -------------------
 
     if ndim == 1:
-        _plot_1d(coll2, dout=dout, dkeys=dkeys, dax=dax, details=details)
+        dax = _plot_1d(
+            coll2,
+            dout=dout,
+            dkeys=dkeys,
+            dax=dax,
+            details=details
+        )
+
     elif ndim == 2:
-        _plot_2d(coll2, dout=dout, dkeys=dkeys, dax=dax, details=details)
+        dax, dgroup = _plot_2d(
+            coll=coll,
+            key_model=key_model,
+            coll2=coll2,
+            dout=dout,
+            keyY=keyY,
+            dkeys=dkeys,
+            dax=dax,
+            details=details,
+        )
 
     # -------------------
     # finalize
@@ -101,10 +124,18 @@ def main(
     # connect interactivity
     # ---------------------
 
-    if ndim > 1:
-        pass
+    if isinstance(dax, dict):
+        return dax
+    else:
+        if connect is True:
+            dax.setup_interactivity(kinter='inter0', dgroup=dgroup, dinc=dinc)
+            dax.disconnect_old()
+            dax.connect()
 
-    return dax
+            dax.show_commands(verb=show_commands)
+            return dax
+        else:
+            return dax, dgroup
 
 
 # ###############################################################
@@ -115,6 +146,7 @@ def main(
 
 def _check(
     details=None,
+    connect=None,
 ):
 
     # -------------
@@ -127,7 +159,17 @@ def _check(
         default=True,
     )
 
-    return details
+    # -------------
+    # connect
+    # -------------
+
+    connect = ds._generic_check._check_var(
+        connect, 'connect',
+        types=bool,
+        default=True,
+    )
+
+    return details, connect
 
 
 # ###############################################################
@@ -138,17 +180,17 @@ def _check(
 
 def _extract_coll2(
     coll=None,
+    key_model=None,
     dout=None,
     details=None,
+    keyY=None,
 ):
-
-    # -------------
-    # extract
-    # -------------
 
     # ------------
     # initialize
+    # -------------
 
+    wsm = coll._which_model
     key = 'data'
     key_lamb = dout['key_lamb']
     if key_lamb is None:
@@ -158,13 +200,16 @@ def _extract_coll2(
 
     # --------------
     # add all refs
+    # --------------
 
+    # ref_nfunc
     ref = dout['ref']
     if details is True:
         ref = list(ref)
         ref[0] = 'nfunc'
         coll2.add_ref(ref[0], size=dout['data'].shape[0])
 
+    # kre_lamb
     if dout['key_lamb'] is None:
         ilamb = ref.index(None)
         kref_lamb = 'nlamb'
@@ -172,20 +217,16 @@ def _extract_coll2(
         ref[ilamb] = kref_lamb
         coll2.add_ref(kref_lamb, size=dout['data'].shape[ilamb])
 
+    # all other refs
     for rr in ref:
         if rr not in coll2.dref.keys():
             coll2.add_ref(key=rr, size=coll.dref[rr]['size'])
 
     # --------------
     # add all data
+    # --------------
 
-    # data
     lk = ['data', 'units', 'dim', 'quant']
-    coll2.add_data(
-        key,
-        ref=tuple(ref),
-        **{k0: dout[k0] for k0 in lk},
-    )
 
     # lamb
     if dout['key_lamb'] is None:
@@ -196,17 +237,42 @@ def _extract_coll2(
             **{k0: coll.ddata[dout['key_lamb']][k0] for k0 in lk + ['ref']},
         )
 
-    # sum if details
+    # sum + details
     if details is True:
+
+        # data
+        lfunc = coll.dobj[wsm][key_model]['keys']
+        for ii, ff in enumerate(lfunc):
+            coll2.add_data(
+                ff,
+                data=dout[key][ii, ...],
+                ref=tuple(ref[1:]),
+                **{k0: dout[k0] for k0 in ['dim', 'quant', 'units']},
+            )
+
+        # sum
         ksum = f"{key}_sum"
         coll2.add_data(
             ksum,
-            data=np.sum(dout['data'], axis=0),
+            data=np.sum(dout[key], axis=0),
             ref=tuple(ref[1:]),
             **{k0: dout[k0] for k0 in ['dim', 'quant', 'units']}
         )
 
-    # all other vectrs if any
+    else:
+        ksum = f"{key}_sum"
+        coll2.add_data(
+            ksum,
+            ref=tuple(ref),
+            **{k0: dout[k0] for k0 in lk}
+        )
+
+    # all other vectors if any
+    if keyY is not None:
+        coll2.add_data(
+            keyY,
+            **{k0: coll.ddata[keyY][k0] for k0 in lk + ['ref']},
+        )
 
     # --------------
     # dkeys
@@ -214,7 +280,7 @@ def _extract_coll2(
 
     dkeys = {
         'lamb': key_lamb,
-        'sum': ksum if details is True else key,
+        'sum': ksum,
     }
     if details is True:
         dkeys['details'] = key
@@ -225,7 +291,7 @@ def _extract_coll2(
 
     # get ndim
     ndim = coll2.ddata[dkeys['sum']]['data'].ndim
-    if ndim > 1:
+    if ndim > 2:
         raise NotImplementedError()
 
     return coll2, dkeys, ndim
@@ -267,7 +333,7 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
                     lw=1.,
                 )
 
-    return
+    return dax
 
 
 # ###############################################################
@@ -276,18 +342,29 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
 # ###############################################################
 
 
-def _plot_2d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
+def _plot_2d(
+    coll=None,
+    key_model=None,
+    coll2=None,
+    dout=None,
+    dkeys=None,
+    keyY=None,
+    dax=None,
+    details=None,
+):
 
     # --------------
     # plot fixed 2d
     # --------------
 
-    dax2, dgroup = coll2.plot_as_array(
-        key=None,
-        keyX=None,
-        keyY=None,
+    coll2, dgroup = coll2.plot_as_array(
+        key=dkeys['sum'],
+        keyX=dkeys['lamb'],
+        keyY=keyY,
         dax=dax,
+        aspect='auto',
         connect=False,
+        inplace=True,
     )
 
     # --------------
@@ -295,20 +372,45 @@ def _plot_2d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
     # --------------
 
     if details is True:
-        kax = 'spectrum'
-        lax = [vax['handle'] for vax in dax.values() if kax in vax['type']]
-        for ax in lax:
 
-            for ii in range(coll2.ddata[dkeys['details']]['data'].shape[0]):
-                ax.plot(
-                    coll2.ddata[dkeys['lamb']]['data'],
-                    coll2.ddata[dkeys['details']]['data'][ii, ...],
-                    ls='-',
-                    marker='None',
-                    lw=1.,
-                )
+        lamb = coll2.ddata[dkeys['lamb']]['data']
+        nmax = dgroup['X']['nmax']
+        wsm = coll._which_model
+        lfunc = coll.dobj[wsm][key_model]['keys']
+        refs = (coll2.ddata[dkeys['sum']]['ref'][0],)
+        nan = np.full(lamb.shape, np.nan)
 
-    return
+        axtype = 'horizontal'
+        lax = [kax for kax, vax in dax.items() if axtype in vax['type']]
+        for kax in lax:
+            ax = dax[kax]['handle']
+            for ii, ff in enumerate(lfunc):
+
+                for jj in range(nmax):
+
+                    ll, = ax.plot(
+                        lamb,
+                        nan,
+                        ls='-',
+                        marker='None',
+                        lw=1.,
+                    )
+
+                    xydata = 'ydata'
+                    km = f'{lfunc[ii]}_{jj}'
+
+                    coll2.add_mobile(
+                        key=km,
+                        handle=ll,
+                        refs=(refs,),
+                        data=(lfunc[ii],),
+                        dtype=[xydata],
+                        group_vis='Y',  # 'X' <-> 'Y'
+                        axes=kax,
+                        ind=jj,
+                    )
+
+    return coll2, dgroup
 
 
 # ###############################################################
@@ -395,13 +497,13 @@ def _get_dax_2d(
     # ---------------
 
     if fs is None:
-        fs = (10, 6)
+        fs = (18, 10)
 
     if dmargin is None:
         dmargin = {
-            'left': 0.10, 'right': 0.90,
-            'bottom': 0.1, 'top': 0.90,
-            'wspace': 0.1, 'hspace': 0.1,
+            'left': 0.07, 'right': 0.98,
+            'bottom': 0.08, 'top': 0.90,
+            'wspace': 0.50, 'hspace': 0.10,
         }
 
     # ---------------
@@ -410,7 +512,7 @@ def _get_dax_2d(
 
     dax = {}
     fig = plt.figure(figsize=fs)
-    gs = gridspec.GridSpec(2, 1, **dmargin)
+    gs = gridspec.GridSpec(2, 7, **dmargin)
 
     # ------------
     # add axes
@@ -419,12 +521,17 @@ def _get_dax_2d(
     ax = fig.add_subplot(gs[:, 0])
     # ax.set_xlabel()
     # ax.set_ylabel()
-    dax = {'2d': {'handle': ax, 'type': '2d'}}
+    dax['vert'] = {'handle': ax, 'type': 'vertical'}
 
-    ax = fig.add_subplot(gs[0, 1])
+    ax = fig.add_subplot(gs[:, 1:3])
     # ax.set_xlabel()
     # ax.set_ylabel()
-    dax = {'1d': {'handle': ax, 'type': 'spectrum'}}
+    dax['2d'] = {'handle': ax, 'type': 'matrix'}
+
+    ax = fig.add_subplot(gs[0, 3:])
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax['hor'] = {'handle': ax, 'type': 'horizontal'}
 
     return dax
 
@@ -458,6 +565,8 @@ def _finalize_figure(dax=None, dout=None, tit=None):
 
     if isinstance(dax, dict):
         fig = list(dax.values())[0]['handle'].figure
+    else:
+        fig = list(dax.dax.values())[0]['handle'].figure
 
     if tit is not None:
         fig.suptitle(tit, size=12, fontweight='bold')

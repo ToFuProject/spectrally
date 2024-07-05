@@ -267,6 +267,7 @@ class SpectralModel(Previous):
         key_model=None,
         key_data=None,
         lamb=None,
+        keyY=None,
         # options
         details=None,
         # plotting
@@ -292,6 +293,7 @@ class SpectralModel(Previous):
             key_model=key_model,
             key_data=key_data,
             lamb=lamb,
+            keyY=keyY,
             # options
             details=details,
             # plotting
