@@ -64,6 +64,10 @@ class Test00_Populate():
         # add data
         _inputs.add_data(self.coll)
 
+        # add spectral lines
+        pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
+        self.coll.add_spectral_lines_from_file(pfe_json)
+
     # ------------------------
     #   Populating
     # ------------------------
