@@ -187,24 +187,24 @@ def add_models(coll=None):
     dmodel = {
         'sm-1': {
             'bck0': 'linear',
-            'l00': 'gauss',
-            'l01': 'gauss',
-            'l02': 'lorentz',
+            'll0': 'gauss',
+            'll1': 'gauss',
+            'll2': 'lorentz',
         },
         'sm00': {
             'bck0': 'linear',
-            'l00': {'type': 'gauss', 'lamb0': 3.92e-10, 'mz': 39.948*scpct.m_u},
-            'l01': {'type': 'gauss', 'lamb0': 3.95e-10, 'mz': 39.948*scpct.m_u},
-            'l02': {'type': 'lorentz', 'lamb0': 3.97e-10, 'mz': 39.948*scpct.m_u},
+            'l00': {'type': 'gauss'},     # from spectral line
+            'l08': {'type': 'lorentz'},   # from spectral line
+            'l12': {'type': 'pvoigt'},    # from spectral line
         },
         'sm01': {
-            'bck0': 'exp',
-            'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
-            'l01': {'type': 'lorentz', 'lamb0': 3.95e-10},
-            'l02': {'type': 'pvoigt', 'lamb0': 3.97e-10},
+            'bck0': 'exp_lamb',
+            'l00': {'type': 'gauss', 'lamb0': 3.92e-10, 'mz': 39.948*scpct.m_u},
+            'l01': {'type': 'lorentz', 'lamb0': 3.95e-10, 'mz': 39.948*scpct.m_u},
+            'l02': {'type': 'voigt', 'lamb0': 3.97e-10, 'mz': 39.948*scpct.m_u},
         },
         'sm02': {
-            'bck0': 'exp',
+            'bck0': 'exp_lamb',
             'l00': {'type': 'gauss', 'lamb0': 3.92e-10},
             'l01': {'type': 'lorentz', 'lamb0': 3.95e-10},
             'l02': {'type': 'voigt', 'lamb0': 3.97e-10},
@@ -214,6 +214,7 @@ def add_models(coll=None):
             'l00': {'type': 'pulse1'},
             'l01': {'type': 'pulse2'},
             'l02': {'type': 'lognorm'},
+            'l03': {'type': 'lognorm'},
         },
     }
 
@@ -230,7 +231,7 @@ def add_models(coll=None):
         raise Exception('sucess')
     except Exception as err:
         if "For model" not in str(err):
-            raise Exception("Wrong error raised!")
+            raise Exception("Wrong error raised!") from err
 
     # no constraints
     coll.add_spectral_model(
@@ -244,8 +245,8 @@ def add_models(coll=None):
         key='sm01',
         dmodel=dmodel['sm01'],
         dconstraints={
-            'g00': {'ref': 'l00_amp', 'sl00_amp': [0, 1, 0]},
-            'g01': {'ref': 'l00_sigma', 'sl00_gam': [0, 1, 0]},
+            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
+            'g01': {'ref': 'l00_sigma', 'l02_gam': [0, 1, 0]},
         },
     )
 
@@ -330,7 +331,7 @@ def interpolate_spectral_model(coll=None):
     # prepare xfree
 
     t = coll.ddata['t']['data']
-    dxfree = _get_dxfree(t)
+    dxfree = _get_dxfree(t, lamb)
 
     # ---------------
     # add model data
@@ -389,19 +390,36 @@ def interpolate_spectral_model(coll=None):
     return
 
 
-def _get_dxfree(t=None):
+def _get_dxfree(t=None, lamb=None):
+
+    lambm = np.mean(lamb)
+    lambD = lamb[-1] - lamb[0]
+    tm = np.mean(t)
+
+    rate = np.log(2*lamb[0]/lamb[-1]) / (1/lamb[-1] - 1/lamb[0])
+
+    tmax = 3.960e-10
+    fmax = 1
+    delta = lambD / 30
+
+    sigma = 0.5
+    mu = 0.5 * (np.log(delta**2/(np.exp(sigma**2) - 1)) - sigma**2)
+    # mu = -28
+
+    t0 = tmax - np.exp(mu - sigma**2)
+    amp = fmax / np.exp(0.5*sigma**2 - mu)
 
     # sm00
     # 'bck0_a0', 'bck0_a1',
     # 'l00_amp', 'l00_vccos', 'l00_sigma',
-    # 'l01_amp', 'l01_vccos', 'l01_sigma',
-    # 'l02_amp', 'l02_vccos', 'l02_gam'
+    # 'l08_amp', 'l08_vccos', 'l08_gam',
+    # 'l12_amp', 'l12_vccos', 'l12_sigma', 'l12_gam',
 
     # sm01
     # 'bck0_amp', 'bck0_rate',
     # 'l00_amp', 'l00_vccos', 'l00_sigma',
-    # 'l02_amp', 'l02_vccos', 'l02_sigma', 'l02_gam',
-    # 'sl00_vccos'
+    # 'l01_vccos', 'l01_gam',
+    # 'l02_amp', 'l02_vccos', 'l02_sigma',
 
     # sm02
     # 'bck0_amp', 'bck0_rate',
@@ -417,28 +435,29 @@ def _get_dxfree(t=None):
 
     dxfree = {
         'sm00': np.r_[
-            0.2, 0.01,
-            1, 0.01e-10, 0.005e-10,
-            0.8, -0.01e-10, 0.001e-10,
-            1.2 * 0.005e-10**2, 0.01e-10, 0.005e-10,
+            0.1 - lamb[0] * 0.1/lambD, 0.1 / lambD,
+            1, 0.004, 0.003e-10,
+            0.9, -0.006, 0.003e-10,
+            1.1, -0.001, 0.003e-10, 0.003e-10,
         ],
         'sm01': np.r_[
-            0.1, 0.01,
-            1, 0.01e-10, 0.005e-10,
-            0.8, -0.01e-10, 0.001e-10, 0.,
-            0.01e-10,
-        ][None, :] * np.exp(-(t[:, None] - np.mean(t))**2 / 2**2),
+            0.2*lamb[0]*np.exp(rate/lamb[0]), rate,
+            1, 0.001, 0.003e-10,
+            -0.001, 0.001e-10,
+            1.e-12, 0.001, 0.002e-10,
+        ][None, :] * np.exp(-(t[:, None] - tm)**2 / 2**2),
         'sm02': np.r_[
-            0.1, -0.01,
-            1, 0.01e-10, 0.002e-10,
-            -0.01e-10,
-            1, 0.1e-10, 0.05e-10, 0.1e-10,
+            0.2*lamb[0]*np.exp(rate/lamb[0]), rate,
+            1, 0.001, 0.003e-10,
+            -0.001,
+            1e-12, 0.001, 0.003e-10, 0.001e-10,
         ],
         'sm03': np.r_[
             0.1, 0.,
-            2, 3.91e-10, 0.001e-10, 0.004e-10,
-            1, 3.94e-10, 0.001e-10, 0.007e-10,
-            1 * 0.001e-10, 3.899e-10, 0.001e-10, 2*(0.001e-10 - np.log(1e-10)),
+            2, 3.905e-10, 0.001e-10, 0.004e-10,
+            1, 3.935e-10, 0.001e-10, 0.007e-10,
+            amp, t0, mu, sigma,
+            amp, t0 + 0.015e-10, mu, sigma,
         ],
     }
     return dxfree
