@@ -298,7 +298,7 @@ def _get_func_moments(
                 )
 
             # integral
-            dout[kfunc]['integ'] = None
+            dout[kfunc]['integ'] = np.full(amp.shape, np.nan)
 
         # ------------------
         # sum all pulse1
@@ -356,8 +356,10 @@ def _get_func_moments(
             sigma = x_full[dind[kfunc]['sigma']['ind']]
             mu = x_full[dind[kfunc]['mu']['ind']]
 
-            # max at lamb - t0 = exp(sigma/2 * (mu-1))
-            # max = amp / mu
+            # max at t - t0 = exp(mu - sigma**2)
+            # max = amp * exp(sigma**2/2 - mu)
+            # variance = (exp(sigma**2) - 1) * exp(2mu + sigma**2)
+            # skewness = (exp(sigma**2) + 2) * sqrt(exp(sigma**2) - 1)
 
             # variables
             dout[kfunc]['amp'] = amp
@@ -366,7 +368,7 @@ def _get_func_moments(
             dout[kfunc]['mu'] = mu
 
             # integral
-            dout[kfunc]['integ'] = None
+            dout[kfunc]['integ'] = np.full(mu.shape, np.nan)
 
         return dout
 
