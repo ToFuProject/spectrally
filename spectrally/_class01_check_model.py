@@ -6,6 +6,7 @@ import itertools as itt
 
 
 import numpy as np
+import scipy.constants as scpct
 import datastock as ds
 
 
@@ -134,7 +135,7 @@ def _dmodel_err(key, dmodel):
             stri = f"\t- 'f{ii}': '{k0}'"
         else:
             lpar = v0['param']
-            pstr = ", ".join([f"'{k1}': {v1}" for (k1, v1) in lpar])
+            pstr = ", ".join([f"'{tpar[0]}': {tpar[1]}" for tpar in lpar])
             stri = f"\t- 'f{ii}': " + "{" + f"'type': '{k0}', {pstr}" + "}"
 
         if k0 == 'linear':
@@ -237,37 +238,39 @@ def _check_dmodel(
             lpar = _DMODEL[typ]['param']
 
             # loop on parameters
+            dpar = {}
             for tpar in lpar:
 
-                if len(tpar) == 2:
-                    pass
-
-                else:
-                    pass
-
-
-            c0 = (
-                isinstance(v0, dict)
-                and all([
-                    isinstance(v0.get(tpar[0]), tpar[1])
-                    for tpar in lpar
-                ])
-            )
-
-            # all parameters properly defined
-            if c0:
-                dpar = {tpar[0]: v0[tpar[1]] for tpar in lpar}
-
-            else:
-
-                # check if lamb0 can be extracted from existing lines
-                c1 = (
-                    typ in ['gauss', 'lorentz', 'pvoigt', 'voigt']
-                    and len(lpar) == 1
-                    and k1 in coll.dobj.get(wsl, {}).keys()
+                # provided
+                c0 = (
+                    isinstance(v0, dict)
+                    and isinstance(v0.get(tpar[0]), tpar[1])
                 )
-                if c1:
-                    dpar = {'lamb0': coll.dobj[wsl][k1]['lamb0']}
+                if c0:
+                    dpar[tpar[0]] = v0[tpar[0]]
+
+                elif tpar[0] in ('lamb0', 'mz'):
+
+                    # check if lamb0 can be extracted from existing lines
+                    c1 = (
+                        typ in ['gauss', 'lorentz', 'pvoigt', 'voigt']
+                        and k1 in coll.dobj.get(wsl, {}).keys()
+                    )
+                    if c1 and tpar[0] == 'lamb0':
+                        dpar[tpar[0]] = coll.dobj[wsl][k1]['lamb0']
+
+                    elif c1 and tpar[0] == 'mz':
+                        kion = coll.dobj[wsl][k1]['ion']
+                        dpar[tpar[0]] = coll.dobj['ion'][kion]['A'] * scpct.m_u
+
+                    elif len(tpar) == 3:
+                        dpar[tpar[0]] = tpar[2]
+                    else:
+                        dout[k0] = v0
+                        continue
+
+                elif len(tpar) == 3:
+                    dpar[tpar[0]] = tpar[2]
 
                 else:
                     dout[k0] = v0
@@ -386,13 +389,13 @@ def _get_var(
 
     if 'param_key' in returnas:
         dout['param_key'] = [
-            [f"{k0}_{k1}" for (k1, v1) in _DMODEL[dmodel[k0]['type']]['param']]
+            [f"{k0}_{tpar[0]}" for tpar in _DMODEL[dmodel[k0]['type']]['param']]
             for k0 in keys if dmodel[k0].get('param') is not None
         ]
 
     if 'param_value' in returnas:
         dout['param_value'] = [
-            [dmodel[k0]['param'][k1] for (k1, v1) in _DMODEL[dmodel[k0]['type']]['param']]
+            [dmodel[k0]['param'][tpar[0]] for tpar in _DMODEL[dmodel[k0]['type']]['param']]
             for k0 in keys if dmodel[k0].get('param') is not None
         ]
 
@@ -625,12 +628,16 @@ def _show_details(coll=None, key=None, lcol=None, lar=None, show=None):
     nvarmax = np.max([len(lvar) for lvar in llvar])
     lfree = coll.get_spectral_model_variables(key, returnas='free')['free']
 
+    lpar = sorted(set(itt.chain.from_iterable([
+        v0.get('param', {}).keys() for v0 in dmodel.values()
+    ])))
+
     # ---------------------------
     # column names
     # ---------------------------
 
     lvar = [f"var{ii}" for ii in range(nvarmax)]
-    lcol.append(['func', 'type', ' '] + lvar)
+    lcol.append(['func', 'type', ' '] + lvar + [' '] + lpar)
 
     # ---------------------------
     # data
@@ -642,7 +649,7 @@ def _show_details(coll=None, key=None, lcol=None, lar=None, show=None):
         # initialize with key, type
         arr = [kf, dmodel[kf]['type'], '|']
 
-        # add nb of func of each type
+        # add variables of each func
         for ii, k1 in enumerate(dmodel[kf]['var']):
             key = f"{kf}_{k1}"
             if key in lfree:
@@ -654,7 +661,14 @@ def _show_details(coll=None, key=None, lcol=None, lar=None, show=None):
             arr.append(nn)
 
         # complement
-        arr += ['' for ii in range(nvarmax - ii - 1)]
+        arr += ['' for ii in range(nvarmax - ii - 1)] + ['|']
+
+        # add parameters of each func
+        for k1 in lpar:
+            nn = dmodel[kf].get('param', {}).get(k1, '')
+            if not isinstance(nn, str):
+                nn = f"{nn:.6e}"
+            arr.append(nn)
 
         lar0.append(arr)
 
