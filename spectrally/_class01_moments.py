@@ -349,7 +349,7 @@ def _get_func_moments(
                 )
 
             # integral
-            dout[kfunc]['integ'] = np.full(amp.shape, np.nan)
+            dout[kfunc]['integ'] = amp
 
         # ------------------
         # sum all pulse1
