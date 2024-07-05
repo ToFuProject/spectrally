@@ -6,6 +6,9 @@ Created on Wed Jul  3 09:57:00 2024
 """
 
 
+import itertools as itt
+
+
 import numpy as np
 import scipy.constants as scpct
 
@@ -87,6 +90,7 @@ def main(
         c2=c2,
         dind=dind,
         param_val=param_val,
+        axis=coll.ddata[key_data]['ref'].index(ref_nx),
     )
 
     # ------------
@@ -147,6 +151,7 @@ def _get_func_moments(
     c2=None,
     dind=None,
     param_val=None,
+    axis=None,
 ):
 
     # --------------
@@ -162,6 +167,7 @@ def _get_func_moments(
         c2=c2,
         dind=dind,
         scale=None,
+        axis=axis,
     ):
 
         # ----------
@@ -175,7 +181,24 @@ def _get_func_moments(
         if c0 is None:
             x_full = x_free
         else:
-            x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
+            if x_free.ndim > 1:
+                shape = list(x_free.shape)
+                shape[axis] = c0.size
+                x_full = np.full(shape, np.nan)
+                sli = list(shape)
+                sli[axis] = slice(None)
+                sli = np.array(sli)
+                ich = np.array([ii for ii in range(len(shape)) if ii != axis])
+                linds = [range(shape[ii]) for ii in ich]
+                for ind in itt.product(*linds):
+                    sli[ich] = ind
+                    slii = tuple(sli)
+                    x_full[slii] = (
+                        c2.dot(x_free[slii]**2) + c1.dot(x_free[slii]) + c0
+                    )
+
+            else:
+                x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
 
         # -------------------
         # rescale
@@ -300,6 +323,34 @@ def _get_func_moments(
             # integral
             dout[kfunc]['integ'] = np.full(amp.shape, np.nan)
 
+        # --------------------
+        # sum all voigt
+
+        kfunc = 'voigt'
+        if dind.get(kfunc) is not None:
+
+            amp = x_full[dind[kfunc]['amp']['ind']]
+            sigma = x_full[dind[kfunc]['sigma']['ind']]
+            gam = x_full[dind[kfunc]['gam']['ind']]
+            vccos = x_full[dind[kfunc]['vccos']['ind']]
+            lamb0 = param_val[dind[kfunc]['lamb0']]
+
+            # variables
+            dout[kfunc]['amp'] = amp
+            dout[kfunc]['sigma'] = sigma
+            dout[kfunc]['gam'] = gam
+            dout[kfunc]['vccos'] = vccos
+
+            # physics
+            if dind[kfunc].get('mz') is not None:
+                mz = param_val[dind[kfunc]['mz']]
+                dout[kfunc]['Ti'] = (
+                    (sigma / lamb0)**2 * mz * scpct.c**2 * scpct.e
+                )
+
+            # integral
+            dout[kfunc]['integ'] = np.full(amp.shape, np.nan)
+
         # ------------------
         # sum all pulse1
 
@@ -310,8 +361,6 @@ def _get_func_moments(
             t0 = x_full[dind[kfunc]['t0']['ind']]
             tup = x_full[dind[kfunc]['t_up']['ind']]
             tdown = x_full[dind[kfunc]['t_down']['ind']]
-
-            ind0 = lamb > t0
 
             # variables
             dout[kfunc]['amp'] = amp
@@ -332,9 +381,6 @@ def _get_func_moments(
             t0 = x_full[dind[kfunc]['t0']['ind']]
             tup = x_full[dind[kfunc]['t_up']['ind']]
             tdown = x_full[dind[kfunc]['t_down']['ind']]
-
-            indup = (lamb < t0)
-            inddown = (lamb >= t0)
 
             # variables
             dout[kfunc]['amp'] = amp
