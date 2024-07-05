@@ -222,19 +222,26 @@ def _get_func_details(
         kfunc = 'lognorm'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
-            sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
-            mu = x_full[dind[kfunc]['mu']['ind']][:, None]
+            amp = x_full[dind[kfunc]['amp']['ind']]
+            t0 = x_full[dind[kfunc]['t0']['ind']]
+            sigma = x_full[dind[kfunc]['sigma']['ind']]
+            mu = x_full[dind[kfunc]['mu']['ind']]
 
-            # max at lamb - t0 = exp(sigma/2 * (mu-1))
-            # max = amp / mu
+            # max at t - t0 = exp(mu - sigma**2)
+            # max = amp * exp(sigma**2/2 - mu)
+            # variance = (exp(sigma**2) - 1) * exp(2mu + sigma**2)
+            # skewness = (exp(sigma**2) + 2) * sqrt(exp(sigma**2) - 1)
 
             ind = dind['func'][kfunc]['ind']
-            val[ind, ...] = (
-                (amp / (lamb - t0))
-                * np.exp(-(np.log(lamb - t0) - mu)**2 / (2.*sigma**2))
-            )
+            for ii, i0 in enumerate(ind):
+                iok = lamb > t0[ii]
+                val[i0, iok] = (
+                    (amp[ii] / (lamb[iok] - t0[ii]))
+                    * np.exp(
+                        -(np.log(lamb[iok] - t0[ii]) - mu[ii])**2
+                        / (2.*sigma[ii]**2)
+                    )
+                )
 
         return val
 
