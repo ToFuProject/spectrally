@@ -64,6 +64,10 @@ class Test00_Populate():
         # add data
         _inputs.add_data(self.coll)
 
+        # add spectral lines
+        pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
+        self.coll.add_spectral_lines_from_file(pfe_json)
+
     # ------------------------
     #   Populating
     # ------------------------
@@ -71,25 +75,25 @@ class Test00_Populate():
     # ---------------
     # 1d spectral fit
 
-    def test04_add_spectral_fit_1d(self):
+    def test01_add_spectral_fit_1d(self):
         # add spectral fit 1d
         _inputs.add_fit(self.coll, key_data='data1d')
 
-    def test05_plot_spectral_fit_input_validity_1d(self):
+    def test02_plot_spectral_fit_input_validity_1d(self):
         # plot 1d
         _inputs.plot_input_validity(self.coll, key_data='data1d')
 
-    def test06_compute_spectral_fit_1d(self):
+    def test03_compute_spectral_fit_1d(self):
         # compute 1d
         _inputs.compute_fit(self.coll, key_data='data1d')
 
     # ---------------
     # 2d spectral fit
 
-    def test07_add_spectral_fit_2d(self):
+    def test04_add_spectral_fit_2d(self):
         # add spectral fit 2d
         _inputs.add_fit(self.coll, key_data='data2d')
 
-    def test08_plot_spectral_fit_input_validity_2d(self):
+    def test05_plot_spectral_fit_input_validity_2d(self):
         # plot 2d
         _inputs.plot_input_validity(self.coll, key_data='data2d')
