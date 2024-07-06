@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+import itertools as itt
 import datetime as dtm
 
 
@@ -68,8 +69,8 @@ def main(
         axis=axis,
         iok_all=iok_all,
         # func
-        fun_cost=func_cost,
-        func_jac=func_jac,
+        fun_cost=dfunc['cost'],
+        func_jac=dfunc['jac'],
         # options
         verb=verb,
         timing=timing,
