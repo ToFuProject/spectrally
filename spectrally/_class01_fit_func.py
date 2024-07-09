@@ -26,7 +26,7 @@ _DFUNC = {
         'sum': _1d._get_func_sum,
         'cost': _1d._get_func_cost,
         'details': _1d._get_func_details,
-        # 'jac': _1d._get_func_jac,
+        'jac': _1d._get_func_jacob,
     },
 }
 

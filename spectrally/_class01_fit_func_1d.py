@@ -38,8 +38,15 @@ def _get_func_details(
         c1=c1,
         c2=c2,
         dind=dind,
-        scale=None,
+        scales=None,
+        iok=None,
     ):
+
+        # ---------------
+        # iok
+
+        if iok is not None:
+            lamb = lamb[iok]
 
         # ----------
         # initialize
@@ -50,8 +57,8 @@ def _get_func_details(
         # -------------------
         # rescale
 
-        if scale is not None:
-            x_free = x_free * scale
+        if scales is not None:
+            x_free = x_free * scales
 
         # ----------------------------
         # get x_full from constraints
@@ -60,12 +67,6 @@ def _get_func_details(
             x_full = x_free
         else:
             x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
-
-        # -------------------
-        # rescale
-
-        if scale is not None:
-            pass
 
         # ------------------
         # sum all linear
@@ -287,10 +288,15 @@ def _get_func_sum(
     def func(
         x_free=None,
         lamb=None,
-        scale=None,
+        # scales, iok
+        scales=None,
+        iok=None,
     ):
 
-        return np.sum(func_details(x_free, lamb=lamb, scale=scale), axis=0)
+        return np.sum(
+            func_details(x_free, lamb=lamb, scales=scales, iok=iok),
+            axis=0,
+        )
 
     return func
 
@@ -328,13 +334,18 @@ def _get_func_cost(
     def func(
         x_free=None,
         lamb=None,
-        scale=None,
+        # scales, iok
+        scales=None,
+        iok=None,
+        # data
         data=None,
         # sum
         func_sum=func_sum,
     ):
+        if iok is not None:
+            data = data[iok]
 
-        return func_sum(x_free, lamb=lamb, scale=scale) - data
+        return func_sum(x_free, lamb=lamb, scales=scales, iok=iok) - data
 
     return func
 
@@ -367,8 +378,18 @@ def _get_func_jacob(
         c2=c2,
         dindj=dindj,
         dind=dind,
-        scale=None,
+        # scales, iok
+        scales=None,
+        iok=None,
+        # unused
+        **kwdargs,
     ):
+
+        # ---------------
+        # iok
+
+        if iok is not None:
+            lamb = lamb[iok]
 
         # ----------
         # initialize
@@ -380,8 +401,8 @@ def _get_func_jacob(
         # -------------------
         # rescale
 
-        if scale is not None:
-            x_free = x_free * scale
+        if scales is not None:
+            x_free = x_free * scales
 
         # ----------------------------
         # get x_full from constraints
