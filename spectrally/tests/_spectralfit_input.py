@@ -50,6 +50,11 @@ def add_data(coll=None):
         quant='wavelength',
     )
 
+    # derive useful quantities
+    Dlamb = lamb[-1] - lamb[0]
+    lambm = np.mean(lamb)
+    lamb0 = lamb[0] + Dlamb * np.r_[0.25, 0.55, 0.75]
+
     # phi
     nphi = 100
     coll.add_ref('nphi', size=nphi)
@@ -77,13 +82,58 @@ def add_data(coll=None):
     )
 
     # ------------------
+    # model-specific data
+    # ------------------
+
+    # --------
+    # linear
+
+    a1 = (100 - 150) / (lamb[-1] - lamb[0])
+    a0 = 150 - a1 * lamb[0]
+
+    coll.add_data(
+        key='data_linear',
+        data=np.random.poisson( a1 * lamb + a0 ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # exp_lamb
+
+    Te = 1e3
+    rate = scpct.c / (Te * scpct.e)
+    amp = 200 * lambm * np.exp(rate/lambm)
+
+    coll.add_data(
+        key='data_exp',
+        data=np.random.poisson( amp * np.exp(-rate/lamb) / lamb ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # gauss
+
+    sigma = Dlamb/8.
+    vccos = Dlamb/10.
+    amp = 200 * np.exp((lambm - lamb0[1]*(1+vccos))**2/(2*sigma**2))
+
+    coll.add_data(
+        key='data_gauss',
+        data=np.random.poisson(
+            amp * np.exp(-(lamb - lamb0*(1+vccos))**2/(2*sigma**2))
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # ------------------
     # data 1d
     # ------------------
 
     # lamb0
     amp0 = 700
-    Dlamb = lamb[-1] - lamb[0]
-    lamb0 = lamb[0] + Dlamb * np.r_[0.25, 0.55, 0.75]
     width = Dlamb * np.r_[0.015, 0.035, 0.025]
     amp = amp0 * np.r_[1, 0.5, 2]
 
@@ -164,7 +214,7 @@ def add_data(coll=None):
 # ###################################################
 
 
-def add_models(coll=None):
+def add_models(coll=None, models=None):
 
     # ---------------
     # check
@@ -185,6 +235,36 @@ def add_models(coll=None):
     # dmodels
 
     dmodel = {
+        # Testing fit only
+        'smlinear': {
+            'bck0': 'linear',
+        },
+        'smexp': {
+            'bck0': 'exp_lamb',
+        },
+        'smgauss': {
+            'l00': 'gauss',
+        },
+        'smlorentz': {
+            'l00': 'lorentz',
+        },
+        'smpvoigt': {
+            'l00': 'pvoigt',
+        },
+        'smvoigt': {
+            'l00': 'voigt',
+        },
+        'smpulse1': {
+            'l00': 'pulse1',
+        },
+        'smpulse2': {
+            'l00': 'pulse2',
+        },
+        'smlognorm': {
+            'l00': 'lognorm',
+        },
+
+        # testing model population
         'sm-1': {
             'bck0': 'linear',
             'll0': 'gauss',
@@ -218,53 +298,56 @@ def add_models(coll=None):
         },
     }
 
-    # ---------------
-    # add models
-
-    # check err
-    try:
-        coll.add_spectral_model(
-            key='sm-1',
-            dmodel=dmodel['sm-1'],
-            dconstraints=None,
-        )
-        raise Exception('sucess')
-    except Exception as err:
-        if "For model" not in str(err):
-            raise Exception("Wrong error raised!") from err
-
-    # no constraints
-    coll.add_spectral_model(
-        key='sm00',
-        dmodel=dmodel['sm00'],
-        dconstraints=None,
-    )
-
-    # with constraints
-    coll.add_spectral_model(
-        key='sm01',
-        dmodel=dmodel['sm01'],
-        dconstraints={
+    dconstraints = {
+        'sm01': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
             'g01': {'ref': 'l00_sigma', 'l02_gam': [0, 1, 0]},
         },
-    )
-
-    # with voigt
-    coll.add_spectral_model(
-        key='sm02',
-        dmodel=dmodel['sm02'],
-        dconstraints={
+        'sm02': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
             'g01': {'ref': 'l00_sigma', 'l01_gam': [0, 1, 0]},
         },
-    )
+    }
 
-    # with pulses
-    coll.add_spectral_model(
-        key='sm03',
-        dmodel=dmodel['sm03'],
-    )
+
+    if models is None:
+        models = sorted(dmodel.keys())
+
+    lout = [k0 for k0 in models if k0 not in dmodel.keys()]
+    if len(lout):
+        lstr = [f"\t- {k0}" for k0 in lout]
+        msg = "Requested models not available for tests:\n" + "\n".join(lstr)
+        raise Exception(msg)
+
+    # ---------------
+    # add models
+    # ---------------
+
+    for k0 in dmodel.keys():
+
+        if k0 not in models:
+            continue
+
+        # check err
+        if k0 == 'sm-1':
+            try:
+                coll.add_spectral_model(
+                    key='sm-1',
+                    dmodel=dmodel['sm-1'],
+                    dconstraints=None,
+                )
+                raise Exception('sucess')
+            except Exception as err:
+                if "For model" not in str(err):
+                    raise Exception("Wrong error raised!") from err
+
+        else:
+            # no constraints
+            coll.add_spectral_model(
+                key=k0,
+                dmodel=dmodel[k0],
+                dconstraints=dconstraints.get(k0),
+            )
 
     return
 
@@ -434,6 +517,18 @@ def _get_dxfree(t=None, lamb=None):
     # 'l02_amp', 'l02_t0', 'l02_mu', 'l02_sigma'
 
     dxfree = {
+        # testing elementary models
+        'smlinear': np.r_[0.1 - lamb[0] * 0.1/lambD, 0.1 / lambD],
+        'smexp': np.r_[0.2*lamb[0]*np.exp(rate/lamb[0]), rate],
+        'smgauss': np.r_[1, 0.004, 0.003e-10],
+        'smlorentz': np.r_[0.9, -0.006, 0.003e-10],
+        'smpvoigt': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
+        'smvoigt': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
+        'smpulse1': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10,],
+        'smpulse2': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10,],
+        'smlognorm': np.r_[amp, t0, mu, sigma],
+
+        # testing complex models
         'sm00': np.r_[
             0.1 - lamb[0] * 0.1/lambD, 0.1 / lambD,
             1, 0.004, 0.003e-10,
@@ -494,10 +589,11 @@ def plot_spectral_model(coll=None):
 # ###################################################
 
 
-def add_fit(coll=None, key_data=None):
+def add_fit(coll=None, key_model=None, key_data=None):
 
     # ---------------
     # check
+    # ---------------
 
     add_models(coll)
 
@@ -509,8 +605,9 @@ def add_fit(coll=None, key_data=None):
         if len(lk) > 0:
             return
 
-    # -------------------
+    # ---------------
     # add 1d
+    # ---------------
 
     mask = [None, _MASK_1D]
     domain = [
@@ -534,7 +631,7 @@ def add_fit(coll=None, key_data=None):
         try:
             coll.add_spectral_fit(
                 key=None,
-                key_model='sm00',
+                key_model=key_model,
                 key_data=key_data,
                 key_sigma=None,
                 key_lamb='lamb',
@@ -560,6 +657,33 @@ def add_fit(coll=None, key_data=None):
             raise err
 
     return
+
+
+def add_fit_single(coll=None):
+
+    lk = [
+        ('smlinear', 'data_linear'),
+        ('smexp', 'data_exp'),
+        ('smgauss', 'data_gauss'),
+    ]
+
+    for (key_model, key_data) in lk:
+        add_fit(coll=coll, key_model=key_model, key_data=key_data)
+
+    return
+
+
+def add_fit_multi(coll=None):
+
+    lk = [
+        ('sm00', 'data1d'),
+    ]
+
+    for (key_model, key_data) in lk:
+        add_fit(coll=coll, key_model=key_model, key_data=key_data)
+
+    return
+
 
 
 # ###################################################
@@ -603,14 +727,22 @@ def plot_input_validity(coll=None, key_data=None):
 
 def compute_fit(coll=None, key_data=None):
 
-    # ---------------
-    # check
+    # --------------------
+    # add models if needed
+    # --------------------
 
     add_models(coll)
-    add_fit(coll, key_data=key_data)
+
+    # --------------------
+    # add fit if needed
+    # --------------------
+
+    for key_data in lkdata:
+        add_fit(coll, key_data=key_data)
 
     # ---------------
     # select data
+    # ---------------
 
     lk = [
         k0 for k0, v0 in coll.dobj['spect_fit'].items()
@@ -618,11 +750,13 @@ def compute_fit(coll=None, key_data=None):
     ]
 
     # ---------------
-    # compute
+    # compute fit
+    # ---------------
 
     for k0 in lk:
         coll.compute_spectral_fit(
             key=k0,
+            strict=True,
             verb=None,
             timing=None,
         )
