@@ -564,6 +564,7 @@ def _get_var_dind(
                 [
                     x_free.index(f"{kf}_{kvar}")
                     for kf in lf
+                    if f"{kf}_{kvar}" in x_free
                 ],
                 dtype=int,
             )
