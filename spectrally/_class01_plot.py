@@ -283,7 +283,7 @@ def _extract_coll2(
         'sum': ksum,
     }
     if details is True:
-        dkeys['details'] = key
+        dkeys['details'] = lfunc
 
     # --------------
     # prepare data
@@ -324,10 +324,10 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
 
         # details
         if details is True:
-            for ii in range(coll2.ddata[dkeys['details']]['data'].shape[0]):
+            for ff in dkeys['details']:
                 ax.plot(
                     coll2.ddata[dkeys['lamb']]['data'],
-                    coll2.ddata[dkeys['details']]['data'][ii, ...],
+                    coll2.ddata[ff]['data'],
                     ls='-',
                     marker='None',
                     lw=1.,
