@@ -10,7 +10,7 @@ from . import _class02_check_fit as _check_fit
 from . import _class01_fit_func as _fit_func
 from . import _class02_compute_fit as _compute_fit
 from . import _class02_plot_valid as _plot_valid
-from . import _class02_plot as _plot
+from . import _class02_plot_fit as _plot_fit
 
 
 __all__ = ['SpectralFit']
@@ -202,7 +202,7 @@ class SpectralFit(Previous):
 
         """
 
-        return _plot.main(
+        return _plot_fit.main(
             coll=self,
             key=key,
             keyY=keyY,

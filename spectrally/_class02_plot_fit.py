@@ -9,268 +9,185 @@ Created on Sat Mar  9 16:09:08 2024
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-import matplotlib.colors as mcolors
-import matplotlib.transforms as transforms
 import datastock as ds
 
 
-# local
+from . import _class01_plot
 
 
-#############################################
-#############################################
-#       DEFAULTS
-#############################################
-
-
-
-
-
-#############################################
-#############################################
-#       main
-#############################################
+# ###############################################################
+# ###############################################################
+#               Main
+# ###############################################################
 
 
 def main(
     coll=None,
-    key_model=None,
-    key_data=None,
-    lamb=None,
-    # other dimensions
+    key=None,
     keyY=None,
-    dref_vectorY=None,
-    # others
-    details=None,
     # options
+    details=None,
+    # plotting
     dprop=None,
     vmin=None,
     vmax=None,
-    cmap=None,
     # figure
     dax=None,
     fs=None,
     dmargin=None,
     tit=None,
-    # interactivity
-    connect=True,
+    connect=None,
     dinc=None,
     show_commands=None,
 ):
 
-    # -----------------
+    # -------------------
     # check
-    # -----------------
+    # -------------------
 
     (
-        key_model, ref_model, key_data, lamb,
-        keyY, keyZ,
-        details,
-        dprop, vmin, vmax, tit,
+        key_model, key_sol, key_data, key_lamb,
+        details, connect,
     ) = _check(
+        coll=coll,
+        key=key,
+        details=details,
+        connect=connect,
+    )
+
+    # -------------------
+    # interpolate
+    # -------------------
+
+    dout = coll.interpolate_spectral_model(
+        key_model=key_model,
+        key_data=key_sol,
+        lamb=key_lamb,
+        # options
+        details=details,
+        # others
+        returnas=dict,
+    )
+
+    # -------------------
+    # extract coll2
+    # -------------------
+
+    coll2, dkeys, ndim = _extract_coll2(
         coll=coll,
         key_model=key_model,
         key_data=key_data,
-        lamb=lamb,
-        # keyY
-        keyY=keyY,
-        dref_vectorY=dref_vectorY,
-        # others
+        dout=dout,
         details=details,
-        # options
-        dprop=dprop,
-        vmin=vmin,
-        vmax=vmax,
-        # figure
-        tit=tit,
+        keyY=keyY,
     )
 
-    data = coll.ddata[key_data]['data']
-    ndim = data.ndim
+    # -------------------
+    # prepare figure
+    # -------------------
 
-    # -----------------
-    # compute
-    # -----------------
-
-
-    # -----------------
-    # plot
-    # -----------------
-
-    if ndim == 1:
-
-        dax = _plot_1d(
-            coll=coll,
-            key=key,
-            # options
-            dprop=dprop,
-            vmin=vmin,
-            vmax=vmax,
-            # figure
-            dax=dax,
+    if dax is None:
+        dax = _get_dax(
+            ndim=ndim,
             fs=fs,
             dmargin=dmargin,
+            tit=tit,
+        )
+
+    dax = ds._generic_check._check_dax(dax)
+
+    # -------------------
+    # plot
+    # -------------------
+
+    if ndim == 1:
+        dax = _plot_1d(
+            coll2,
+            dout=dout,
+            dkeys=dkeys,
+            dax=dax,
+            details=details
         )
 
     elif ndim == 2:
-
         dax, dgroup = _plot_2d(
             coll=coll,
-            key=key,
-            # keyY
+            key_model=key_model,
+            coll2=coll2,
+            dout=dout,
             keyY=keyY,
-            # bsplines
-            key_bs=key_bs,
-            key_bs_vect=key_bs_vect,
-            # options
-            dprop=dprop,
-            dvminmax=None,
-            cmap=cmap,
-            # figure
+            dkeys=dkeys,
             dax=dax,
-            fs=fs,
-            dmargin=dmargin,
+            details=details,
         )
 
-    else:
-        raise NotImplementedError()
+    # -------------------
+    # finalize
+    # -------------------
 
-    # -----------------
-    # Complenent
-    # -----------------
+    _finalize_figure(
+        dax=dax,
+        dout=dout,
+        tit=tit,
+    )
 
-    # get figure handle
+    # ---------------------
+    # connect interactivity
+    # ---------------------
+
     if isinstance(dax, dict):
-        fig = list(dax.values())[0]['handle'].figure
-    else:
-        fig = list(dax.dax.values())[0]['handle'].figure
-
-    # add title
-    if tit is not False:
-        fig.suptitle(tit, size=14, fontweight='bold')
-
-    # ----------------------
-    # connect interactivity
-    # ----------------------
-
-    # ndim = 1 => no interactivity
-    if ndim == 1:
         return dax
-
-    # connect interactivity
-    elif connect is True:
-        dax.setup_interactivity(
-            kinter='inter0', dgroup=dgroup, dinc=dinc,
-        )
-        dax.disconnect_old()
-        dax.connect()
-
-        dax.show_commands(verb=show_commands)
-        return dax
-
-    # interactivity not connected
     else:
-        return dax, dgroup
+        if connect is True:
+            dax.setup_interactivity(kinter='inter0', dgroup=dgroup, dinc=dinc)
+            dax.disconnect_old()
+            dax.connect()
+
+            dax.show_commands(verb=show_commands)
+            return dax
+        else:
+            return dax, dgroup
 
 
-#############################################
-#############################################
-#       check
-#############################################
+# ###############################################################
+# ###############################################################
+#               check
+# ###############################################################
 
 
 def _check(
     coll=None,
-    key_model=None,
-    key_data=None,
-    lamb=None,
-    # keyY
-    keyY=None,
-    dref_vectorY=None,
-    # keyZ
-    keyZ=None,
-    dref_vectorZ=None,
-    # others
-    details=None,
+    key=None,
     # options
-    dprop=None,
-    vmin=None,
-    vmax=None,
-    # figure
-    tit=None,
+    details=None,
+    connect=None,
 ):
 
-    # ----------
-    # key_model
-    # ----------
+    # -------------
+    # key
+    # -------------
 
-    wsm = coll._which_model
-    key_model = ds._generic_check._check_var(
-        key_model, 'key_model',
-        types=str,
-        allowed=list(coll.dobj.get(wsm, {}).keys()),
-    )
-
-    # derive x_free
-    x_free = coll.get_spectral_model_variables(
-        key_model,
-        returnas='free',
-        concatenate=True,
-    )['free']
-
-    # derive ref_model
-    ref_model = coll.dobj[wsm][key_model]['ref']
-
-    # ----------
-    # key_data
-    # ----------
-
-    # list of acceptable values
+    wsf = coll._which_fit
     lok = [
-        k0 for k0, v0 in coll.ddata.items()
-        if ref_model in v0['ref']
+        k0 for k0, v0 in coll.dobj.get(wsf, {}).items()
+        if v0['key_sol'] is not None
     ]
 
-    # check
-    key_data = ds._generic_check._check_var(
-        key_data, 'key_data',
+    key = ds._generic_check._check_var(
+        key, 'key',
         types=str,
         allowed=lok,
     )
 
-    # derive ndim
-    ndim = coll.ddata[key_data]['data'].ndim
-    if ndim > 1:
-        msg = "plot_spectral_model() not implemented for ndim > 1"
-        raise NotImplementedError(msg)
+    # key model, data, lamb
+    key_model = coll.dobj[wsf][key]['key_model']
+    key_sol = coll.dobj[wsf][key]['key_sol']
+    key_data = coll.dobj[wsf][key]['key_data']
+    key_lamb = coll.dobj[wsf][key]['key_lamb']
 
-    # -----------------
-    # lamb
-    # -----------------
-
-    if isinstance(lamb, np.ndarray):
-        c0 = (
-            lamb.ndim == 1
-            and np.all(np.isifinite(lamb))
-        )
-        if not c0:
-            _err_lamb(lamb)
-
-    elif isinstance(lamb, str):
-        c0 = (
-            lamb in coll.ddata.keys()
-            and coll.ddata[lamb]['data'].ndim == 1
-            and np.all(np.isifinite(coll.ddata[lamb]['data']))
-        )
-        if not c0:
-            _err_lamb(lamb)
-
-    else:
-        _err_lamb(lamb)
-
-    # -----------------
+    # -------------
     # details
-    # -----------------
+    # -------------
 
     details = ds._generic_check._check_var(
         details, 'details',
@@ -278,180 +195,362 @@ def _check(
         default=True,
     )
 
+    # -------------
+    # connect
+    # -------------
+
+    connect = ds._generic_check._check_var(
+        connect, 'connect',
+        types=bool,
+        default=True,
+    )
+
     return (
-        key_model, ref_model, key_data, lamb,
-        keyY, keyZ,
-        details,
-        dprop, vmin, vmax, tit,
+        key_model, key_sol, key_data, key_lamb,
+        details, connect,
     )
 
 
-def _err_lamb(lamb):
-    msg = (
-    )
-    raise Exception(msg)
+# ###############################################################
+# ###############################################################
+#               extract coll2
+# ###############################################################
 
 
-#############################################
-#############################################
-#       plot 1d
-#############################################
-
-
-def _plot_1d(
+def _extract_coll2(
     coll=None,
-    key=None,
-    # options
-    dprop=None,
-    vmin=None,
-    vmax=None,
-    # figure
-    dax=None,
-    fs=None,
-    dmargin=None,
+    key_model=None,
+    key_data=None,
+    dout=None,
+    details=None,
+    keyY=None,
 ):
 
-    # -----------------
-    # prepare
-    # -----------------
+    coll2, dkeys, ndim = _class01_plot._extract_coll2(
+        coll=coll,
+        key_model=key_model,
+        dout=dout,
+        details=details,
+        keyY=keyY,
+    )
 
-    wsm = coll._which_model
-    if isinstance(lamb, str):
-        lamb = coll.ddata[lamb]['data']
-    data = coll.ddata[key_data]['data']
+    # ----------
+    # add data
 
-    # -----------------
-    # prepare figure
-    # -----------------
+    lk = ['data', 'units', 'dim', 'quant']
+    coll2.add_data(
+        key=key_data,
+        **{k0: coll._ddata[key_data][k0] for k0 in lk}
+    )
 
-    if dax is None:
-        dax = _get_dax_1d(
-            fs=fs,
-            dmargin=dmargin,
-            # labelling
-            coll=coll,
-            key=key,
-        )
+    dkeys['data'] = key_data
 
-    dax = ds._generic_check._check_dax(dax=dax, main='data')
+    return coll2, dkeys, ndim
 
-    # -----------------
-    # plot
-    # -----------------
 
-    kax = 'data'
-    if dax.get(kax) is not None:
+# ###############################################################
+# ###############################################################
+#               plot 1d
+# ###############################################################
+
+
+def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
+
+    # ------------
+    # plot spectrum
+    # -----------
+
+    axtype = 'spectrum'
+    lax = [kax for kax, vax in dax.items() if axtype in vax['type']]
+    for kax in lax:
         ax = dax[kax]['handle']
 
-        # validity
-        for k0, v0 in dvalid['meaning'].items():
-
-            ind = (iok == k0)
-            ax.plot(
-                lamb[ind],
-                data[ind],
-                label=v0,
-                **dprop[k0],
-            )
-
-        # legend
-        ax.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=10)
-
-        # frac
-        ax.set_title(
-            f"frac = {frac:.3f} vs {dvalid['fraction']}",
-            size=12,
-            fontweight='bold',
+        # plot fit
+        ax.plot(
+            coll2.ddata[dkeys['lamb']]['data'],
+            coll2.ddata[dkeys['sum']]['data'],
+            ls='-',
+            marker='None',
+            lw=1.,
+            color='k',
         )
 
-        # nsigma
-        ax.axhline(dvalid['nsigma']**2, ls='--', c='k')
-
-        trans = transforms.blended_transform_factory(
-            ax.transAxes,
-            ax.transData,
-        )
-        ax.text(
-            1.02,
-            dvalid['nsigma']**2,
-            r'$n_{\sigma}^2$' + f" = {dvalid['nsigma']}" + r"$^2$",
-            size=12,
-            fontweight='normal',
-            transform=trans,
+        # plot data
+        ax.plot(
+            coll2.ddata[dkeys['lamb']]['data'],
+            coll2.ddata[dkeys['data']]['data'],
+            ls='None',
+            marker='.',
+            lw=1.,
+            color='k',
         )
 
-        # focus
-        if dvalid.get('focus') is not None:
-            for ff in dvalid['focus']:
-                ax.axvspan(ff[0], ff[1], fc=(0.8, 0.8, 0.8, 0.5))
+        # details
+        if details is True:
+            for ff in dkeys['details']:
+                ax.plot(
+                    coll2.ddata[dkeys['lamb']]['data'],
+                    coll2.ddata[ff]['data'],
+                    ls='-',
+                    marker='None',
+                    lw=1.,
+                )
 
-        # vmin vmax
-        if vmin is not None:
-            ax.set_ylim(bottom=vmin)
-        if vmax is not None:
-            ax.set_ylim(top=vmax)
+    # ------------
+    # plot diff
+    # -----------
+
+    axtype = 'diff'
+    lax = [kax for kax, vax in dax.items() if axtype in vax['type']]
+    for kax in lax:
+        ax = dax[kax]['handle']
+
+        # plot fit
+        ax.plot(
+            coll2.ddata[dkeys['lamb']]['data'],
+            coll2.ddata[dkeys['data']]['data'] - coll2.ddata[dkeys['sum']]['data'],
+            ls='-',
+            marker='None',
+            lw=1.,
+            color='k',
+        )
 
     return dax
 
 
-# ---------------------
-# create axes
-# ---------------------
+# ###############################################################
+# ###############################################################
+#               plot 2d
+# ###############################################################
+
+
+def _plot_2d(
+    coll=None,
+    key_model=None,
+    coll2=None,
+    dout=None,
+    dkeys=None,
+    keyY=None,
+    dax=None,
+    details=None,
+):
+
+    # --------------
+    # plot fixed 2d
+    # --------------
+
+    coll2, dgroup = coll2.plot_as_array(
+        key=dkeys['sum'],
+        keyX=dkeys['lamb'],
+        keyY=keyY,
+        dax=dax,
+        aspect='auto',
+        connect=False,
+        inplace=True,
+    )
+
+    # --------------
+    # plot spectrum
+    # --------------
+
+    if details is True:
+
+        lamb = coll2.ddata[dkeys['lamb']]['data']
+        nmax = dgroup['X']['nmax']
+        wsm = coll._which_model
+        lfunc = coll.dobj[wsm][key_model]['keys']
+        refs = (coll2.ddata[dkeys['sum']]['ref'][0],)
+        nan = np.full(lamb.shape, np.nan)
+
+        axtype = 'horizontal'
+        lax = [kax for kax, vax in dax.items() if axtype in vax['type']]
+        for kax in lax:
+            ax = dax[kax]['handle']
+            for ii, ff in enumerate(lfunc):
+
+                for jj in range(nmax):
+
+                    ll, = ax.plot(
+                        lamb,
+                        nan,
+                        ls='-',
+                        marker='None',
+                        lw=1.,
+                    )
+
+                    xydata = 'ydata'
+                    km = f'{lfunc[ii]}_{jj}'
+
+                    coll2.add_mobile(
+                        key=km,
+                        handle=ll,
+                        refs=(refs,),
+                        data=(lfunc[ii],),
+                        dtype=[xydata],
+                        group_vis='Y',  # 'X' <-> 'Y'
+                        axes=kax,
+                        ind=jj,
+                    )
+
+    return coll2, dgroup
+
+
+# ###############################################################
+# ###############################################################
+#               dax
+# ###############################################################
+
+
+def _get_dax(
+    ndim=None,
+    # figure
+    fs=None,
+    dmargin=None,
+    tit=None,
+):
+
+    if ndim == 1:
+        return _get_dax_1d(
+            fs=fs,
+            dmargin=dmargin,
+            tit=tit,
+        )
+
+    if ndim == 2:
+        return _get_dax_2d(
+            fs=fs,
+            dmargin=dmargin,
+            tit=tit,
+        )
 
 
 def _get_dax_1d(
     fs=None,
     dmargin=None,
-    # labelling
-    coll=None,
-    key=None,
+    tit=None,
 ):
 
     # ---------------
-    # check
+    # check inputs
     # ---------------
 
     if fs is None:
-        fs = (11, 6)
+        fs = (10, 6)
 
     if dmargin is None:
         dmargin = {
-            'left': 0.07, 'right': 0.78,
-            'bottom': 0.08, 'top': 0.90,
-            'wspace': 0.10, 'hspace': 0.10,
+            'left': 0.10, 'right': 0.90,
+            'bottom': 0.1, 'top': 0.90,
+            'wspace': 0.1, 'hspace': 0.1,
         }
 
     # ---------------
-    # prepare labels
+    # prepare figure
     # ---------------
 
-    wsf = coll._which_fit
-    key_lamb = coll.dobj[wsf][key]['key_lamb']
-    key_data = coll.dobj[wsf][key]['key_data']
-    xlab = f"{key_lamb} ({coll.ddata[key_lamb]['units']})"
-    ylab = f"{key_data} ({coll.ddata[key_data]['units']})"
-
-    # ---------------
-    # figure
-    # ---------------
-
+    dax = {}
     fig = plt.figure(figsize=fs)
-    gs = gridspec.GridSpec(ncols=1, nrows=1, **dmargin)
+    gs = gridspec.GridSpec(3, 1, **dmargin)
 
-    # ---------------
-    # axes
-    # ---------------
+    # ------------
+    # add axes
+    # ------------
 
-    ax = fig.add_subplot(gs[0, 0])
-    ax.set_xlabel(xlab, size=12, fontweight='bold')
-    ax.set_ylabel(ylab, size=12, fontweight='bold')
+    # spectrum
+    ax = fig.add_subplot(gs[:2, 0])
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax['1d'] = {'handle': ax, 'type': 'spectrum'}
 
-    dax = {'data': {'handle': ax}}
+    ax = fig.add_subplot(gs[2, 0])
+    dax['diff'] = {'handle': ax, 'type': 'diff'}
 
     return dax
 
 
-#############################################
-#############################################
-#       plot 2d
-#############################################
+def _get_dax_2d(
+    fs=None,
+    dmargin=None,
+    tit=None,
+):
+
+    # ---------------
+    # check inputs
+    # ---------------
+
+    if fs is None:
+        fs = (18, 10)
+
+    if dmargin is None:
+        dmargin = {
+            'left': 0.07, 'right': 0.98,
+            'bottom': 0.08, 'top': 0.90,
+            'wspace': 0.50, 'hspace': 0.10,
+        }
+
+    # ---------------
+    # prepare figure
+    # ---------------
+
+    dax = {}
+    fig = plt.figure(figsize=fs)
+    gs = gridspec.GridSpec(2, 7, **dmargin)
+
+    # ------------
+    # add axes
+    # ------------
+
+    ax = fig.add_subplot(gs[:, 0])
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax['vert'] = {'handle': ax, 'type': 'vertical'}
+
+    ax = fig.add_subplot(gs[:, 1:3])
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax['2d'] = {'handle': ax, 'type': 'matrix'}
+
+    ax = fig.add_subplot(gs[0, 3:])
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax['hor'] = {'handle': ax, 'type': 'horizontal'}
+
+    return dax
+
+
+
+# ###############################################################
+# ###############################################################
+#               Finalize figure
+# ###############################################################
+
+
+def _finalize_figure(dax=None, dout=None, tit=None):
+
+    # -------------
+    # tit
+    # -------------
+
+    titdef = (
+        f"Spectral model '{dout['key_model']}'\n"
+        f"using data '{dout['key_data']}'"
+    )
+    tit = ds._generic_check._check_var(
+        tit, 'tit',
+        types=str,
+        default=titdef,
+    )
+
+    # -------------
+    # tit
+    # -------------
+
+    if isinstance(dax, dict):
+        fig = list(dax.values())[0]['handle'].figure
+    else:
+        fig = list(dax.dax.values())[0]['handle'].figure
+
+    if tit is not None:
+        fig.suptitle(tit, size=12, fontweight='bold')
+
+    return
