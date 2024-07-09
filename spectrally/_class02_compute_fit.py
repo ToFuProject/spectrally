@@ -9,6 +9,10 @@ Created on Tue Feb 20 14:44:51 2024
 # -*- coding: utf-8 -*-
 
 
+import warnings
+
+
+
 import datastock as ds
 
 
@@ -124,11 +128,13 @@ def main(
     )
 
     if dout is None:
-        # TP BE dealt with
-        print()
-        print("dout is None, 127")
-        print()
-        pass
+        msg = (
+            "No valid spectrum in chosen data:\n"
+            f"\t- spectral_fit: {key}\n"
+            f"\t- key_data: {key_data}\n"
+        )
+        warnings.warn(msg)
+        return
 
     # --------------
     # format output
@@ -149,7 +155,9 @@ def main(
             key_model=key_model,
             key_data=key_data,
             key_lamb=key_lamb,
+            # flags
             axis=axis,
+            ravel=ravel,
             # dout
             dout=dout,
         )
@@ -350,7 +358,9 @@ def _store(
     key_model=None,
     key_data=None,
     key_lamb=None,
+    # flags
     axis=None,
+    ravel=None,
     # dout
     dout=None,
 ):
@@ -364,7 +374,7 @@ def _store(
     ref = list(coll.ddata[key_data]['ref'])
     ref[axis] = refx_free
 
-    ref_reduced = tuple([rr for ii, rr in ref if ii != axis])
+    ref_reduced = tuple([rr for ii, rr in enumerate(ref) if ii != axis])
 
     # ------------
     # add data
@@ -374,24 +384,28 @@ def _store(
     ksol = f"{key}_sol"
     coll.add_data(
         key=ksol,
-        data=dout['sol'],
+        data=dout['sol'].ravel() if ravel is True else dout['sol'],
         ref=tuple(ref),
         units=coll.ddata[key_data]['units'],
         dim='fit_sol',
     )
 
     # other outputs
-    lk = ['cost', 'time', 'success', 'nfev', 'time', 'msg', 'validity', 'errmsg']
+    lk = [
+        'cost', 'chi2n', 'time', 'success', 'nfev',
+        'msg', 'validity', 'errmsg',
+    ]
     dk_out = {k0: f"{key}_k0" for k0 in lk}
 
-    for k0, k1 in dk_out.items():
-        coll.add_data(
-            key=k1,
-            data=dout[k0],
-            ref=ref_reduced,
-            units='',
-            dim='fit_out',
-        )
+    if ravel is False:
+        for k0, k1 in dk_out.items():
+            coll.add_data(
+                key=k1,
+                data=dout[k0],
+                ref=ref_reduced,
+                units='',
+                dim='fit_out',
+            )
 
     # ------------
     # store in fit
@@ -402,7 +416,7 @@ def _store(
 
     # scale, bounds, x0
     coll._dobj[wsf][key]['dinternal'] = {
-        'scale': dout['scale'],
+        'scales': dout['scales'],
         'bounds0': dout['bounds0'],
         'bounds1': dout['bounds1'],
         'x0': dout['x0'],
@@ -414,7 +428,12 @@ def _store(
         'dsolver_options': dout['dsolver_options'],
     }
 
-    for k0, k1 in dk_out.items():
-        coll._dobj[wsf][key]['dsolver'][k0] = k1
+    if ravel is True:
+        for k0, k1 in dk_out.items():
+            coll._dobj[wsf][key]['dsolver'][k0] = dout[k0]
+
+    else:
+        for k0, k1 in dk_out.items():
+            coll._dobj[wsf][key]['dsolver'][k0] = k1
 
     return
