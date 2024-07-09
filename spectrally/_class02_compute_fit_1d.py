@@ -308,12 +308,13 @@ def _loop(
     validity = np.zeros(shape_reduced, dtype=int)
     success = np.full(shape_reduced, np.nan)
     cost = np.full(shape_reduced, np.nan)
+    chi2n = np.full(shape_reduced, np.nan)
     nfev = np.full(shape_reduced, np.nan)
     time = np.full(shape_reduced, np.nan)
     sol = np.full(shape_sol, np.nan)
 
-    message = ['' for ss in range(nspect)]
-    errmsg = ['' for ss in range(nspect)]
+    message = []
+    errmsg = []
 
     # ----------
     # slice_sol
@@ -381,24 +382,29 @@ def _loop(
             if chain is True:
                 x0 = res.x
 
-            # cost, message, time
+            # time
+            time[ind] = round(dti, ndigits=6)
+
+            # other outputs
             success[ind] = res.success
             cost[ind] = res.cost
             nfev[ind] = res.nfev
-            message[ii] = res.message
-            time[ind] = round(
-                (dtm.datetime.now()-t0i).total_seconds(),
-                ndigits=3,
-            )
+
+            chi2n[ind] = np.sqrt(cost * 2) / iok_all[slii].sum()
 
             sol[slii] = res.x * scales
             # sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]
+
+            # message
+            message.append(res.message)
+            errmsg.append('')
 
         # ---------------
         # manage failures
 
         except Exception as err:
 
+            message.append('')
             msg = str(err)
             if 'is infeasible' in msg:
                 msg += _add_err_bounds(
@@ -422,16 +428,20 @@ def _loop(
     dout = {
         'validity': validity,
         'sol': sol,
-        'msg': message,
+        'msg': np.reshape(message, shape_reduced),
         'nfev': nfev,
         'cost': cost,
+        'chi2n': chi2n,
         'success': success,
         'time': time,
-        'errmsg': errmsg,
+        'errmsg': np.reshape(errmsg, shape_reduced),
         'scales': scales,
         'bounds0': bounds0,
         'bounds1': bounds1,
         'x0': x0,
+        # solver
+        'solver': solver,
+        'dsolver_options': dsolver_options,
     }
 
     return dout
