@@ -28,14 +28,16 @@ from . import _class02_x0_scale_bounds as _x0_scale_bounds
 
 def main(
     coll=None,
+    # keys
     key=None,
     key_model=None,
     key_data=None,
     key_lamb=None,
-    ref_data=None,
-    ref_lamb=None,
-    shape_data=None,
+    # lamb, data, axis
+    lamb=None,
+    data=None,
     axis=None,
+    ravel=None,
     # options
     chain=None,
     dscales=None,
@@ -43,15 +45,8 @@ def main(
     dbounds_up=None,
     dx0=None,
     # solver options
-    method=None,
-    xtol=None,
-    ftol=None,
-    gtol=None,
-    tr_solver=None,
-    tr_options=None,
-    max_nfev=None,
-    loss=None,
-    verbscp=None,
+    solver=None,
+    dsolver_options=None,
     # options
     strict=None,
     verb=None,
@@ -62,29 +57,38 @@ def main(
     """
 
     # ------------
-    # ind_ok
+    # iok
     # ------------
 
     # iok_all
-    iok_all = get_iok_all(
+    iok_all, iok_reduced = get_iok_all(
         coll=coll,
         key=key,
         axis=axis,
     )
 
-    lamb = coll.ddata[key_lamb]['data']
+    # trivial
+    if not np.any(iok_reduced):
+        return
+
+    # ravel
+    if ravel is True:
+        iok_all = iok_all[:, None]
+        iok_reduced = np.array([iok_reduced])
+
+    # ------------
+    # lamb, data, dind
+    # ------------
 
     dind = coll.get_spectral_model_variables_dind(key_model)
-
-    data = coll.ddata[key_data]['data']
-
-    # ------------
-    # get x0, scale, bounds
-    # ------------
+    lk_xfree = coll.get_spectral_model_variables(key_model, 'free')['free']
 
     wsm = coll._which_model
-    lk_xfree = coll.get_spectral_model_variables(key_model, 'free')['free']
     dmodel = coll.dobj[wsm][key_model]['dmodel']
+
+    # ------------
+    # get scale, bounds
+    # ------------
 
     # check dscales
     dscales = _x0_scale_bounds._get_dict(
@@ -110,15 +114,11 @@ def main(
         din_name='dbounds_up',
     )
 
-
-    # check dx0
-    dx0 = None
-
     # get scales and bounds
-    scale, bounds = _x0_scale_bounds._get_scales_bounds(
-        nxfree=None,
+    scales, bounds0, bounds1 = _x0_scale_bounds._get_scales_bounds(
+        nxfree=len(lk_xfree),
         lamb=lamb,
-        data=None,
+        data=data,
         iok_all=iok_all,
         dind=dind,
         dscales=dscales,
@@ -126,8 +126,28 @@ def main(
         dbounds_up=dbounds_up,
     )
 
+    # ------------
     # get x0
-    x0 = _x0_scale_bounds._get_x0()
+    # ------------
+
+    # check dx0
+    dx0 = _x0_scale_bounds._get_dict(
+        lx_free_keys=lk_xfree,
+        dmodel=dmodel,
+        din=dx0,
+        din_name='dx0',
+    )
+
+    # get x0
+    x0 = _x0_scale_bounds._get_x0(
+        nxfree=len(lk_xfree),
+        lamb=lamb,
+        data=data,
+        iok=iok_all,
+        dind=dind,
+        dx0=dx0,
+        scales=scales,
+    )
 
     # ------------
     # get functions
@@ -146,32 +166,29 @@ def main(
     dout = _loop(
         coll=coll,
         key=key,
-        shape_data=shape_data,
-        axis=axis,
-        iok_all=iok_all,
-        # data
+        # lamb, data, axis
+        lamb=lamb,
         data=data,
+        axis=axis,
+        # iok
+        iok_all=iok_all,
+        iok_reduced=iok_reduced,
         # x0, bounds, scale
-        scale=scale,
-        bounds=bounds,
+        scales=scales,
+        bounds0=bounds0,
+        bounds1=bounds1,
         x0=x0,
         # options
         chain=chain,
         # func
-        fun_cost=dfunc['cost'],
+        func_cost=dfunc['cost'],
         func_jac=dfunc['jac'],
         # solver options
-        method=method,
-        xtol=xtol,
-        ftol=ftol,
-        gtol=gtol,
-        tr_solver=tr_solver,
-        tr_options=tr_options,
-        max_nfev=max_nfev,
-        loss=loss,
-        verbscp=verbscp,
+        solver=solver,
+        dsolver_options=dsolver_options,
         # options
-        strict=None,
+        lk_xfree=lk_xfree,
+        strict=strict,
         verb=verb,
         timing=timing,
     )
@@ -215,13 +232,9 @@ def get_iok_all(
     for k0 in lind_valid[1:]:
         iok_all = np.logical_or(iok_all, (iok == k0))
 
-    # -------------
-    # safety check
-    # -------------
+    iok_reduced = np.any(iok_all, axis=axis)
 
-    c0 = np.all(iok_all, axis=axis)
-
-    return iok_all
+    return iok_all, iok_reduced
 
 
 #############################################
@@ -233,14 +246,17 @@ def get_iok_all(
 def _loop(
     coll=None,
     key=None,
-    shape_data=None,
-    axis=None,
-    iok_all=None,
-    # data
+    # lamb, data, axis
+    lamb=None,
     data=None,
+    axis=None,
+    # iok
+    iok_all=None,
+    iok_reduced=None,
     # x0, bounds, scale
-    scale=None,
-    bounds=None,
+    scales=None,
+    bounds0=None,
+    bounds1=None,
     x0=None,
     # options
     chain=None,
@@ -248,16 +264,10 @@ def _loop(
     func_cost=None,
     func_jac=None,
     # solver options
-    method=None,
-    xtol=None,
-    ftol=None,
-    gtol=None,
-    tr_solver=None,
-    tr_options=None,
-    max_nfev=None,
-    loss=None,
-    verbscp=None,
+    solver=None,
+    dsolver_options=None,
     # options
+    lk_xfree=None,
     strict=None,
     verb=None,
     timing=None,
@@ -269,12 +279,13 @@ def _loop(
 
     # shape_reduced
     shape_reduced = tuple([
-        ss for ii, ss in enumerate(shape_data)
+        ss for ii, ss in enumerate(data.shape)
         if ii != axis
     ])
 
     # shape_sol
-    shape_sol = []
+    shape_sol = list(data.shape)
+    shape_sol[axis] = len(lk_xfree)
 
     # lind
     lind = [range(ss) for ss in shape_reduced]
@@ -309,9 +320,9 @@ def _loop(
 
     sli_sol = np.array([
         slice(None) if ii == axis else 0
-        for ii, ss in enumerate(shape_data)
+        for ii, ss in enumerate(data.shape)
     ])
-    ind_ind = np.array([ii for ii in range(len(shape_data)) if ii != axis])
+    ind_ind = np.array([ii for ii in range(data.ndim) if ii != axis])
 
     # -----------------
     # main loop
@@ -322,7 +333,7 @@ def _loop(
         # -------------
         # check iok_all
 
-        if not iok_all(ind):
+        if not iok_reduced[ind]:
             validity[ind] = -1
             continue
 
@@ -351,34 +362,24 @@ def _loop(
                 func_cost,
                 x0,
                 jac=func_jac,
-                bounds=bounds,
-                method=method,
-                ftol=ftol,
-                xtol=xtol,
-                gtol=gtol,
+                bounds=(bounds0, bounds1),
                 x_scale='jac',
                 f_scale=1.0,
-                loss=loss,
-                diff_step=None,
-                tr_solver=tr_solver,
-                tr_options=tr_options,
                 jac_sparsity=None,
-                max_nfev=max_nfev,
-                verbose=verbscp,
                 args=(),
                 kwargs={
                     'data': data[slii],
-                    'scales': None,
+                    'scales': scales,
+                    'lamb': lamb,
                     # 'const': const[ii, :],
-                    # 'indok': iok_all,
+                    'iok': iok_all[slii],
                 },
+                **dsolver_options,
             )
             dti = (dtm.datetime.now() - t0i).total_seconds()
 
             if chain is True:
                 x0 = res.x
-            else:
-                x0 = _x0_scale_bounds._get_x0()
 
             # cost, message, time
             success[ind] = res.success
@@ -389,17 +390,29 @@ def _loop(
                 (dtm.datetime.now()-t0i).total_seconds(),
                 ndigits=3,
             )
-            sol[slii] = res.x
+
+            sol[slii] = res.x * scales
             # sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]
 
         # ---------------
         # manage failures
 
         except Exception as err:
+
+            msg = str(err)
+            if 'is infeasible' in msg:
+                msg += _add_err_bounds(
+                    lk_xfree=lk_xfree,
+                    scales=scales,
+                    x0=x0,
+                    bounds0=bounds0,
+                    bounds1=bounds1,
+                )
+
             if strict:
-                raise err
+                raise Exception(msg) from err
             else:
-                errmsg[ii] = str(err)
+                errmsg[ii] = msg
                 validity[ii] = -2
 
     # --------------
@@ -414,6 +427,93 @@ def _loop(
         'cost': cost,
         'success': success,
         'time': time,
+        'errmsg': errmsg,
+        'scales': scales,
+        'bounds0': bounds0,
+        'bounds1': bounds1,
+        'x0': x0,
     }
 
     return dout
+
+
+#############################################
+#############################################
+#       Utilities
+#############################################
+
+
+def _add_err_bounds(
+    lk_xfree=None,
+    scales=None,
+    x0=None,
+    bounds0=None,
+    bounds1=None,
+):
+
+    # -------------
+    # is_out
+    # -------------
+
+    is_out = np.nonzero((x0 < bounds0) | (x0 > bounds1))[0]
+
+    # -------------
+    # dout, din
+    # -------------
+
+    dout = {
+        k0: {
+            'scale': f"{scales[ii]:.3e}",
+            'x0': f"{x0[ii]:.3e}",
+            'bounds0': f"{bounds0[ii]:.3e}",
+            'bounds1': f"{bounds1[ii]:.3e}",
+        }
+        for ii, k0 in enumerate(lk_xfree) if ii in is_out
+    }
+    din = {
+        k0: {
+            'scale': f"{scales[ii]:.3e}",
+            'x0': f"{x0[ii]:.3e}",
+            'bounds0': f"{bounds0[ii]:.3e}",
+            'bounds1': f"{bounds1[ii]:.3e}",
+        }
+        for ii, k0 in enumerate(lk_xfree) if ii not in is_out
+    }
+
+    # -------------
+    # msg arrays
+    # -------------
+
+    head = ['var', 'scale', 'x0', 'bounds0', 'bounds1']
+
+    arr_out = [
+        (k0, v0['scale'], v0['x0'], v0['bounds0'], v0['bounds1'])
+        for k0, v0 in dout.items()
+    ]
+
+    arr_in = [
+        (k0, v0['scale'], v0['x0'], v0['bounds0'], v0['bounds1'])
+        for k0, v0 in dout.items()
+    ]
+
+    # max_just
+    max_just = np.max([
+        [len(ss) for ss in head]
+        + [np.max([len(ss) for ss in arr]) for arr in arr_out]
+        + [np.max([len(ss) for ss in arr]) for arr in arr_in]
+    ])
+
+    # -------------
+    # msg
+    # -------------
+
+    lstr = [
+        " ".join([ss.ljust(max_just) for ss in head]),
+        " ".join(['-'*max_just for ss in head]),
+    ]
+    for arr in arr_out:
+        lstr.append(" ".join([ss.ljust(max_just) for ss in arr]))
+
+    msg = "\n\n" + "\n".join(lstr)
+
+    return msg

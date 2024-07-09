@@ -10,6 +10,7 @@ from . import _class02_check_fit as _check_fit
 from . import _class01_fit_func as _fit_func
 from . import _class02_compute_fit as _compute_fit
 from . import _class02_plot_valid as _plot_valid
+from . import _class02_plot as _plot
 
 
 __all__ = ['SpectralFit']
@@ -116,20 +117,30 @@ class SpectralFit(Previous):
     def compute_spectral_fit(
         self,
         key=None,
+        # solver options
+        solver=None,
+        dsolver_options=None,
+        # storing
+        store=None,
         # options
+        strict=None,
         verb=None,
         timing=None,
     ):
 
-        _compute_fit.main(
+        return _compute_fit.main(
             coll=self,
             key=key,
+            # solver options
+            solver=solver,
+            dsolver_options=dsolver_options,
+            # storing
+            store=store,
             # options
+            strict=strict,
             verb=verb,
             timing=timing,
         )
-
-        return
 
     # ----------------------------------
     # plot spectral fit data validity
@@ -153,6 +164,51 @@ class SpectralFit(Previous):
             coll=self,
             key=key,
             # options
+            dprop=dprop,
+            vmin=vmin,
+            vmax=vmax,
+            # figure
+            dax=dax,
+            fs=fs,
+            dmargin=dmargin,
+            tit=tit,
+        )
+
+    # ----------------------------
+    # plot spectral fit
+    # ----------------------------
+
+    def plot_spectral_fit(
+        self,
+        key=None,
+        keyY=None,
+        # options
+        details=None,
+        # plotting
+        dprop=None,
+        vmin=None,
+        vmax=None,
+        # figure
+        dax=None,
+        fs=None,
+        dmargin=None,
+        tit=None,
+    ):
+        """ Plot a spectral model using specified data
+
+        lamb can be:
+            - a key to an existing vector
+            - a user-provided vector (1d np.ndarray)
+
+        """
+
+        return _plot.main(
+            coll=self,
+            key=key,
+            keyY=keyY,
+            # options
+            details=details,
+            # plotting
             dprop=dprop,
             vmin=vmin,
             vmax=vmax,

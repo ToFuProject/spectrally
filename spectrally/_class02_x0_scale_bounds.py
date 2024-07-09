@@ -9,6 +9,24 @@ Created on Sat Jul  6 17:31:49 2024
 import numpy as np
 
 
+
+#############################################
+#############################################
+#    DEFAULTS
+#############################################
+
+
+_DEF_SCALES_FACTORS = {
+    'width': 2,   # lambD / 2
+    'shift': 2,   # lambD / 2
+}
+
+_DEF_X0_FACTORS = {
+    'width': 10,  # lambD / 10
+    'shift': 10,  # lambD / 10
+}
+
+
 #############################################
 #############################################
 #    harmonize dict for scale, bounds, x0
@@ -119,7 +137,7 @@ def _get_scales_bounds(
     # initialize
     # ------------------
 
-    scale = np.zeros((nxfree,), dtype=float)
+    scales = np.zeros((nxfree,), dtype=float)
     bounds0 = np.zeros((nxfree,), dtype=float)
     bounds1 = np.zeros((nxfree,), dtype=float)
 
@@ -135,7 +153,7 @@ def _get_scales_bounds(
     data_min = np.nanmin(data[iok_all])
     data_mean = np.nanmean(data[iok_all])
 
-    ldins = [(dscales, scale), (dbounds_low, bounds0, dbounds_up, bounds1)]
+    ldins = [(dscales, scales), (dbounds_low, bounds0), (dbounds_up, bounds1)]
 
     # ------------------
     # all linear
@@ -151,14 +169,14 @@ def _get_scales_bounds(
 
         kvar = 'a1'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = a1max
+        scales[ind] = a1max
         bounds0[ind] = -10.
         bounds1[ind] = 10.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # -------
@@ -166,18 +184,17 @@ def _get_scales_bounds(
 
         kvar = 'a0'
         ind = dind['jac'][kfunc].get(kvar)
-        if ind is not None:
-            scale[ind] = max(
-                np.abs(data_min - a1max*lamb[0]),
-                np.abs(data_max + a1max*lamb[0]),
-            )
-            bounds0[ind] = -10.
-            bounds1[ind] = 10.
+        scales[ind] = max(
+            np.abs(data_min - a1max*lamb[0]),
+            np.abs(data_max + a1max*lamb[0]),
+        )
+        bounds0[ind] = -10.
+        bounds1[ind] = 10.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
 
@@ -202,27 +219,27 @@ def _get_scales_bounds(
         # rate
         kvar = 'rate'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = rate
+        scales[ind] = rate
         bounds0[ind] = 0.
         bounds1[ind] = 10.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # amp
         kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = data_mean * np.exp(rate/lambm) * lambm
+        scales[ind] = data_mean * np.exp(rate/lambm) * lambm
         bounds0[ind] = 0.
         bounds1[ind] = 10.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
     # -----------------
@@ -235,40 +252,40 @@ def _get_scales_bounds(
         # amp
         kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = data_max - data_min
+        scales[ind] = data_max - data_min
         bounds0[ind] = 0.
         bounds1[ind] = 10.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # vccos
         kvar = 'vccos'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['shift']
         bounds0[ind] = -1.
         bounds1[ind] = 1.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # sigma
         kvar = 'sigma'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['width']
         bounds0[ind] = 1e-3
         bounds1[ind] = 2
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
     # -----------------
@@ -281,40 +298,40 @@ def _get_scales_bounds(
         # amp
         kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = data_max - data_min
+        scales[ind] = data_max - data_min
         bounds0[ind] = 0.
         bounds1[ind] = 10.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # vccos
         kvar = 'vccos'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['shift']
         bounds0[ind] = -1.
         bounds1[ind] = 1.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # gam
         kvar = 'gam'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['width']
         bounds0[ind] = 1e-3
         bounds1[ind] = 2
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
     # -----------------
@@ -327,53 +344,53 @@ def _get_scales_bounds(
         # amp
         kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = data_max - data_min
+        scales[ind] = data_max - data_min
         bounds0[ind] = 0.
         bounds1[ind] = 10.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # vccos
         kvar = 'vccos'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['shift']
         bounds0[ind] = -1.
         bounds1[ind] = 1.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # sigma
         kvar = 'sigma'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['width']
         bounds0[ind] = 1e-3
         bounds1[ind] = 2
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # gam
         kvar = 'gam'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['width']
         bounds0[ind] = 1e-3
         bounds1[ind] = 2
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
     # -----------------
@@ -386,47 +403,53 @@ def _get_scales_bounds(
         # amp
         kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = data_max - data_min
+        scales[ind] = data_max - data_min
         bounds0[ind] = 0.
         bounds1[ind] = 10.
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=None if ii == 0 else scales
+            )
 
         # vccos
         kvar = 'vccos'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['shift']
         bounds0[ind] = -1.
         bounds1[ind] = 1.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # sigma
         kvar = 'sigma'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['width']
         bounds0[ind] = 1e-3
         bounds1[ind] = 2
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # gam
         kvar = 'gam'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambD / 5
+        scales[ind] = lambD / _DEF_SCALES_FACTORS['width']
         bounds0[ind] = 1e-3
         bounds1[ind] = 2
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
     # ------------------
@@ -436,57 +459,22 @@ def _get_scales_bounds(
     kfunc = 'pulse1'
     if dind.get(kfunc) is not None:
 
-        # amp
-        kvar = 'amp'
-        ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = data_max - data_min
-        bounds0[ind] = -10.
-        bounds1[ind] = 10.
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
-            )
-
-        # t0
-        kvar = 't0'
-        ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambm
-        bounds0[ind] = (lamb[0] - lambd) / lambm
-        bounds1[ind] = (lamb[1] + lambd) / lambm
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
-            )
-
-        # tup
-        kvar = 'tup'
-        ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambd
-        bounds0[ind] = 1.e-2
-        bounds1[ind] = lambD/lambd
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
-            )
-
-        # tdown
-        kvar = 'tdown'
-        ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = 0.5 * lambD
-        bounds0[ind] = 1.e-2
-        bounds1[ind] = 2
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
-            )
+        _get_scales_bounds_pulse(
+            dind=dind,
+            kfunc=kfunc,
+            ldins=ldins,
+            # data
+            data_min=data_min,
+            data_max=data_max,
+            lamb=lamb,
+            lambd=lambd,
+            lambm=lambm,
+            lambD=lambD,
+            # arrays to fill
+            scales=scales,
+            bounds0=bounds0,
+            bounds1=bounds1,
+        )
 
     # ------------------
     # all pulse2
@@ -495,57 +483,22 @@ def _get_scales_bounds(
     kfunc = 'pulse2'
     if dind.get(kfunc) is not None:
 
-        # amp
-        kvar = 'amp'
-        ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = data_max - data_min
-        bounds0[ind] = -10.
-        bounds1[ind] = 10.
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
-            )
-
-        # t0
-        kvar = 't0'
-        ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambm
-        bounds0[ind] = (lamb[0] - lambd) / lambm
-        bounds1[ind] = (lamb[1] + lambd) / lambm
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
-            )
-
-        # tup
-        kvar = 'tup'
-        ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambd
-        bounds0[ind] = 1.e-2
-        bounds1[ind] = lambD/lambd
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
-            )
-
-        # tdown
-        kvar = 'tdown'
-        ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = 0.5 * lambD
-        bounds0[ind] = 1.e-2
-        bounds1[ind] = 2
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
-            )
+        _get_scales_bounds_pulse(
+            dind=dind,
+            kfunc=kfunc,
+            ldins=ldins,
+            # data
+            data_min=data_min,
+            data_max=data_max,
+            lamb=lamb,
+            lambd=lambd,
+            lambm=lambm,
+            lambD=lambD,
+            # arrays to fill
+            scales=scales,
+            bounds0=bounds0,
+            bounds1=bounds1,
+        )
 
     # ------------------
     # all lognorm
@@ -557,73 +510,56 @@ def _get_scales_bounds(
         # amp
         kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = data_max - data_min
+        scales[ind] = data_max - data_min
         bounds0[ind] = -10.
         bounds1[ind] = 10.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # t0
         kvar ='t0'
         ind = dind['jac'][kfunc].get('t0')
-        scale[ind] = lambm
+        scales[ind] = lambm
         bounds0[ind] = (lamb[0] - lambd) / lambm
         bounds1[ind] = (lamb[1] + lambd) / lambm
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # sigma
         kvar = 'sigma'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = lambd
+        scales[ind] = lambd
         bounds0[ind] = 1.e-2
         bounds1[ind] = lambD/lambd
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
         # mu
         kvar = 'mu'
         ind = dind['jac'][kfunc].get(kvar)
-        scale[ind] = 0.5 * lambD
+        scales[ind] = 0.5 * lambD
         bounds0[ind] = 1.e-2
         bounds1[ind] = 2
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
                 din, kfunc, kvar, val,
-                scale=None if ii == 0 else scale
+                scales=None if ii == 0 else scales
             )
 
-    return scale
-
-
-# #######################
-# generic pdate from dict
-# #######################
-
-
-def _update_din_from_user(din, kfunc, kvar, val, scale=None):
-
-    if din.get(kfunc, {}).get(kvar) is not None:
-        ind = din[kfunc][kvar]['ind']
-        if scale is None:
-            val[ind] = din[kfunc][kvar]['val']
-        else:
-            val[ind] = din[kfunc][kvar]['val'] / scale[ind]
-
-    return
+    return scales, bounds0, bounds1
 
 
 #############################################
@@ -633,13 +569,552 @@ def _update_din_from_user(din, kfunc, kvar, val, scale=None):
 
 
 def _get_x0(
-    x_free=None,
+    nxfree=None,
+    lamb=None,
+    data=None,
     iok=None,
-    lambD=None,
-    lambd=None,
     dind=None,
+    dx0=None,
+    scales=None,
 ):
 
+    # ------------------
+    # initialize
+    # ------------------
 
+    x0 = np.zeros((nxfree,), dtype=float)
+
+    # ------------------
+    # prepare
+    # ------------------
+
+    lambD = lamb[-1] - lamb[0]
+    lambd = lamb[1] - lamb[0]
+    lambm = np.mean(lamb)
+
+    data_max = np.nanmax(data[iok])
+    data_min = np.nanmin(data[iok])
+    data_mean = np.nanmean(data[iok])
+    data_median = np.median(data[iok])
+    data_pulse_sign = np.sign(data_mean - data_median)
+
+    ldins = [(dx0, x0)]
+
+    # ------------------
+    # all linear
+    # ------------------
+
+    kfunc = 'linear'
+    if dind.get(kfunc) is not None:
+
+        a1max = ((data_max - data_min) / lambD) / 10
+
+        # -------
+        # a1
+
+        kvar = 'a1'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = a1max / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # -------
+        # a0
+
+        kvar = 'a0'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = np.abs(data_min - a1max*lamb[0]) / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+    # --------------------
+    # all exponentials
+    # ------------------
+
+    kfunc = 'exp_lamb'
+    if dind.get(kfunc) is not None:
+
+        rate = np.nanmax([
+            np.abs(
+                np.log(data_max * lamb[0] / (data_min * lamb[-1]))
+                / (1/lamb[-1] - 1./lamb[0])
+            ),
+            np.abs(
+                np.log(data_min * lamb[0] / (data_max * lamb[-1]))
+                / (1/lamb[-1] - 1./lamb[0])
+            ),
+        ]) / 10.
+
+        # rate
+        kvar = 'rate'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = rate / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # amp
+        kvar = 'amp'
+        ind = dind['jac'][kfunc].get(kvar)
+        scales[ind] = data_mean * np.exp(rate/lambm) * lambm / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+    # -----------------
+    # all gaussians
+    # -----------------
+
+    kfunc = 'gauss'
+    if dind.get(kfunc) is not None:
+
+        # amp
+        kvar = 'amp'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = (data_max - data_min) / 2 / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # vccos
+        kvar = 'vccos'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['shift'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # sigma
+        kvar = 'sigma'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['width'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+    # -----------------
+    # all lorentz
+    # -----------------
+
+    kfunc = 'lorentz'
+    if dind.get(kfunc) is not None:
+
+        # amp
+        kvar = 'amp'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = (data_max - data_min) / 2 / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # vccos
+        kvar = 'vccos'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['shift'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # gam
+        kvar = 'gam'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['width'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+    # -----------------
+    # all pvoigt
+    # -----------------
+
+    kfunc = 'pvoigt'
+    if dind.get(kfunc) is not None:
+
+        # amp
+        kvar = 'amp'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = (data_max - data_min) / 2. / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # vccos
+        kvar = 'vccos'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['shift'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # sigma
+        kvar = 'sigma'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['width'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # gam
+        kvar = 'gam'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['width'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+    # -----------------
+    # all voigt
+    # -----------------
+
+    kfunc = 'voigt'
+    if dind.get(kfunc) is not None:
+
+        # amp
+        kvar = 'amp'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = (data_max - data_min) / 2 / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # vccos
+        kvar = 'vccos'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['shift'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # sigma
+        kvar = 'sigma'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['width'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # gam
+        kvar = 'gam'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambD / _DEF_X0_FACTORS['width'] / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+    # ------------------
+    # all pulse1
+    # ------------------
+
+    kfunc = 'pulse1'
+    if dind.get(kfunc) is not None:
+
+        _get_x0_pulse(
+            dind=dind,
+            kfunc=kfunc,
+            ldins=ldins,
+            # data
+            data_min=data_min,
+            data_max=data_max,
+            data_pulse_sign=data_pulse_sign,
+            lambd=lambd,
+            lambm=lambm,
+            lambD=lambD,
+            # arrays to fill
+            x0=x0,
+            scales=scales,
+        )
+
+    # ------------------
+    # all pulse2
+    # ------------------
+
+    kfunc = 'pulse2'
+    if dind.get(kfunc) is not None:
+
+        _get_x0_pulse(
+            dind=dind,
+            kfunc=kfunc,
+            ldins=ldins,
+            # data
+            data_min=data_min,
+            data_max=data_max,
+            data_pulse_sign=data_pulse_sign,
+            lambd=lambd,
+            lambm=lambm,
+            lambD=lambD,
+            # arrays to fill
+            x0=x0,
+            scales=scales,
+        )
+
+    # ------------------
+    # all lognorm
+    # ------------------
+
+    kfunc = 'lognorm'
+    if dind.get(kfunc) is not None:
+
+        # amp
+        kvar = 'amp'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = (data_max - data_min) / 2 / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # t0
+        kvar ='t0'
+        ind = dind['jac'][kfunc].get('t0')
+        x0[ind] = lambm / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # sigma
+        kvar = 'sigma'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = lambd / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # mu
+        kvar = 'mu'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = 0.5 * lambD / scales[ind]
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+    return x0
+
+
+# #######################
+# generic pdate from dict
+# #######################
+
+
+def _update_din_from_user(din, kfunc, kvar, val, scales=None):
+
+    if din.get(kfunc, {}).get(kvar) is not None:
+        ind = din[kfunc][kvar]['ind']
+        if scales is None:
+            val[ind] = din[kfunc][kvar]['val']
+        else:
+            val[ind] = din[kfunc][kvar]['val'] / scales[ind]
+
+    return
+
+
+# #######################
+# generic pulse scales bounds
+# #######################
+
+
+def _get_scales_bounds_pulse(
+    dind=None,
+    kfunc=None,
+    ldins=None,
+    # data
+    data_min=None,
+    data_max=None,
+    data_pulse_sign=None,
+    lamb=None,
+    lambd=None,
+    lambm=None,
+    lambD=None,
+    # arrays to fill
+    scales=None,
+    bounds0=None,
+    bounds1=None,
+):
+
+    # amp
+    kvar = 'amp'
+    ind = dind['jac'][kfunc].get(kvar)
+    scales[ind] = data_max - data_min
+    bounds0[ind] = -10.
+    bounds1[ind] = 10.
+
+    for ii, (din, val) in enumerate(ldins):
+        _update_din_from_user(
+            din, kfunc, kvar, val,
+            scales=None if ii == 0 else scales
+        )
+
+    # t0
+    kvar = 't0'
+    ind = dind['jac'][kfunc].get(kvar)
+    scales[ind] = lambm
+    bounds0[ind] = (lamb[0] - lambd) / lambm
+    bounds1[ind] = (lamb[1] + lambd) / lambm
+
+    for ii, (din, val) in enumerate(ldins):
+        _update_din_from_user(
+            din, kfunc, kvar, val,
+            scales=None if ii == 0 else scales
+        )
+
+    # tup
+    kvar = 'tup'
+    ind = dind['jac'][kfunc].get(kvar)
+    scales[ind] = lambd
+    bounds0[ind] = 1.e-2
+    bounds1[ind] = lambD / lambd
+
+    for ii, (din, val) in enumerate(ldins):
+        _update_din_from_user(
+            din, kfunc, kvar, val,
+            scales=None if ii == 0 else scales
+        )
+
+    # tdown
+    kvar = 'tdown'
+    ind = dind['jac'][kfunc].get(kvar)
+    scales[ind] = 0.5 * lambD
+    bounds0[ind] = 1.e-2
+    bounds1[ind] = 2
+
+    for ii, (din, val) in enumerate(ldins):
+        _update_din_from_user(
+            din, kfunc, kvar, val,
+            scales=None if ii == 0 else scales
+        )
+
+    return
+
+
+# #######################
+# generic pulse x0
+# #######################
+
+
+def _get_x0_pulse(
+    dind=None,
+    kfunc=None,
+    ldins=None,
+    # data
+    data_min=None,
+    data_max=None,
+    data_pulse_sign=None,
+    lambd=None,
+    lambm=None,
+    lambD=None,
+    # arrays to fill
+    x0=None,
+    scales=None,
+):
+
+    # amp
+    kvar = 'amp'
+    ind = dind['jac'][kfunc].get(kvar)
+    x0[ind] = (data_max - data_min) * data_pulse_sign / scales[ind]
+
+    for ii, (din, val) in enumerate(ldins):
+        _update_din_from_user(
+            din, kfunc, kvar, val,
+            scales=scales,
+        )
+
+    # t0
+    kvar = 't0'
+    ind = dind['jac'][kfunc].get(kvar)
+    x0[ind] = lambm / scales[ind]
+
+    for ii, (din, val) in enumerate(ldins):
+        _update_din_from_user(
+            din, kfunc, kvar, val,
+            scales=scales,
+        )
+
+    # tup
+    kvar = 'tup'
+    ind = dind['jac'][kfunc].get(kvar)
+    x0[ind] = 2 * lambd / scales[ind]
+
+    for ii, (din, val) in enumerate(ldins):
+        _update_din_from_user(
+            din, kfunc, kvar, val,
+            scales=scales,
+        )
+
+    # tdown
+    kvar = 'tdown'
+    ind = dind['jac'][kfunc].get(kvar)
+    x0[ind] = 0.5 * lambD / scales[ind]
+
+    for ii, (din, val) in enumerate(ldins):
+        _update_din_from_user(
+            din, kfunc, kvar, val,
+            scales=scales,
+        )
 
     return
