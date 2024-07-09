@@ -47,6 +47,12 @@ def _get_func_details(
         shape = tuple([dind['nfunc']] + list(lamb.shape))
         val = np.zeros(shape, dtype=float)
 
+        # -------------------
+        # rescale
+
+        if scale is not None:
+            x_free = x_free * scale
+
         # ----------------------------
         # get x_full from constraints
 
@@ -371,6 +377,12 @@ def _get_func_jacob(
         val = np.zeros(shape, dtype=float)
         lamb = lamb[:, None]
 
+        # -------------------
+        # rescale
+
+        if scale is not None:
+            x_free = x_free * scale
+
         # ----------------------------
         # get x_full from constraints
 
@@ -378,12 +390,6 @@ def _get_func_jacob(
             x_full = x_free
         else:
             x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
-
-        # -------------------
-        # rescale
-
-        if scale is not None:
-            pass
 
         # -------
         # linear
