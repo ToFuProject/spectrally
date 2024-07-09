@@ -7,9 +7,11 @@ import datetime as dtm
 
 
 import numpy as np
+import scipy.optimize as scpopt
 
 
 # local
+from . import _class02_x0_scale_bounds as _x0_scale_bounds
 
 
 #############################################
@@ -34,6 +36,24 @@ def main(
     ref_lamb=None,
     shape_data=None,
     axis=None,
+    # options
+    chain=None,
+    dscales=None,
+    dbounds_low=None,
+    dbounds_up=None,
+    dx0=None,
+    # solver options
+    method=None,
+    xtol=None,
+    ftol=None,
+    gtol=None,
+    tr_solver=None,
+    tr_options=None,
+    max_nfev=None,
+    loss=None,
+    verbscp=None,
+    # options
+    strict=None,
     verb=None,
     timing=None,
 ):
@@ -42,7 +62,7 @@ def main(
     """
 
     # ------------
-    # prepare
+    # ind_ok
     # ------------
 
     # iok_all
@@ -51,6 +71,67 @@ def main(
         key=key,
         axis=axis,
     )
+
+    lamb = coll.ddata[key_lamb]['data']
+
+    dind = coll.get_spectral_model_variables_dind(key_model)
+
+    data = coll.ddata[key_data]['data']
+
+    # ------------
+    # get x0, scale, bounds
+    # ------------
+
+    wsm = coll._which_model
+    lk_xfree = coll.get_spectral_model_variables(key_model, 'free')['free']
+    dmodel = coll.dobj[wsm][key_model]['dmodel']
+
+    # check dscales
+    dscales = _x0_scale_bounds._get_dict(
+        lx_free_keys=lk_xfree,
+        dmodel=dmodel,
+        din=dscales,
+        din_name='dscales',
+    )
+
+    # check dbounds_low
+    dbounds_low = _x0_scale_bounds._get_dict(
+        lx_free_keys=lk_xfree,
+        dmodel=dmodel,
+        din=dbounds_low,
+        din_name='dbounds_low',
+    )
+
+    # check dbounds_up
+    dbounds_up = _x0_scale_bounds._get_dict(
+        lx_free_keys=lk_xfree,
+        dmodel=dmodel,
+        din=dbounds_up,
+        din_name='dbounds_up',
+    )
+
+
+    # check dx0
+    dx0 = None
+
+    # get scales and bounds
+    scale, bounds = _x0_scale_bounds._get_scales_bounds(
+        nxfree=None,
+        lamb=lamb,
+        data=None,
+        iok_all=iok_all,
+        dind=dind,
+        dscales=dscales,
+        dbounds_low=dbounds_low,
+        dbounds_up=dbounds_up,
+    )
+
+    # get x0
+    x0 = _x0_scale_bounds._get_x0()
+
+    # ------------
+    # get functions
+    # ------------
 
     # func_cost, func_jac
     dfunc = coll.get_spectral_fit_func(
@@ -68,10 +149,29 @@ def main(
         shape_data=shape_data,
         axis=axis,
         iok_all=iok_all,
+        # data
+        data=data,
+        # x0, bounds, scale
+        scale=scale,
+        bounds=bounds,
+        x0=x0,
+        # options
+        chain=chain,
         # func
         fun_cost=dfunc['cost'],
         func_jac=dfunc['jac'],
+        # solver options
+        method=method,
+        xtol=xtol,
+        ftol=ftol,
+        gtol=gtol,
+        tr_solver=tr_solver,
+        tr_options=tr_options,
+        max_nfev=max_nfev,
+        loss=loss,
+        verbscp=verbscp,
         # options
+        strict=None,
         verb=verb,
         timing=timing,
     )
@@ -136,10 +236,29 @@ def _loop(
     shape_data=None,
     axis=None,
     iok_all=None,
+    # data
+    data=None,
+    # x0, bounds, scale
+    scale=None,
+    bounds=None,
+    x0=None,
+    # options
+    chain=None,
     # func
     func_cost=None,
     func_jac=None,
+    # solver options
+    method=None,
+    xtol=None,
+    ftol=None,
+    gtol=None,
+    tr_solver=None,
+    tr_options=None,
+    max_nfev=None,
+    loss=None,
+    verbscp=None,
     # options
+    strict=None,
     verb=None,
     timing=None,
 ):
@@ -176,18 +295,23 @@ def _loop(
     # -----------------
 
     validity = np.zeros(shape_reduced, dtype=int)
+    success = np.full(shape_reduced, np.nan)
     cost = np.full(shape_reduced, np.nan)
     nfev = np.full(shape_reduced, np.nan)
     time = np.full(shape_reduced, np.nan)
     sol = np.full(shape_sol, np.nan)
 
+    message = ['' for ss in range(nspect)]
+    errmsg = ['' for ss in range(nspect)]
+
     # ----------
     # slice_sol
 
-    sli_sol = [
+    sli_sol = np.array([
         slice(None) if ii == axis else 0
         for ii, ss in enumerate(shape_data)
-    ]
+    ])
+    ind_ind = np.array([ii for ii in range(len(shape_data)) if ii != axis])
 
     # -----------------
     # main loop
@@ -205,8 +329,8 @@ def _loop(
         # -------
         # slices
 
-
-        sli_sol = tuple([])
+        sli_sol[ind_ind] = ind
+        slii = tuple(sli_sol)
 
         # ------
         # verb
@@ -225,14 +349,14 @@ def _loop(
             # optimization
             res = scpopt.least_squares(
                 func_cost,
-                x0[ii, indx],
+                x0,
                 jac=func_jac,
-                bounds=bounds[:, indx],
+                bounds=bounds,
                 method=method,
                 ftol=ftol,
                 xtol=xtol,
                 gtol=gtol,
-                x_scale=1.0,
+                x_scale='jac',
                 f_scale=1.0,
                 loss=loss,
                 diff_step=None,
@@ -243,16 +367,18 @@ def _loop(
                 verbose=verbscp,
                 args=(),
                 kwargs={
-                    'data': datacost[ii, :],
-                    'scales': scales[ii, :],
-                    'const': const[ii, :],
-                    'indok': dprepare['indok_bool'][ii, :],
+                    'data': data[slii],
+                    'scales': None,
+                    # 'const': const[ii, :],
+                    # 'indok': iok_all,
                 },
             )
             dti = (dtm.datetime.now() - t0i).total_seconds()
 
-            if chain is True and ii < nspect-1:
-                x0[ii+1, indx] = res.x
+            if chain is True:
+                x0 = res.x
+            else:
+                x0 = _x0_scale_bounds._get_x0()
 
             # cost, message, time
             success[ind] = res.success
@@ -263,8 +389,8 @@ def _loop(
                 (dtm.datetime.now()-t0i).total_seconds(),
                 ndigits=3,
             )
-            sol_x[ii, indx] = res.x
-            sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]
+            sol[slii] = res.x
+            # sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]
 
         # ---------------
         # manage failures
