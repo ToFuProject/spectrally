@@ -451,10 +451,11 @@ def _get_var_dind(
 
     dout = coll.get_spectral_model_variables(
         key,
-        returnas=['all', 'param_key', 'param_value'],
+        returnas=['all', 'free', 'param_key', 'param_value'],
         concatenate=True,
     )
     x_all = dout['all']
+    x_free = dout['free']
     param_key = dout['param_key']
 
     # ---------------
@@ -550,6 +551,38 @@ def _get_var_dind(
     # add total number of func
 
     dind['nfunc'] = len(keys)
+
+    # ----------------
+    # add jac
+    # ----------------
+
+    dind['jac'] = {ktype: {} for ktype in types}
+    for ktype in types:
+        lf = [k0 for k0 in keys if dmodel[k0]['type'] == ktype]
+        for kvar in _DMODEL[ktype]['var']:
+            dind['jac'][ktype][kvar] = np.array(
+                [
+                    x_free.index(f"{kf}_{kvar}")
+                    for kf in lf
+                ],
+                dtype=int,
+            )
+
+    # ---------------
+    # safety checks
+    # ---------------
+
+    lind = sorted(itt.chain.from_iterable([
+        list(itt.chain.from_iterable([v1.tolist() for v1 in v0.values()]))
+        for v0 in dind['jac'].values()
+    ]))
+    if not np.allclose(lind, np.arange(len(x_free))):
+        msg = (
+            "Something wrong with dind['jac'] !\n"
+            f"\t- lind = {lind}\n"
+            f"\t- dind['jac']:\n{dind['jac']}\n"
+        )
+        raise Exception(msg)
 
     return dind
 
