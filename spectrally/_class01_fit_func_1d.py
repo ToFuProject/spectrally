@@ -420,11 +420,11 @@ def _get_func_jacob(
 
             ind = dind['jac'][kfunc].get('a0')
             if ind is not None:
-                val[:, ind] = 1.
+                val[:, ind] = 1. * scales[ind]
 
             ind = dind['jac'][kfunc].get('a1')
             if ind is not None:
-                val[:, ind] = lamb
+                val[:, ind] = lamb * scales[ind]
 
         # --------
         # exp_lamb
