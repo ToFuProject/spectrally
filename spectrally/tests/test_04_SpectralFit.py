@@ -89,7 +89,7 @@ class Test00_Populate():
 
     def test04_compute_spectral_fit_1d_single(self):
         # compute 1d
-        _inputs.compute_fit_single(self.coll, key_data='data1d')
+        _inputs.compute_fit_single(self.coll)
 
     def test05_compute_spectral_fit_1d_multi(self):
         # compute 1d

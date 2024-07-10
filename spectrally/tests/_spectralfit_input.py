@@ -88,8 +88,8 @@ def add_data(coll=None):
     # --------
     # linear
 
-    a1 = (100 - 150) / (lamb[-1] - lamb[0])
-    a0 = 150 - a1 * lamb[0]
+    a1 = (300 - 500) / (lamb[-1] - lamb[0])
+    a0 = 500 - a1 * lamb[0]
 
     coll.add_data(
         key='data_linear',
@@ -102,8 +102,8 @@ def add_data(coll=None):
     # exp_lamb
 
     Te = 1e3
-    rate = scpct.c / (Te * scpct.e)
-    amp = 200 * lambm * np.exp(rate/lambm)
+    rate = scpct.h * scpct.c / (Te * scpct.e)
+    amp = 500 * lambm * np.exp(rate/lambm)
 
     coll.add_data(
         key='data_exp',
@@ -116,13 +116,53 @@ def add_data(coll=None):
     # gauss
 
     sigma = Dlamb/8.
-    vccos = Dlamb/10.
-    amp = 200 * np.exp((lambm - lamb0[1]*(1+vccos))**2/(2*sigma**2))
+    vccos = Dlamb/10. / lamb0[1]
+    amp = 500 * np.exp((lambm - lamb0[1]*(1+vccos))**2/(2*sigma**2))
 
     coll.add_data(
         key='data_gauss',
         data=np.random.poisson(
-            amp * np.exp(-(lamb - lamb0*(1+vccos))**2/(2*sigma**2))
+            amp * np.exp(-(lamb - lamb0[1]*(1+vccos))**2/(2*sigma**2))
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # lorentz
+
+    gam = Dlamb/8.
+    vccos = Dlamb/10. / lamb0[1]
+    amp = 500 * (1 + ((lambm - lamb0[1]*(1 + vccos)) / gam)**2)
+
+    coll.add_data(
+        key='data_lorentz',
+        data=np.random.poisson(
+            amp / (1 + ((lamb - lamb0[1]*(1 + vccos)) / gam)**2)
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # pvoigt
+
+    sigma = Dlamb/8.
+    gam = Dlamb/10.
+    vccos = Dlamb/10. / lamb0[1]
+    eta = 0.2
+    amp = 500 / (
+        eta / (1 + ((lambm - lamb0[1]*(1 + vccos)) / gam)**2)
+        + (1-eta) * np.exp(-(lambm - lamb0[1]*(1 + vccos))**2/(2*sigma**2))
+    )
+
+    coll.add_data(
+        key='data_pvoigt',
+        data=np.random.poisson(
+            amp * (
+                eta / (1 + ((lamb - lamb0[1]*(1 + vccos)) / gam)**2)
+                + (1-eta) * np.exp(-(lamb - lamb0[1]*(1 + vccos))**2/(2*sigma**2))
+            )
         ),
         ref='nlamb',
         units='counts',
@@ -665,6 +705,8 @@ def add_fit_single(coll=None):
         ('smlinear', 'data_linear'),
         ('smexp', 'data_exp'),
         ('smgauss', 'data_gauss'),
+        ('smlorentz', 'data_lorentz'),
+        ('smpvoigt', 'data_pvoigt'),
     ]
 
     for (key_model, key_data) in lk:
@@ -733,13 +775,6 @@ def compute_fit(coll=None, key_data=None):
 
     add_models(coll)
 
-    # --------------------
-    # add fit if needed
-    # --------------------
-
-    for key_data in lkdata:
-        add_fit(coll, key_data=key_data)
-
     # ---------------
     # select data
     # ---------------
@@ -760,5 +795,25 @@ def compute_fit(coll=None, key_data=None):
             verb=None,
             timing=None,
         )
+
+    return
+
+
+def compute_fit_single(coll=None):
+
+    # --------------------
+    # add models if needed
+    # --------------------
+
+    add_models(coll)
+
+    # --------------------
+    # compute
+    # --------------------
+
+    lk = ['data_linear', 'data_exp', 'data_gauss', 'data_lorentz', 'data_pvoigt']
+
+    for key_data in lk:
+        compute_fit(coll, key_data=key_data)
 
     return
