@@ -493,10 +493,10 @@ def valid(
     # nan, neg, inf
     # -----------------
 
-    if dvalid['positive'] is True:
-        data[data < 0] = np.nan
-
     iokb = ((iok == 0) & (~np.isfinite(data)))
+    if dvalid['positive'] is True:
+        iokb &= (data >= 0)
+
     iok[iokb] = -3
 
     # update iokb
