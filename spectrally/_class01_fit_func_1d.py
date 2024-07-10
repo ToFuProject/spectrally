@@ -42,9 +42,14 @@ def _get_func_details(
         iok=None,
     ):
 
-        # ---------------
-        # iok
+        # ---------------------
+        # get lamb limits + iok
 
+        # for pulses
+        lamb00 = lamb[0]
+        lambD = lamb[-1] - lamb[0]
+
+        # iok
         if iok is not None:
             lamb = lamb[iok]
 
@@ -192,12 +197,14 @@ def _get_func_details(
             tup = x_full[dind[kfunc]['t_up']['ind']][:, None]
             tdown = x_full[dind[kfunc]['t_down']['ind']][:, None]
 
-            ind0 = lamb > t0
+            ind0 = lamb > (lamb00 + lambD * t0)
+            dlamb = lamb - (lamb00 + lambD * t0)
 
             ind = dind['func'][kfunc]['ind']
             val[ind, ...] = (
                 amp * ind0 * (
-                    np.exp(-(lamb - t0)/tdown) - np.exp(-(lamb - t0)/tup)
+                    np.exp(-dlamb/tdown)
+                    - np.exp(-dlamb/tup)
                 )
             )
 
@@ -212,14 +219,16 @@ def _get_func_details(
             tup = x_full[dind[kfunc]['t_up']['ind']][:, None]
             tdown = x_full[dind[kfunc]['t_down']['ind']][:, None]
 
-            indup = (lamb < t0)
-            inddown = (lamb >= t0)
+            indup = (lamb < (lamb00 + lambD * t0))
+            inddown = (lamb >= (lamb00 + lambD * t0))
 
             ind = dind['func'][kfunc]['ind']
+            dlamb = lamb - (lamb00 + lambD * t0)
+
             val[ind, ...] = (
                 amp * (
-                    indup * np.exp(-(lamb - t0)**2/tup**2)
-                    + inddown * np.exp(-(lamb - t0)**2/tdown**2)
+                    indup * np.exp(-dlamb**2/tup**2)
+                    + inddown * np.exp(-dlamb**2/tdown**2)
                 )
             )
 
@@ -241,13 +250,13 @@ def _get_func_details(
 
             ind = dind['func'][kfunc]['ind']
             for ii, i0 in enumerate(ind):
-                iok = lamb > t0[ii]
+                iok = lamb > (lamb00 + lambD * t0[ii])
+
+                dlamb = lamb[iok] - (lamb00 + lambD * t0[ii])
+
                 val[i0, iok] = (
-                    (amp[ii] / (lamb[iok] - t0[ii]))
-                    * np.exp(
-                        -(np.log(lamb[iok] - t0[ii]) - mu[ii])**2
-                        / (2.*sigma[ii]**2)
-                    )
+                    (amp[ii] / dlamb)
+                    * np.exp(-(np.log(dlamb) - mu[ii])**2 / (2.*sigma[ii]**2))
                 )
 
         return val
@@ -385,9 +394,14 @@ def _get_func_jacob(
         **kwdargs,
     ):
 
-        # ---------------
-        # iok
+        # ---------------------
+        # get lamb limits + iok
 
+        # for pulses
+        lamb00 = lamb[0]
+        lambD = lamb[-1] - lamb[0]
+
+        # iok
         if iok is not None:
             lamb = lamb[iok]
 
@@ -610,6 +624,194 @@ def _get_func_jacob(
                     + (1 - eta) * dg_exp
                 )
 
+        # -------------------
+        # all pulse1
+
+        kfunc = 'pulse1'
+        if dind.get(kfunc) is not None:
+
+            amp = x_full[dind[kfunc]['amp']['ind']][None, :]
+            t0 = x_full[dind[kfunc]['t0']['ind']][None, :]
+            tup = x_full[dind[kfunc]['t_up']['ind']][None, :]
+            tdown = x_full[dind[kfunc]['t_down']['ind']][None, :]
+
+            ind0 = lamb >= (lamb00 + lambD * t0)
+            dlamb = lamb - (lamb00 + lambD * t0)
+            exp_up = np.exp(-dlamb/tup)
+            exp_down = np.exp(-dlamb/tdown)
+
+            # amp
+            ind = dind['jac'][kfunc].get('amp')
+            if ind is not None:
+                val[:, ind] = scales[ind] * ind0 * (exp_down - exp_up)
+
+            # t0
+            ind = dind['jac'][kfunc].get('t0')
+            if ind is not None:
+                dt0_exp_up = scales[ind] * exp_up * (lambD/tup)
+                dt0_exp_down = scales[ind] * exp_down * (lambD/tdown)
+                # dt0_ind0 = ind0_t / lambd
+                val[:, ind] = amp * (
+                    ind0 * (dt0_exp_down - dt0_exp_up)
+                    # + dt0_ind0 * (exp_down - exp_up)
+                )
+
+            # tup
+            ind = dind['jac'][kfunc].get('t_up')
+            if ind is not None:
+                val[:, ind] = amp * ind0 * scales[ind] * (
+                    - exp_up * (dlamb/tup**2)
+                )
+
+            # tdown
+            ind = dind['jac'][kfunc].get('t_down')
+            if ind is not None:
+                val[:, ind] = amp * ind0 * scales[ind] * (
+                    exp_down * (dlamb/tdown**2)
+                )
+
+        # -------------------
+        # all pulse2
+
+        kfunc = 'pulse2'
+        if dind.get(kfunc) is not None:
+
+            amp = x_full[dind[kfunc]['amp']['ind']][None, :]
+            t0 = x_full[dind[kfunc]['t0']['ind']][None, :]
+            tup = x_full[dind[kfunc]['t_up']['ind']][None, :]
+            tdown = x_full[dind[kfunc]['t_down']['ind']][None, :]
+
+            indup = (lamb < (lamb00 + lambD * t0))
+            inddown = (lamb >= (lamb00 + lambD * t0))
+
+            dlamb = lamb - (lamb00 + lambD * t0)
+            exp_up = np.exp(-dlamb**2/tup**2)
+            exp_down = np.exp(-dlamb**2/tdown**2)
+
+            # val[ind, ...] = (
+            #     amp * (
+            #         indup * np.exp(-(lamb - t0)**2/tup**2)
+            #         + inddown * np.exp(-(lamb - t0)**2/tdown**2)
+            #     )
+            # )
+
+            # amp
+            ind = dind['jac'][kfunc].get('amp')
+            if ind is not None:
+                val[:, ind] = scales[ind] * (
+                    indup * exp_up
+                    + inddown * exp_down
+                )
+
+            # t0
+            ind = dind['jac'][kfunc].get('t0')
+            if ind is not None:
+                dt0_exp_up = scales[ind] * exp_up * (-1/tup**2) * (-2*lambD*dlamb)
+                dt0_exp_down = scales[ind] * exp_down * (-1/tdown**2) * (-2*lambD*dlamb)
+                # dt0_ind0 = ind0_t / lambd
+                val[:, ind] = amp * (
+                    indup * dt0_exp_up
+                    + inddown * dt0_exp_down
+                )
+
+            # tup
+            ind = dind['jac'][kfunc].get('t_up')
+            if ind is not None:
+                val[:, ind] = amp * indup * scales[ind] * (
+                    exp_up * (2*dlamb**2/tup**3)
+                )
+
+            # tdown
+            ind = dind['jac'][kfunc].get('t_down')
+            if ind is not None:
+                val[:, ind] = amp * inddown * scales[ind] * (
+                    exp_down * (2*dlamb**2/tdown**3)
+                )
+
+        # -------------------
+        # all lognorm
+
+        kfunc = 'lognorm'
+        if dind.get(kfunc) is not None:
+
+            amp = x_full[dind[kfunc]['amp']['ind']]
+            t0 = x_full[dind[kfunc]['t0']['ind']]
+            sigma = x_full[dind[kfunc]['sigma']['ind']]
+            mu = x_full[dind[kfunc]['mu']['ind']]
+
+            # max at t - t0 = exp(mu - sigma**2)
+            # max = amp * exp(sigma**2/2 - mu)
+            # variance = (exp(sigma**2) - 1) * exp(2mu + sigma**2)
+            # skewness = (exp(sigma**2) + 2) * sqrt(exp(sigma**2) - 1)
+
+            # amp
+            ind = dind['jac'][kfunc].get('amp')
+            if ind is not None:
+                for ii, i0 in enumerate(ind):
+                    iok = lamb[:, 0] > (lamb00 + lambD * t0[ii])
+                    dlamb = lamb[iok, 0] - (lamb00 + lambD * t0[ii])
+
+                    log_mu = np.log(dlamb) - mu[ii]
+                    exp = np.exp(-(log_mu)**2 / (2.*sigma[ii]**2))
+
+                    val[iok, i0] = (scales[i0] / dlamb) * exp
+
+            # t0
+            ind = dind['jac'][kfunc].get('t0')
+            if ind is not None:
+                for ii, i0 in enumerate(ind):
+                    iok = lamb[:, 0] > (lamb00 + lambD * t0[ii])
+                    dlamb = lamb[iok, 0] - (lamb00 + lambD * t0[ii])
+
+                    log_mu = np.log(dlamb) - mu[ii]
+                    exp = np.exp(-(log_mu)**2 / (2.*sigma[ii]**2))
+
+                    dt0_inv_dlamb = scales[i0] * lambD/dlamb**2
+                    dt0_logmu = scales[i0] * (-lambD) / dlamb
+                    dt0_exp = exp * dt0_logmu * (-2*log_mu / (2.*sigma[ii]**2))
+
+                    val[iok, i0] = amp * (
+                        dt0_inv_dlamb * exp
+                        + (1/dlamb) * dt0_exp
+                    )
+
+            # sigma
+            ind = dind['jac'][kfunc].get('sigma')
+            if ind is not None:
+                for ii, i0 in enumerate(ind):
+                    iok = lamb[:, 0] > (lamb00 + lambD * t0[ii])
+                    dlamb = lamb[iok, 0] - (lamb00 + lambD * t0[ii])
+
+                    log_mu = np.log(dlamb) - mu[ii]
+                    exp = np.exp(-(log_mu)**2 / (2.*sigma[ii]**2))
+
+                    val[iok, i0] = (
+                        (amp / dlamb) * exp * scales[i0]
+                        * (log_mu**2/sigma[ii]**3)
+                    )
+
+            # mu
+            ind = dind['jac'][kfunc].get('mu')
+            if ind is not None:
+                for ii, i0 in enumerate(ind):
+                    iok = lamb[:, 0] > (lamb00 + lambD * t0[ii])
+                    dlamb = lamb[iok, 0] - (lamb00 + lambD * t0[ii])
+
+                    log_mu = np.log(dlamb) - mu[ii]
+                    exp = np.exp(-(log_mu)**2 / (2.*sigma[ii]**2))
+
+                    val[iok, i0] = 0.1 * (
+                        (amp / dlamb) * exp * scales[i0]
+                        * (-1/(2.*sigma[ii]**2)) * (-2*log_mu)
+                    )
+
+
+
+
+                # val[iok, i0] = (
+                #     (amp[ii] / dlamb)
+                #     * np.exp(-(np.log(dlamb) - mu[ii])**2 / (2.*sigma[ii]**2))
+                # )
 
         # ----------- TO BE FINISHED ------------
 

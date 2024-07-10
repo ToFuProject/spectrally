@@ -44,9 +44,15 @@ _DMODEL = {
 
     # -----------
     # pulse shape
-    'pulse1': {'var': ['amp', 't0', 't_up', 't_down']},
-    'pulse2': {'var': ['amp', 't0', 't_up', 't_down']},
-    'lognorm': {'var': ['amp', 't0', 'mu', 'sigma']},
+    'pulse1': {
+        'var': ['amp', 't0', 't_up', 't_down'],
+    },
+    'pulse2': {
+        'var': ['amp', 't0', 't_up', 't_down'],
+    },
+    'lognorm': {
+        'var': ['amp', 't0', 'mu', 'sigma'],
+    },
 }
 
 

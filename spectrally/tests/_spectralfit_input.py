@@ -168,6 +168,70 @@ def add_data(coll=None):
         units='counts',
     )
 
+    # --------
+    # pulse1
+
+    t0 = lamb0[0]
+    tup = Dlamb / 20
+    tdown = Dlamb / 3
+    amp = 500 / (np.exp(-(lambm-t0)/tdown) - np.exp(-(lambm-t0)/tup))
+
+    coll.add_data(
+        key='data_pulse1',
+        data=np.random.poisson(
+            amp * (lamb>=t0) * (np.exp(-(lamb-t0)/tdown) - np.exp(-(lamb-t0)/tup))
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # pulse2
+
+    t0 = lamb0[0]
+    tup = Dlamb / 20
+    tdown = Dlamb / 3
+    indup = (lamb < t0)
+    inddown = (lamb >= t0)
+    amp = 500
+
+    coll.add_data(
+        key='data_pulse2',
+        data=np.random.poisson(
+            amp * (
+                indup * np.exp(-(lamb - t0)**2/tup**2)
+                + inddown * np.exp(-(lamb - t0)**2/tdown**2)
+            )
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # lognorm
+
+    t0 = lamb0[0]
+    sigma = 0.5
+    mu = 0.5 * (np.log((Dlamb / 30)**2/(np.exp(sigma**2) - 1)) - sigma**2)
+
+    amp = (
+        500 * (lambm - t0)
+        * np.exp((np.log(lambm - t0) - mu)**2 / (2.*sigma**2))
+    )
+    data = np.zeros((lamb.size,))
+    iok = (lamb >= t0)
+    data[iok] = (amp / (lamb[iok] - t0)) * np.exp(
+        -(np.log(lamb[iok] - t0) - mu)**2 / (2.*sigma**2)
+    )
+
+    coll.add_data(
+        key='data_lognorm',
+        data=np.random.poisson(data),
+        ref='nlamb',
+        units='counts',
+    )
+
+
     # ------------------
     # data 1d
     # ------------------
@@ -707,6 +771,9 @@ def add_fit_single(coll=None):
         ('smgauss', 'data_gauss'),
         ('smlorentz', 'data_lorentz'),
         ('smpvoigt', 'data_pvoigt'),
+        ('smpulse1', 'data_pulse1'),
+        ('smpulse2', 'data_pulse2'),
+        ('smlognorm', 'data_lognorm'),
     ]
 
     for (key_model, key_data) in lk:
@@ -811,7 +878,11 @@ def compute_fit_single(coll=None):
     # compute
     # --------------------
 
-    lk = ['data_linear', 'data_exp', 'data_gauss', 'data_lorentz', 'data_pvoigt']
+    lk = [
+        # 'data_linear', 'data_exp',
+        # 'data_gauss', 'data_lorentz', 'data_pvoigt',
+        'data_pulse1', 'data_pulse2', 'data_lognorm',
+    ]
 
     for key_data in lk:
         compute_fit(coll, key_data=key_data)
