@@ -153,14 +153,14 @@ def _get_func_details(
             eta = 1.36603 * ratio - 0.47719 * ratio**2 + 0.11116 * ratio**3
 
             # update widths of gauss and Lorentz
-            sigma = ftot / (2 * np.sqrt(2*np.log(2)))
-            gam = ftot / 2.
+            sigma2 = ftot / (2 * np.sqrt(2*np.log(2)))
+            gam2 = ftot / 2.
 
             # weighted sum
             ind = dind['func'][kfunc]['ind']
             val[ind, ...] = amp * (
-                eta / (1 + ((lamb - lamb0*(1 + vccos)) / gam)**2)
-                + (1-eta) * np.exp(-(lamb - lamb0*(1 + vccos))**2/(2*sigma**2))
+                eta / (1 + ((lamb - lamb0*(1 + vccos)) / gam2)**2)
+                + (1-eta) * np.exp(-(lamb - lamb0*(1 + vccos))**2/(2*sigma2**2))
             )
 
         # ------------
@@ -438,48 +438,48 @@ def _get_func_jacob(
 
             ind = dind['jac'][kfunc].get('amp')
             if ind is not None:
-                val[:, ind] = exp_on_lamb
+                val[:, ind] = exp_on_lamb * scales[ind]
 
             ind = dind['jac'][kfunc].get('rate')
             if ind is not None:
-                val[:, ind] = - amp * exp_on_lamb / lamb
+                val[:, ind] = - amp * exp_on_lamb * scales[ind] / lamb
 
         # -----------------
-        # sum all gaussians
+        # all gaussians
 
         kfunc = 'gauss'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
-            vccos = x_full[dind[kfunc]['vccos']['ind']][:, None]
-            lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
+            amp = x_full[dind[kfunc]['amp']['ind']][None, :]
+            sigma = x_full[dind[kfunc]['sigma']['ind']][None, :]
+            vccos = x_full[dind[kfunc]['vccos']['ind']][None, :]
+            lamb0 = param_val[dind[kfunc]['lamb0']][None, :]
 
             dlamb = lamb - lamb0*(1 + vccos)
             exp = np.exp(-dlamb**2/(2*sigma**2))
 
             ind = dind['jac'][kfunc].get('amp')
             if ind is not None:
-                val[:, ind] = exp
+                val[:, ind] = exp * scales[ind]
 
             ind = dind['jac'][kfunc].get('vccos')
             if ind is not None:
-                val[:, ind] = amp * exp * lamb0 * dlamb / sigma**2
+                val[:, ind] = amp * exp * (dlamb / sigma**2) * lamb0 * scales[ind]
 
             ind = dind['jac'][kfunc].get('sigma')
             if ind is not None:
-                val[:, ind] = amp * exp * dlamb**2 / sigma**3
+                val[:, ind] = amp * exp * (dlamb**2 / sigma**3) * scales[ind]
 
         # -------------------
-        # sum all Lorentzians
+        # all Lorentzians
 
         kfunc = 'lorentz'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-            gam = x_full[dind[kfunc]['gam']['ind']][:, None]
-            vccos = x_full[dind[kfunc]['vccos']['ind']][:, None]
-            lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
+            amp = x_full[dind[kfunc]['amp']['ind']][None, :]
+            gam = x_full[dind[kfunc]['gam']['ind']][None, :]
+            vccos = x_full[dind[kfunc]['vccos']['ind']][None, :]
+            lamb0 = param_val[dind[kfunc]['lamb0']][None, :]
 
             # https://en.wikipedia.org/wiki/Cauchy_distribution
             # value at lamb0 = amp / (pi * gam)
@@ -488,12 +488,12 @@ def _get_func_jacob(
 
             ind = dind['jac'][kfunc].get('amp')
             if ind is not None:
-                val[:, ind] = 1. / (1 + lamb_on_gam**2)
+                val[:, ind] = scales[ind] / (1 + lamb_on_gam**2)
 
             ind = dind['jac'][kfunc].get('vccos')
             if ind is not None:
                 val[:, ind] = (
-                    (amp * lamb0 / gam)
+                    (amp * lamb0 / gam) * scales[ind]
                     * 2 * lamb_on_gam / (1 + lamb_on_gam**2)**2
                 )
 
@@ -501,8 +501,115 @@ def _get_func_jacob(
             if ind is not None:
                 val[:, ind] = (
                     amp * 2 * lamb_on_gam**2 / (1 + lamb_on_gam**2)**2
-                    / gam
+                    * scales[ind] / gam
                 )
+
+        # -------------------
+        # all pvoigt
+
+        kfunc = 'pvoigt'
+        if dind.get(kfunc) is not None:
+
+            amp = x_full[dind[kfunc]['amp']['ind']][None, :]
+            sigma = x_full[dind[kfunc]['sigma']['ind']][None, :]
+            gam = x_full[dind[kfunc]['gam']['ind']][None, :]
+            vccos = x_full[dind[kfunc]['vccos']['ind']][None, :]
+            lamb0 = param_val[dind[kfunc]['lamb0']][None, :]
+
+            fg = 2 * np.sqrt(2*np.log(2)) * sigma
+            fl = 2 * gam
+
+            ftot_norm = (
+                fg**5 + 2.69269*fg**4*fl + 2.42843*fg**3*fl**2
+                + 4.47163*fg**2*fl**3 + 0.07842*fg*fl**4 + fl**5
+            )
+            ftot = ftot_norm ** (1./5.)
+            ratio = fl / ftot
+
+            # eta
+            eta = 1.36603 * ratio - 0.47719 * ratio**2 + 0.11116 * ratio**3
+
+            # update widths of gauss and Lorentz
+            sigma2 = ftot / (2 * np.sqrt(2*np.log(2)))
+            gam2 = ftot / 2.
+
+            dlamb = lamb - lamb0*(1 + vccos)
+            exp = np.exp(-dlamb**2/(2*sigma2**2))
+            lamb_on_gam = dlamb / gam2
+            lorentz_norm = 1. / (1 + lamb_on_gam**2)
+
+            # weighted sum
+            # ind = dind['func'][kfunc]['ind']
+            # val[ind, ...] = amp * (
+            #     eta / (1 + ((lamb - lamb0*(1 + vccos)) / gam)**2)
+            #     + (1-eta) * np.exp(-(lamb - lamb0*(1 + vccos))**2/(2*sigma**2))
+            # )
+
+            ind = dind['jac'][kfunc].get('amp')
+            if ind is not None:
+                val[:, ind] = (
+                    (eta * lorentz_norm + (1-eta)*exp) * scales[ind]
+                )
+
+            ind = dind['jac'][kfunc].get('vccos')
+            if ind is not None:
+                val[:, ind] = amp * scales[ind] * (
+                    eta * (lamb0 / gam2) * 2 * lamb_on_gam / (1 + lamb_on_gam**2)**2
+                    + (1 - eta) * exp * (dlamb / sigma2**2) * lamb0
+                )
+
+            # --------------
+            # widths
+
+            # sigma
+            ind = dind['jac'][kfunc].get('sigma')
+            if ind is not None:
+                ds_fg = 2 * np.sqrt(2*np.log(2)) * scales[ind]
+                ds_ftot = (1/5) * ftot_norm**(-4./5.) * ds_fg * (
+                    5*fg**4 + 2.69269*4*fg**3*fl + 2.42843*3*fg**2*fl**2
+                    + 4.47163*2*fg*fl**3 + 0.07842*fl**4
+                )
+                ds_ratio = (-fl/ftot**2) * ds_ftot
+                ds_eta = ds_ratio * (
+                    1.36603 - 0.47719 * 2 * ratio + 0.11116 * 3 * ratio**2
+                )
+                ds_sigma2 = ds_ftot / (2 * np.sqrt(2*np.log(2)))
+                ds_gam2 = ds_ftot / 2.
+
+                ds_lamb_on_gam = - ds_gam2 * dlamb / gam2**2
+                ds_exp = ds_sigma2 * (dlamb**2/sigma2**3) * exp
+
+                val[:, ind] = amp * (
+                    ds_eta / (1 + lamb_on_gam**2)
+                    + eta * ds_lamb_on_gam * (-2*lamb_on_gam)/ (1 + lamb_on_gam**2)**2
+                    - ds_eta * exp
+                    + (1 - eta) * ds_exp
+                )
+
+            ind = dind['jac'][kfunc].get('gam')
+            if ind is not None:
+                dg_fl = 2 * scales[ind]
+                dg_ftot = (1/5) * ftot_norm**(-4./5.) * dg_fl * (
+                    2.69269*fg**4 + 2.42843*fg**3*2*fl
+                    + 4.47163*fg**2*3*fl**2 + 0.07842*fg*4*fl**3 + 5*fl**4
+                )
+                dg_ratio = dg_fl/ftot + (-fl/ftot**2) * dg_ftot
+                dg_eta = dg_ratio * (
+                    1.36603 - 0.47719 * 2 * ratio + 0.11116 * 3 * ratio**2
+                )
+                dg_sigma2 = dg_ftot / (2 * np.sqrt(2*np.log(2)))
+                dg_gam2 = dg_ftot / 2.
+
+                dg_lamb_on_gam = - dg_gam2 * dlamb / gam2**2
+                dg_exp = dg_sigma2 * (dlamb**2/sigma2**3) * exp
+
+                val[:, ind] = amp * (
+                    ds_eta / (1 + lamb_on_gam**2)
+                    + eta * dg_lamb_on_gam * (-2*lamb_on_gam)/ (1 + lamb_on_gam**2)**2
+                    - dg_eta * exp
+                    + (1 - eta) * dg_exp
+                )
+
 
         # ----------- TO BE FINISHED ------------
 

@@ -265,7 +265,7 @@ def _get_scales_bounds(
         # vccos
         kvar = 'vccos'
         ind = dind['jac'][kfunc].get(kvar)
-        scales[ind] = lambD / _DEF_SCALES_FACTORS['shift']
+        scales[ind] = (lambD/lambm) / _DEF_SCALES_FACTORS['shift']
         bounds0[ind] = -1.
         bounds1[ind] = 1.
 
@@ -311,7 +311,7 @@ def _get_scales_bounds(
         # vccos
         kvar = 'vccos'
         ind = dind['jac'][kfunc].get(kvar)
-        scales[ind] = lambD / _DEF_SCALES_FACTORS['shift']
+        scales[ind] = (lambD/lambm) / _DEF_SCALES_FACTORS['shift']
         bounds0[ind] = -1.
         bounds1[ind] = 1.
 
@@ -357,7 +357,7 @@ def _get_scales_bounds(
         # vccos
         kvar = 'vccos'
         ind = dind['jac'][kfunc].get(kvar)
-        scales[ind] = lambD / _DEF_SCALES_FACTORS['shift']
+        scales[ind] = (lambD/lambm) / _DEF_SCALES_FACTORS['shift']
         bounds0[ind] = -1.
         bounds1[ind] = 1.
 
@@ -416,7 +416,7 @@ def _get_scales_bounds(
         # vccos
         kvar = 'vccos'
         ind = dind['jac'][kfunc].get(kvar)
-        scales[ind] = lambD / _DEF_SCALES_FACTORS['shift']
+        scales[ind] = (lambD/lambm) / _DEF_SCALES_FACTORS['shift']
         bounds0[ind] = -1.
         bounds1[ind] = 1.
 
