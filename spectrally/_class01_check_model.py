@@ -20,11 +20,13 @@ _DMODEL = {
 
     # ----------
     # background
+
     'linear': {'var': ['a0', 'a1']},
     'exp_lamb': {'var': ['amp', 'rate']},
 
     # --------------
     # spectral lines
+
     'gauss': {
         'var': ['amp', 'vccos', 'sigma'],
         'param': [('lamb0', float), ('mz', float, np.nan)],
@@ -44,6 +46,7 @@ _DMODEL = {
 
     # -----------
     # pulse shape
+
     'pulse1': {
         'var': ['amp', 't0', 't_up', 't_down'],
     },

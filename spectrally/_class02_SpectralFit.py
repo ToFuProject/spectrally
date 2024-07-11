@@ -41,7 +41,7 @@ class SpectralFit(Previous):
         if which == self._which_fit:
             return _check_fit._show
         else:
-            return super()._get_show_obj()
+            return super()._get_show_obj(which)
 
     # ###################
     # -------------------
