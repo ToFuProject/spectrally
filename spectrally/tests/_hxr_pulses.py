@@ -34,7 +34,7 @@ def main(
     coll=None,
     pfe=_PFE,
     # spectral fits to be run
-    lspect_fit=['exp'], # , 'gauss', 'lognorm'],
+    lspect_fit=['exp', 'gauss', 'lognorm'],
     strict=True,
     verb=1,
 ):
