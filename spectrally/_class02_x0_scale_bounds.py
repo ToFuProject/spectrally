@@ -507,36 +507,14 @@ def _get_scales_bounds(
     kfunc = 'lognorm'
     if dind.get(kfunc) is not None:
 
-        # amp
-        kvar = 'amp'
-        ind = dind['jac'][kfunc].get(kvar)
-        scales[ind] = data_max - data_min
-        bounds0[ind] = -10.
-        bounds1[ind] = 10.
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scales=None if ii == 0 else scales
-            )
-
-        # t0
-        kvar ='t0'
-        ind = dind['jac'][kfunc].get('t0')
-        scales[ind] = 1
-        bounds0[ind] = 0
-        bounds1[ind] = 1
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scales=None if ii == 0 else scales
-            )
+        # useful for guessing
+        sigma = 0.5
+        mu = 0.5 * (np.log((lambD / 10)**2/(np.exp(sigma**2) - 1)) - sigma**2)
 
         # sigma
         kvar = 'sigma'
         ind = dind['jac'][kfunc].get(kvar)
-        scales[ind] = 0.5
+        scales[ind] = sigma
         bounds0[ind] = 0.1
         bounds1[ind] = 10
 
@@ -549,7 +527,7 @@ def _get_scales_bounds(
         # mu
         kvar = 'mu'
         ind = dind['jac'][kfunc].get(kvar)
-        scales[ind] = 0.5 * (np.log((lambD / 10)**2/(np.exp(0.5**2) - 1)) - 0.5**2)
+        scales[ind] = mu
         bounds0[ind] = 1.e-2
         bounds1[ind] = 10
 
@@ -558,6 +536,36 @@ def _get_scales_bounds(
                 din, kfunc, kvar, val,
                 scales=None if ii == 0 else scales
             )
+
+        # amp
+        # max = amp * exp(sigma**2/2 - mu)
+        kvar = 'amp'
+        ind = dind['jac'][kfunc].get(kvar)
+        scales[ind] = (data_max - data_min) * np.exp(mu - 0.5*sigma**2)
+        bounds0[ind] = -10.
+        bounds1[ind] = 10.
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=None if ii == 0 else scales
+            )
+
+        # t0
+        # max at lamb - lamb00 + lambD * t0 = exp(mu - sigma**2)
+        kvar ='t0'
+        ind = dind['jac'][kfunc].get('t0')
+        scales[ind] = 1
+        bounds0[ind] = 0
+        bounds1[ind] = 1
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=None if ii == 0 else scales
+            )
+
+
 
     return scales, bounds0, bounds1
 
@@ -910,27 +918,9 @@ def _get_x0(
     kfunc = 'lognorm'
     if dind.get(kfunc) is not None:
 
-        # amp
-        kvar = 'amp'
-        ind = dind['jac'][kfunc].get(kvar)
-        x0[ind] = (data_max - data_min) / 2 / scales[ind]
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scales=scales,
-            )
-
-        # t0
-        kvar ='t0'
-        ind = dind['jac'][kfunc].get('t0')
-        x0[ind] = 0.3
-
-        for ii, (din, val) in enumerate(ldins):
-            _update_din_from_user(
-                din, kfunc, kvar, val,
-                scales=scales,
-            )
+        # useful for guessing
+        sigma = 0.5
+        mu = 0.5 * (np.log((lambD / 10)**2/(np.exp(sigma**2) - 1)) - sigma**2)
 
         # sigma
         kvar = 'sigma'
@@ -945,6 +935,30 @@ def _get_x0(
 
         # mu
         kvar = 'mu'
+        ind = dind['jac'][kfunc].get(kvar)
+        x0[ind] = 1
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # t0
+        # max at lamb - lamb00 + lambD * t0 = exp(mu - sigma**2)
+        kvar ='t0'
+        ind = dind['jac'][kfunc].get('t0')
+        x0[ind] = 0.3
+
+        for ii, (din, val) in enumerate(ldins):
+            _update_din_from_user(
+                din, kfunc, kvar, val,
+                scales=scales,
+            )
+
+        # amp
+        # max = amp * exp(sigma**2/2 - mu)
+        kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
         x0[ind] = 1
 
