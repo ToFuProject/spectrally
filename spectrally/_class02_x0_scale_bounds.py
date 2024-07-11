@@ -152,6 +152,8 @@ def _get_scales_bounds(
     data_max = np.nanmax(data[iok_all])
     data_min = np.nanmin(data[iok_all])
     data_mean = np.nanmean(data[iok_all])
+    data_median = np.nanmedian(data[iok_all])
+    data_pulse_sign = np.sign(data_mean - data_median)
 
     ldins = [(dscales, scales), (dbounds_low, bounds0), (dbounds_up, bounds1)]
 
@@ -466,6 +468,8 @@ def _get_scales_bounds(
             # data
             data_min=data_min,
             data_max=data_max,
+            data_pulse_sign=data_pulse_sign,
+            # lamb
             lamb=lamb,
             lambd=lambd,
             lambm=lambm,
@@ -490,6 +494,8 @@ def _get_scales_bounds(
             # data
             data_min=data_min,
             data_max=data_max,
+            data_pulse_sign=data_pulse_sign,
+            # lamb
             lamb=lamb,
             lambd=lambd,
             lambm=lambm,
@@ -542,8 +548,12 @@ def _get_scales_bounds(
         kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
         scales[ind] = (data_max - data_min) * np.exp(mu - 0.5*sigma**2)
-        bounds0[ind] = -10.
-        bounds1[ind] = 10.
+        if data_pulse_sign > 0:
+            bounds0[ind] = 0.
+            bounds1[ind] = 10.
+        else:
+            bounds0[ind] = -10.
+            bounds1[ind] = 0.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -564,8 +574,6 @@ def _get_scales_bounds(
                 din, kfunc, kvar, val,
                 scales=None if ii == 0 else scales
             )
-
-
 
     return scales, bounds0, bounds1
 
@@ -596,15 +604,20 @@ def _get_x0(
     # prepare
     # ------------------
 
+    lamb0 = lamb[0]
     lambD = lamb[-1] - lamb[0]
     lambd = lamb[1] - lamb[0]
     lambm = np.mean(lamb)
+    lamb_amax = lamb[iok][np.argmax(data[iok])]
+    lamb_amin = lamb[iok][np.argmin(data[iok])]
 
     data_max = np.nanmax(data[iok])
     data_min = np.nanmin(data[iok])
     data_mean = np.nanmean(data[iok])
     data_median = np.median(data[iok])
     data_pulse_sign = np.sign(data_mean - data_median)
+
+    lamb_ext = lamb_amax if data_pulse_sign > 0 else lamb_amin
 
     ldins = [(dx0, x0)]
 
@@ -880,9 +893,12 @@ def _get_x0(
             data_min=data_min,
             data_max=data_max,
             data_pulse_sign=data_pulse_sign,
+            # lamb
+            lamb0=lamb0,
             lambd=lambd,
             lambm=lambm,
             lambD=lambD,
+            lamb_ext=lamb_ext,
             # arrays to fill
             x0=x0,
             scales=scales,
@@ -903,9 +919,12 @@ def _get_x0(
             data_min=data_min,
             data_max=data_max,
             data_pulse_sign=data_pulse_sign,
+            # lamb
+            lamb0=lamb0,
             lambd=lambd,
             lambm=lambm,
             lambD=lambD,
+            lamb_ext=lamb_ext,
             # arrays to fill
             x0=x0,
             scales=scales,
@@ -921,6 +940,7 @@ def _get_x0(
         # useful for guessing
         sigma = 0.5
         mu = 0.5 * (np.log((lambD / 10)**2/(np.exp(sigma**2) - 1)) - sigma**2)
+        exp = np.exp(mu - sigma**2)
 
         # sigma
         kvar = 'sigma'
@@ -948,7 +968,7 @@ def _get_x0(
         # max at lamb - lamb00 + lambD * t0 = exp(mu - sigma**2)
         kvar ='t0'
         ind = dind['jac'][kfunc].get('t0')
-        x0[ind] = 0.3
+        x0[ind] = (exp - lamb[0] + lamb0) / lambD / scales[ind]
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -960,7 +980,7 @@ def _get_x0(
         # max = amp * exp(sigma**2/2 - mu)
         kvar = 'amp'
         ind = dind['jac'][kfunc].get(kvar)
-        x0[ind] = 1
+        x0[ind] = data_pulse_sign
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -1001,6 +1021,7 @@ def _get_scales_bounds_pulse(
     data_min=None,
     data_max=None,
     data_pulse_sign=None,
+    # lamb
     lamb=None,
     lambd=None,
     lambm=None,
@@ -1015,9 +1036,13 @@ def _get_scales_bounds_pulse(
     kvar = 'amp'
     ind = dind['jac'][kfunc].get(kvar)
     if ind is not None:
-        scales[ind] = data_max - data_min
-        bounds0[ind] = -10.
-        bounds1[ind] = 10.
+        scales[ind] = (data_max - data_min)
+        if data_pulse_sign > 0.:
+            bounds0[ind] = 0
+            bounds1[ind] = 10.
+        else:
+            bounds0[ind] = -10.
+            bounds1[ind] = 0.
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -1083,9 +1108,12 @@ def _get_x0_pulse(
     data_min=None,
     data_max=None,
     data_pulse_sign=None,
+    # lamb
     lambd=None,
     lambm=None,
     lambD=None,
+    lamb0=None,
+    lamb_ext=None,
     # arrays to fill
     x0=None,
     scales=None,
@@ -1107,7 +1135,7 @@ def _get_x0_pulse(
     kvar = 't0'
     ind = dind['jac'][kfunc].get(kvar)
     if ind is not None:
-        x0[ind] = 0.3
+        x0[ind] = (lamb_ext - lamb0) / lambD
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -1119,7 +1147,7 @@ def _get_x0_pulse(
     kvar = 't_up'
     ind = dind['jac'][kfunc].get(kvar)
     if ind is not None:
-        x0[ind] = 0.05 * lambD / scales[ind]
+        x0[ind] = 1
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -1131,7 +1159,7 @@ def _get_x0_pulse(
     kvar = 't_down'
     ind = dind['jac'][kfunc].get(kvar)
     if ind is not None:
-        x0[ind] = 0.2 * lambD / scales[ind]
+        x0[ind] = 1
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
