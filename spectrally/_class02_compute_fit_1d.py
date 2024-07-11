@@ -138,17 +138,6 @@ def main(
         din_name='dx0',
     )
 
-    # get x0
-    x0 = _x0_scale_bounds._get_x0(
-        nxfree=len(lk_xfree),
-        lamb=lamb,
-        data=data,
-        iok=iok_all,
-        dind=dind,
-        dx0=dx0,
-        scales=scales,
-    )
-
     # ------------
     # get functions
     # ------------
@@ -171,13 +160,14 @@ def main(
         data=data,
         axis=axis,
         # iok
+        dind=dind,
         iok_all=iok_all,
         iok_reduced=iok_reduced,
         # x0, bounds, scale
         scales=scales,
         bounds0=bounds0,
         bounds1=bounds1,
-        x0=x0,
+        dx0=dx0,
         # options
         chain=chain,
         # func
@@ -251,13 +241,14 @@ def _loop(
     data=None,
     axis=None,
     # iok
+    dind=None,
     iok_all=None,
     iok_reduced=None,
     # x0, bounds, scale
     scales=None,
     bounds0=None,
     bounds1=None,
-    x0=None,
+    dx0=None,
     # options
     chain=None,
     # func
@@ -284,8 +275,9 @@ def _loop(
     ])
 
     # shape_sol
+    nxfree = len(lk_xfree)
     shape_sol = list(data.shape)
-    shape_sol[axis] = len(lk_xfree)
+    shape_sol[axis] = nxfree
 
     # lind
     lind = [range(ss) for ss in shape_reduced]
@@ -343,6 +335,21 @@ def _loop(
 
         sli_sol[ind_ind] = ind
         slii = tuple(sli_sol)
+
+        # ---------------
+        # x0
+
+        # get x0
+        if chain is False or ii == 0:
+            x0 = _x0_scale_bounds._get_x0(
+                nxfree=nxfree,
+                lamb=lamb,
+                data=data[slii],
+                iok=iok_all[slii],
+                dind=dind,
+                dx0=dx0,
+                scales=scales,
+            )
 
         # ------
         # verb
