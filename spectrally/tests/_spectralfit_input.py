@@ -879,8 +879,8 @@ def compute_fit_single(coll=None):
     # --------------------
 
     lk = [
-        # 'data_linear', 'data_exp',
-        # 'data_gauss', 'data_lorentz', 'data_pvoigt',
+        'data_linear', 'data_exp',
+        'data_gauss', 'data_lorentz', 'data_pvoigt',
         'data_pulse1', 'data_pulse2', 'data_lognorm',
     ]
 

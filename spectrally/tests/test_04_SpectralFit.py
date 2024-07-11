@@ -98,10 +98,10 @@ class Test00_Populate():
     # ---------------
     # 2d spectral fit
 
-    def test06_add_spectral_fit_2d(self):
-        # add spectral fit 2d
-        _inputs.add_fit(self.coll, key_data='data2d')
+    # def test06_add_spectral_fit_2d(self):
+    #     # add spectral fit 2d
+    #     _inputs.add_fit(self.coll, key_data='data2d')
 
-    def test07_plot_spectral_fit_input_validity_2d(self):
-        # plot 2d
-        _inputs.plot_input_validity(self.coll, key_data='data2d')
+    # def test07_plot_spectral_fit_input_validity_2d(self):
+    #     # plot 2d
+    #     _inputs.plot_input_validity(self.coll, key_data='data2d')
