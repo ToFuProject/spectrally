@@ -17,6 +17,7 @@ from ._setup_teardown import setup_module0, teardown_module0
 from .._class02_SpectralFit import SpectralFit as Collection
 # from .._saveload import load
 from . import _spectralfit_input as _inputs
+from . import _hxr_pulses
 
 
 _PATH_HERE = os.path.dirname(__file__)
@@ -105,3 +106,10 @@ class Test00_Populate():
     # def test07_plot_spectral_fit_input_validity_2d(self):
     #     # plot 2d
     #     _inputs.plot_input_validity(self.coll, key_data='data2d')
+
+    # ------------------------
+    #   Special cases
+    # ------------------------
+
+    def test99_HXR_pulses(self):
+        _hxr_pulses.main(self.coll)

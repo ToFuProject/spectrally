@@ -1011,7 +1011,6 @@ def _get_scales_bounds_pulse(
     bounds1=None,
 ):
 
-
     # amp
     kvar = 'amp'
     ind = dind['jac'][kfunc].get(kvar)
