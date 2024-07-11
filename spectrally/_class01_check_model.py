@@ -606,19 +606,36 @@ def _get_var_dind(
 def _show(coll=None, which=None, lcol=None, lar=None, show=None):
 
     # ---------------------------
-    # column names
+    # list of functions
     # ---------------------------
 
-    lcol.append([which] + _LMODEL_ORDER + ['constraints', 'free var'])
-
-    # ---------------------------
-    # data
-    # ---------------------------
-
+    # list of models
     lkey = [
         k1 for k1 in coll._dobj.get(which, {}).keys()
         if show is None or k1 in show
     ]
+
+    # list of relevant functions
+    lfunc = []
+    for k0 in lkey:
+        dmod = coll.dobj[which][k0]['dmodel']
+        for k1 in _LMODEL_ORDER:
+            lk2 = [k2 for k2, v2 in dmod.items() if v2['type'] == k1]
+            if len(lk2) > 0 and k1 not in lfunc:
+                lfunc.append(k1)
+
+    # reorder
+    lfunc = [k1 for k1 in _LMODEL_ORDER if k1 in lfunc]
+
+    # ---------------------------
+    # column names
+    # ---------------------------
+
+    lcol.append([which] + lfunc + ['constraints', 'free var'])
+
+    # ---------------------------
+    # data array
+    # ---------------------------
 
     lar0 = []
     for k0 in lkey:
@@ -628,7 +645,7 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
 
         # add nb of func of each type
         dmod = coll.dobj[which][k0]['dmodel']
-        for k1 in _LMODEL_ORDER:
+        for k1 in lfunc:
             nn = str(len([k2 for k2, v2 in dmod.items() if v2['type'] == k1]))
             arr.append(nn)
 
