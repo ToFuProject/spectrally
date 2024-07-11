@@ -88,7 +88,11 @@ def main(
 
     if dax is None:
         dax = _get_dax(
-            ndim=ndim,
+            ndim=ndim,# resources
+            coll=coll,
+            key_data=key_data,
+            key_fit=key,
+            key_lamb=key_lamb,
             fs=fs,
             dmargin=dmargin,
             tit=tit,
@@ -245,6 +249,19 @@ def _extract_coll2(
 
     dkeys['data'] = key_data
 
+    # ----------
+    # add error
+
+    kerr = 'error'
+    lk = ['units', 'dim', 'quant']
+    coll2.add_data(
+        key=kerr,
+        data=coll.ddata[key_data]['data'] - coll2.ddata[dkeys['sum']]['data'],
+        **{k0: coll._ddata[key_data][k0] for k0 in lk}
+    )
+
+    dkeys['error'] = kerr
+
     return coll2, dkeys, ndim
 
 
@@ -336,15 +353,63 @@ def _plot_2d(
 ):
 
     # --------------
-    # plot fixed 2d
+    # dvminmax
     # --------------
 
-    coll2, dgroup = coll2.plot_as_array(
+    vmin = np.nanmin(coll2.ddata[dkeys['data']]['data'])
+    vmax = np.nanmax(coll2.ddata[dkeys['data']]['data'])
+
+    dvminmax = {
+        'data': {'min': vmin, 'max': vmax}
+    }
+
+    errmax = np.nanmax(np.abs(coll2.ddata[dkeys['error']]['data']))
+    dvminmax_err = {
+        'data': {'min': -errmax, 'max': errmax}
+    }
+
+    # --------------
+    # plot data
+    # --------------
+
+    coll2, dgroup0 = coll2.plot_as_array(
+        key=dkeys['data'],
+        keyX=dkeys['lamb'],
+        keyY=keyY,
+        dax={k0: dax[k0] for k0 in ['vert', '2d_data', 'spectrum']},
+        aspect='auto',
+        dvminmax=dvminmax,
+        connect=False,
+        inplace=True,
+    )
+
+    # --------------
+    # plot fit
+    # --------------
+
+    coll2, dgroup1 = coll2.plot_as_array(
         key=dkeys['sum'],
         keyX=dkeys['lamb'],
         keyY=keyY,
-        dax=dax,
+        dax={k0: dax[k0] for k0 in ['vert', '2d_fit', 'spectrum']},
         aspect='auto',
+        dvminmax=dvminmax,
+        connect=False,
+        inplace=True,
+    )
+
+    # --------------
+    # plot error
+    # --------------
+
+    coll2, dgroup0 = coll2.plot_as_array(
+        key=dkeys['error'],
+        keyX=dkeys['lamb'],
+        keyY=keyY,
+        dax={k0: dax[k0] for k0 in ['vert', '2d_err', 'error']},
+        aspect='auto',
+        dvminmax=dvminmax_err,
+        cmap=plt.cm.seismic,
         connect=False,
         inplace=True,
     )
@@ -356,7 +421,7 @@ def _plot_2d(
     if details is True:
 
         lamb = coll2.ddata[dkeys['lamb']]['data']
-        nmax = dgroup['X']['nmax']
+        nmax = dgroup0['X']['nmax']
         wsm = coll._which_model
         lfunc = coll.dobj[wsm][key_model]['keys']
         refs = (coll2.ddata[dkeys['sum']]['ref'][0],)
@@ -392,7 +457,7 @@ def _plot_2d(
                         ind=jj,
                     )
 
-    return coll2, dgroup
+    return coll2, dgroup0
 
 
 # ###############################################################
@@ -403,6 +468,11 @@ def _plot_2d(
 
 def _get_dax(
     ndim=None,
+    # resources
+    coll=None,
+    key_data=None,
+    key_fit=None,
+    key_lamb=None,
     # figure
     fs=None,
     dmargin=None,
@@ -418,6 +488,11 @@ def _get_dax(
 
     if ndim == 2:
         return _get_dax_2d(
+            coll=coll,
+            key_data=key_data,
+            key_fit=key_fit,
+            key_lamb=key_lamb,
+            # options
             fs=fs,
             dmargin=dmargin,
             tit=tit,
@@ -469,6 +544,11 @@ def _get_dax_1d(
 
 
 def _get_dax_2d(
+    coll=None,
+    key_data=None,
+    key_fit=None,
+    key_lamb=None,
+    # options
     fs=None,
     dmargin=None,
     tit=None,
@@ -479,14 +559,21 @@ def _get_dax_2d(
     # ---------------
 
     if fs is None:
-        fs = (18, 10)
+        fs = (19, 10)
 
     if dmargin is None:
         dmargin = {
-            'left': 0.07, 'right': 0.98,
+            'left': 0.05, 'right': 0.98,
             'bottom': 0.08, 'top': 0.90,
-            'wspace': 0.50, 'hspace': 0.10,
+            'wspace': 0.30, 'hspace': 0.20,
         }
+
+    # ---------------
+    # prepare figure
+    # ---------------
+
+    data_lab = f"{key_data} ({coll.ddata[key_data]['units']})"
+    lamb_lab = f"{key_lamb} ({coll.ddata[key_lamb]['units']})"
 
     # ---------------
     # prepare figure
@@ -494,26 +581,52 @@ def _get_dax_2d(
 
     dax = {}
     fig = plt.figure(figsize=fs)
-    gs = gridspec.GridSpec(2, 7, **dmargin)
+    gs = gridspec.GridSpec(4, 14, **dmargin)
 
     # ------------
     # add axes
     # ------------
 
-    ax = fig.add_subplot(gs[:, 0])
+    # --------
+    # images
+
+    ax = fig.add_subplot(gs[:, 1:3])
+    ax.set_title(f'data\n{key_data}', size=12, fontweight='bold')
+    # ax.set_ylabel()
+    ax0 = ax
+    dax['2d_data'] = {'handle': ax, 'type': 'matrix'}
+
+    ax = fig.add_subplot(gs[:, 3:5], sharex=ax0, sharey=ax0)
+    ax.set_title(f'fit\n{key_fit}', size=12, fontweight='bold')
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax['2d_fit'] = {'handle': ax, 'type': 'matrix'}
+
+    ax = fig.add_subplot(gs[:, 5:7], sharex=ax0, sharey=ax0)
+    ax.set_title('error', size=12, fontweight='bold')
+    # ax.set_xlabel()
+    # ax.set_ylabel()
+    dax['2d_err'] = {'handle': ax, 'type': 'matrix'}
+
+    # --------
+    # vertical
+
+    ax = fig.add_subplot(gs[:, 0], sharey=ax0)
     # ax.set_xlabel()
     # ax.set_ylabel()
     dax['vert'] = {'handle': ax, 'type': 'vertical'}
 
-    ax = fig.add_subplot(gs[:, 1:3])
-    # ax.set_xlabel()
-    # ax.set_ylabel()
-    dax['2d'] = {'handle': ax, 'type': 'matrix'}
+    # ----------
+    # spectrum
 
-    ax = fig.add_subplot(gs[0, 3:])
-    # ax.set_xlabel()
-    # ax.set_ylabel()
-    dax['hor'] = {'handle': ax, 'type': 'horizontal'}
+    ax = fig.add_subplot(gs[:2, 8:], sharex=ax0)
+    ax.set_ylabel(data_lab, size=12, fontweight='bold')
+    dax['spectrum'] = {'handle': ax, 'type': 'horizontal'}
+
+    ax = fig.add_subplot(gs[2, 8:], sharex=ax0)
+    ax.set_xlabel(lamb_lab, size=12, fontweight='bold')
+    ax.set_ylabel('error', size=12, fontweight='bold')
+    dax['error'] = {'handle': ax, 'type': 'horizontal'}
 
     return dax
 
