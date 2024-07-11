@@ -390,7 +390,7 @@ def _loop(
             cost[ind] = res.cost
             nfev[ind] = res.nfev
 
-            chi2n[ind] = np.sqrt(cost * 2) / iok_all[slii].sum()
+            chi2n[ind] = np.sqrt(cost[ind] * 2) / iok_all[slii].sum()
 
             sol[slii] = res.x * scales
             # sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]

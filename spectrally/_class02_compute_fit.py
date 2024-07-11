@@ -88,6 +88,7 @@ def main(
     dsolver_options = _get_solver_options(
         solver=solver,
         dsolver_options=dsolver_options,
+        verb=verb,
     )
 
     # ------------
@@ -283,6 +284,7 @@ def _check(
 def _get_solver_options(
     solver=None,
     dsolver_options=None,
+    verb=None,
 ):
 
     # -------------------
@@ -314,7 +316,7 @@ def _get_solver_options(
             diff_step=None,
             max_nfev=None,
             loss='linear',
-            verbose=2,
+            verbose=verb,
         )
 
     else:
@@ -395,7 +397,7 @@ def _store(
         'cost', 'chi2n', 'time', 'success', 'nfev',
         'msg', 'validity', 'errmsg',
     ]
-    dk_out = {k0: f"{key}_k0" for k0 in lk}
+    dk_out = {k0: f"{key}_{k0}" for k0 in lk}
 
     if ravel is False:
         for k0, k1 in dk_out.items():
