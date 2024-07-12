@@ -171,6 +171,12 @@ def _get_func_moments(
     ):
 
         # ----------
+        # prepare
+
+        lamb0 = lamb[0]
+        lambD = lamb[-1] - lamb[0]
+
+        # ----------
         # initialize
 
         dout = {k0: {} for k0 in dind.keys() if k0 not in ['func', 'nfunc']}
@@ -371,6 +377,9 @@ def _get_func_moments(
             # integral
             dout[kfunc]['integ'] = amp * (tdown - tup)
 
+            # lamb_max
+            dout[kfunc]['lamb_max'] = None
+
         # ------------------
         # sum all pulse2
 
@@ -415,6 +424,11 @@ def _get_func_moments(
 
             # integral
             dout[kfunc]['integ'] = np.full(mu.shape, np.nan)
+
+            # lamb_max
+            # lamb - (lamb00 + lambD * t0) = exp(mu - sigma**2)
+            exp = np.exp(mu - sigma**2)
+            dout[kfunc]['lamb_max'] = exp + (lamb0 + lambD * t0)
 
         return dout
 
