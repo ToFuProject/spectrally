@@ -415,6 +415,7 @@ def _loop(
             msg = str(err)
             if 'is infeasible' in msg:
                 msg += _add_err_bounds(
+                    key=key,
                     lk_xfree=lk_xfree,
                     scales=scales,
                     x0=x0,
@@ -461,6 +462,7 @@ def _loop(
 
 
 def _add_err_bounds(
+    key=None,
     lk_xfree=None,
     scales=None,
     x0=None,
@@ -531,6 +533,6 @@ def _add_err_bounds(
     for arr in arr_out:
         lstr.append(" ".join([ss.ljust(max_just) for ss in arr]))
 
-    msg = "\n\n" + "\n".join(lstr)
+    msg = f" for spectral_fit '{key}'\n\n" + "\n".join(lstr)
 
     return msg
