@@ -805,9 +805,6 @@ def _get_func_jacob(
                         * (-1/(2.*sigma[ii]**2)) * (-2*log_mu)
                     )
 
-
-
-
                 # val[iok, i0] = (
                 #     (amp[ii] / dlamb)
                 #     * np.exp(-(np.log(dlamb) - mu[ii])**2 / (2.*sigma[ii]**2))

@@ -308,9 +308,9 @@ def _get_solver_options(
         ddef = dict(
             # solver options
             method='trf',
-            xtol=1e-10,
-            ftol=1e-10,
-            gtol=1e-10,
+            xtol=None,
+            ftol=1e-12,
+            gtol=None,
             tr_solver='exact',
             tr_options={},
             diff_step=None,
