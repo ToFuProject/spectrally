@@ -514,15 +514,29 @@ def _get_scales_bounds(
     if dind.get(kfunc) is not None:
 
         # useful for guessing
-        sigma = 0.5
-        mu = 0.5 * (np.log((lambD / 10)**2/(np.exp(sigma**2) - 1)) - sigma**2)
+
+        # max at t - t0 = exp(mu - sigma**2)
+        # max = amp * exp(sigma**2/2 - mu)
+        # variance = (exp(sigma**2) - 1) * exp(2mu + sigma**2)
+        # => mu = 0.5 * (log(std**2 / (exp(sigma**2) - 1)) - sigma**2)
+        # skewness = (exp(sigma**2) + 2) * sqrt(exp(sigma**2) - 1)
+
+        sigma = 1
+
+        std = lambD / 5
+        std_min = lambD / 100
+        std_max = lambD
+
+        mu = 0.5 * (np.log(std**2/(np.exp(sigma**2) - 1)) - sigma**2)
+        mu_min = 0.5 * (np.log(std_min**2/(np.exp(sigma**2) - 1)) - sigma**2)
+        mu_max = 0.5 * (np.log(std_max**2/(np.exp(sigma**2) - 1)) - sigma**2)
 
         # sigma
         kvar = 'sigma'
         ind = dind['jac'][kfunc].get(kvar)
         scales[ind] = sigma
         bounds0[ind] = 0.1
-        bounds1[ind] = 10
+        bounds1[ind] = 5
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -534,8 +548,8 @@ def _get_scales_bounds(
         kvar = 'mu'
         ind = dind['jac'][kfunc].get(kvar)
         scales[ind] = mu
-        bounds0[ind] = 1.e-2
-        bounds1[ind] = 10
+        bounds0[ind] = mu_min / mu
+        bounds1[ind] = mu_max / mu
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -562,7 +576,7 @@ def _get_scales_bounds(
             )
 
         # t0
-        # max at lamb - lamb00 + lambD * t0 = exp(mu - sigma**2)
+        # max at lamb - (lamb00 + lambD * t0) = exp(mu - sigma**2)
         kvar ='t0'
         ind = dind['jac'][kfunc].get('t0')
         scales[ind] = 1
@@ -938,14 +952,14 @@ def _get_x0(
     if dind.get(kfunc) is not None:
 
         # useful for guessing
-        sigma = 0.5
+        sigma = 1
         mu = 0.5 * (np.log((lambD / 10)**2/(np.exp(sigma**2) - 1)) - sigma**2)
         exp = np.exp(mu - sigma**2)
 
         # sigma
         kvar = 'sigma'
         ind = dind['jac'][kfunc].get(kvar)
-        x0[ind] = 0.5
+        x0[ind] = 1
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -965,10 +979,10 @@ def _get_x0(
             )
 
         # t0
-        # max at lamb - lamb00 + lambD * t0 = exp(mu - sigma**2)
+        # max at lamb - (lamb00 + lambD * t0) = exp(mu - sigma**2)
         kvar ='t0'
         ind = dind['jac'][kfunc].get('t0')
-        x0[ind] = (exp - lamb[0] + lamb0) / lambD / scales[ind]
+        x0[ind] = (lamb_ext - exp - lamb0) / lambD / scales[ind]
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
