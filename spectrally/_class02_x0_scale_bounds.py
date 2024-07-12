@@ -21,9 +21,17 @@ _DEF_SCALES_FACTORS = {
     'shift': 2,   # lambD / 2
 }
 
+
 _DEF_X0_FACTORS = {
     'width': 10,  # lambD / 10
     'shift': 10,  # lambD / 10
+}
+
+
+_DEF_X0 = {
+    'lognorm': {
+        'sigma': 1.,
+    },
 }
 
 
@@ -521,7 +529,7 @@ def _get_scales_bounds(
         # => mu = 0.5 * (log(std**2 / (exp(sigma**2) - 1)) - sigma**2)
         # skewness = (exp(sigma**2) + 2) * sqrt(exp(sigma**2) - 1)
 
-        sigma = 1
+        sigma = _DEF_X0[kfunc]['sigma']
 
         std = lambD / 5
         std_min = lambD / 100
@@ -952,7 +960,7 @@ def _get_x0(
     if dind.get(kfunc) is not None:
 
         # useful for guessing
-        sigma = 1
+        sigma = _DEF_X0[kfunc]['sigma']
         mu = 0.5 * (np.log((lambD / 10)**2/(np.exp(sigma**2) - 1)) - sigma**2)
         exp = np.exp(mu - sigma**2)
 
