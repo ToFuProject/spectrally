@@ -117,6 +117,8 @@ class SpectralFit(Previous):
     def compute_spectral_fit(
         self,
         key=None,
+        # binning
+        binning=None,
         # solver options
         solver=None,
         dsolver_options=None,
@@ -131,6 +133,8 @@ class SpectralFit(Previous):
         return _compute_fit.main(
             coll=self,
             key=key,
+            # binning
+            binning=None,
             # solver options
             solver=solver,
             dsolver_options=dsolver_options,

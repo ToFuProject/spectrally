@@ -38,6 +38,8 @@ def main(
     data=None,
     axis=None,
     ravel=None,
+    # binning
+    binning=None,
     # options
     chain=None,
     dscales=None,
@@ -146,7 +148,26 @@ def main(
     dfunc = coll.get_spectral_fit_func(
         key=key_model,
         func=['cost', 'jac'],
+        binning=binning,
     )
+
+    # -----------------
+    # optionnal binning
+    # -----------------
+
+    if binning is not False:
+        lambd = lamb[1] - lamb[0]
+
+        lamb_edges = np.r_[
+            lamb[0] - lambd,
+            0.5*(lamb[1:] + lamb[:-1]),
+        ]
+
+        lamb_inc = np.linspace(0, 1, binning+2)[1:-1] * lambd
+        lamb = (lamb_edges[:, None] + lamb_inc[None, :]).ravel()
+
+        # safety check
+        assert lamb.size = coll.ddata[key_lamb]['data'].size * binning
 
     # ------------
     # Main loop
@@ -381,6 +402,7 @@ def _loop(
                     'lamb': lamb,
                     # 'const': const[ii, :],
                     'iok': iok_all[slii],
+                    'binning': binnning,
                 },
                 **dsolver_options,
             )

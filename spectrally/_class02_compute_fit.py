@@ -35,6 +35,8 @@ from . import _class02_compute_fit_1d as _compute_fit_1d
 def main(
     coll=None,
     key=None,
+    # binning
+    binning=None,
     # solver options
     solver=None,
     dsolver_options=None,
@@ -59,11 +61,14 @@ def main(
         key_data, key_lamb,
         ref_data, ref_lamb,
         lamb, data, axis,
+        binning,
         store,
         strict, verb, timing,
     ) = _check(
         coll=coll,
         key=key,
+        # binning
+        binning=binning,
         # storing
         store=store,
         # options
@@ -113,6 +118,8 @@ def main(
         data=data,
         axis=axis,
         ravel=ravel,
+        # binning
+        binning=binning,
         # options
         chain=None,
         dscales=None,
@@ -175,6 +182,8 @@ def main(
 def _check(
     coll=None,
     key=None,
+    # binning
+    binning=None,
     # storing
     store=None,
     # options
@@ -220,6 +229,16 @@ def _check(
     ref_data = coll.ddata[key_data]['ref']
     ref_lamb = coll.ddata[key_lamb]['ref']
     axis = ref_data.index(ref_lamb[0])
+
+    # --------------
+    # binning
+    # --------------
+
+    binning = ds._generic_check._check_var(
+        binning, 'binning',
+        types=bool,
+        default=False,
+    )
 
     # --------------
     # store
@@ -270,6 +289,7 @@ def _check(
         key_data, key_lamb,
         ref_data, ref_lamb,
         lamb, data, axis,
+        binning,
         store,
         strict, verb, timing,
     )
