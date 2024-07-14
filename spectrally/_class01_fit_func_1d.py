@@ -24,6 +24,8 @@ def _get_func_details(
     c2=None,
     dind=None,
     param_val=None,
+    # binning
+    binning=None,
 ):
 
     # --------------
@@ -40,6 +42,8 @@ def _get_func_details(
         dind=dind,
         scales=None,
         iok=None,
+        # binning
+        binning=binning,
     ):
 
         # ---------------------
@@ -259,6 +263,12 @@ def _get_func_details(
                     * np.exp(-(np.log(dlamb) - mu[ii])**2 / (2.*sigma[ii]**2))
                 )
 
+        # -------
+        # binning
+
+        if binning is not False:
+            val = np.add.reduceat(val, binning, axis=1)
+
         return val
 
     return func
@@ -276,6 +286,7 @@ def _get_func_sum(
     c2=None,
     dind=None,
     param_val=None,
+    binning=None,
 ):
 
     # --------------
@@ -288,6 +299,7 @@ def _get_func_sum(
         c2=c2,
         dind=dind,
         param_val=param_val,
+        binning=binning,
     )
 
     # --------------
@@ -322,6 +334,8 @@ def _get_func_cost(
     c2=None,
     dind=None,
     param_val=None,
+    # binning
+    binning=None,
 ):
 
     # --------------
@@ -334,6 +348,7 @@ def _get_func_cost(
         c2=c2,
         dind=dind,
         param_val=param_val,
+        binning=binning,
     )
 
     # ------------
@@ -372,6 +387,8 @@ def _get_func_jacob(
     dindj=None,
     dind=None,
     param_val=None,
+    # binning
+    binning=None,
 ):
 
     # --------------
@@ -390,6 +407,8 @@ def _get_func_jacob(
         # scales, iok
         scales=None,
         iok=None,
+        # binning
+        binning=binning,
         # unused
         **kwdargs,
     ):
@@ -810,138 +829,11 @@ def _get_func_jacob(
                 #     * np.exp(-(np.log(dlamb) - mu[ii])**2 / (2.*sigma[ii]**2))
                 # )
 
-        # ----------- TO BE FINISHED ------------
+        # -------
+        # binning
 
-
-
-
-
-
-
-# =============================================================================
-#         # --------------------
-#         # sum all pseudo-voigt
-#
-#         kfunc = 'pvoigt'
-#         if dind.get(kfunc) is not None:
-#
-#             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-#             sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
-#             gam = x_full[dind[kfunc]['gam']['ind']][:, None]
-#             vccos = x_full[dind[kfunc]['vccos']['ind']][:, None]
-#             lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
-#
-#             # https://en.wikipedia.org/wiki/Voigt_profile
-#
-#             fg = 2 * np.sqrt(2*np.log(2)) * sigma
-#             fl = 2 * gam
-#             ftot = (
-#                 fg**5 + 2.69269*fg**4*fl + 2.42843*fg**3*fl**2
-#                 + 4.47163*fg**2*fl**3 + 0.07842*fg*fl**4 + fl**5
-#             ) ** (1./5.)
-#             ratio = fl / ftot
-#
-#             # eta
-#             eta = 1.36603 * ratio - 0.47719 * ratio**2 + 0.11116 * ratio**3
-#
-#             # update widths of gauss and Lorentz
-#             sigma = ftot / (2 * np.sqrt(2*np.log(2)))
-#             gam = ftot / 2.
-#
-#             # weighted sum
-#             ind = dind['func'][kfunc]['ind']
-#             val[ind, ...] = amp * (
-#                 eta / (1 + ((lamb - lamb0*(1 + vccos)) / gam)**2)
-#                 + (1-eta) * np.exp(-(lamb - lamb0*(1 + vccos))**2/(2*sigma**2))
-#             )
-#
-#         # ------------
-#
-#         kfunc = 'voigt'
-#         if dind.get(kfunc) is not None:
-#
-#             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-#             sigma = x_full[dind[kfunc]['sigma']['ind']][:, None]
-#             gam = x_full[dind[kfunc]['gam']['ind']][:, None]
-#             vccos = x_full[dind[kfunc]['vccos']['ind']][:, None]
-#             lamb0 = param_val[dind[kfunc]['lamb0']][:, None]
-#
-#             ind = dind['func'][kfunc]['ind']
-#             val[ind, ...] = amp * scpsp.voigt_profile(
-#                 lamb - lamb0*(1 + vccos),
-#                 sigma,
-#                 gam,
-#             )
-#
-#         # ------------------
-#         # sum all pulse1
-#
-#         kfunc = 'pulse1'
-#         if dind.get(kfunc) is not None:
-#
-#             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-#             t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
-#             tup = x_full[dind[kfunc]['t_up']['ind']][:, None]
-#             tdown = x_full[dind[kfunc]['t_down']['ind']][:, None]
-#
-#             ind0 = lamb > t0
-#
-#             ind = dind['func'][kfunc]['ind']
-#             val[ind, ...] = (
-#                 amp * ind0 * (
-#                     np.exp(-(lamb - t0)/tdown) - np.exp(-(lamb - t0)/tup)
-#                 )
-#             )
-#
-#         # ------------------
-#         # sum all pulse2
-#
-#         kfunc = 'pulse2'
-#         if dind.get(kfunc) is not None:
-#
-#             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
-#             t0 = x_full[dind[kfunc]['t0']['ind']][:, None]
-#             tup = x_full[dind[kfunc]['t_up']['ind']][:, None]
-#             tdown = x_full[dind[kfunc]['t_down']['ind']][:, None]
-#
-#             indup = (lamb < t0)
-#             inddown = (lamb >= t0)
-#
-#             ind = dind['func'][kfunc]['ind']
-#             val[ind, ...] = (
-#                 amp * (
-#                     indup * np.exp(-(lamb - t0)**2/tup**2)
-#                     + inddown * np.exp(-(lamb - t0)**2/tdown**2)
-#                 )
-#             )
-#
-#         # ------------------
-#         # sum all lognorm
-#
-#         kfunc = 'lognorm'
-#         if dind.get(kfunc) is not None:
-#
-#             amp = x_full[dind[kfunc]['amp']['ind']]
-#             t0 = x_full[dind[kfunc]['t0']['ind']]
-#             sigma = x_full[dind[kfunc]['sigma']['ind']]
-#             mu = x_full[dind[kfunc]['mu']['ind']]
-#
-#             # max at t - t0 = exp(mu - sigma**2)
-#             # max = amp * exp(sigma**2/2 - mu)
-#             # variance = (exp(sigma**2) - 1) * exp(2mu + sigma**2)
-#             # skewness = (exp(sigma**2) + 2) * sqrt(exp(sigma**2) - 1)
-#
-#             ind = dind['func'][kfunc]['ind']
-#             for ii, i0 in enumerate(ind):
-#                 iok = lamb > t0[ii]
-#                 val[i0, iok] = (
-#                     (amp[ii] / (lamb[iok] - t0[ii]))
-#                     * np.exp(
-#                         -(np.log(lamb[iok] - t0[ii]) - mu[ii])**2
-#                         / (2.*sigma[ii]**2)
-#                     )
-#                 )
-# =============================================================================
+        if binning is not False:
+            val = np.add.reduceat(val, binning, axis=0)
 
         return val
 
