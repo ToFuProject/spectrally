@@ -93,24 +93,6 @@ class SpectralFit(Previous):
         return
 
     # -------------------
-    # get func details, cost, jac
-    # -------------------
-
-    def get_spectral_fit_func(
-        self,
-        key=None,
-        func=None,
-    ):
-        """ Return the fitting functions for a given model
-        """
-
-        return _fit_func.main(
-            coll=self,
-            key=key,
-            func=func,
-        )
-
-    # -------------------
     # compute spectral fit
     # -------------------
 
