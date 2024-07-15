@@ -375,6 +375,7 @@ def _loop(
                 dind=dind,
                 dx0=dx0,
                 scales=scales,
+                binning=binning,
             )
 
         # ------
