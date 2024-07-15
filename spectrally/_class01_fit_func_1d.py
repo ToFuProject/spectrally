@@ -11,7 +11,6 @@ import numpy as np
 import scipy.special as scpsp
 
 
-
 # ############################################
 # ############################################
 #       details
@@ -167,7 +166,10 @@ def _get_func_details(
             ind = dind['func'][kfunc]['ind']
             val[ind, ...] = amp * (
                 eta / (1 + ((lamb - lamb0*(1 + vccos)) / gam2)**2)
-                + (1-eta) * np.exp(-(lamb - lamb0*(1 + vccos))**2/(2*sigma2**2))
+                + (1-eta) * np.exp(
+                    -(lamb - lamb0*(1 + vccos))**2
+                    / (2*sigma2**2)
+                )
             )
 
         # ------------
@@ -841,56 +843,5 @@ def _get_func_jacob(
             val = np.add.reduceat(val, binning, axis=0)
 
         return val
-
-    return func
-
-
-
-# ################################################
-# ################################################
-# ################################################
-# ################################################
-# ################################################
-#               Back up
-# ################################################
-
-
-def _get_func_cost_1d_old():
-
-    def func(
-        x,
-        xscale=xscale,
-    ):
-
-        if indok is None:
-            indok = np.ones(lambrel.shape, dtype=bool)
-
-        # xscale = x*scales   !!! scales ??? !!! TBC
-        xscale[indx] = x*scales[indx]
-        xscale[~indx] = const
-
-        # make sure iwl is 2D to get all lines at once
-        amp = xscale[ial] * coefsal + offsetal
-        inv_2wi2 = 1./(2.*(xscale[iwl] * coefswl + offsetwl))
-        shift = xscale[ishl] * coefssl + offsetsl
-
-        # ----------
-        # sum
-
-        y = (
-            np.nansum(
-                amp * np.exp(-(lambnorm[indok, :]-(1 + shift))**2 * inv_2wi2),
-                axis=1,
-            )
-            + xscale[ibckax] * np.exp(xscale[ibckrx] * lambrel[indok])
-        )
-
-        # ----------
-        # return
-
-        return y - data[iok]
-
-    # -----------
-    # return func
 
     return func
