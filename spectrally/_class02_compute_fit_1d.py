@@ -165,6 +165,7 @@ def main(
         nlamb = lamb.size
         lamb_inc = np.linspace(0, 1, binning+2)[1:-1] * lambd
         lamb = (lamb_edges[:, None] + lamb_inc[None, :]).ravel()
+        iok_all = np.repeat(iok_all, binning, axis=axis)
 
         # safety check
         assert lamb.size == coll.ddata[key_lamb]['data'].size * binning
