@@ -166,6 +166,7 @@ def main(
             # flags
             axis=axis,
             ravel=ravel,
+            binning=binning,
             # dout
             dout=dout,
         )
@@ -236,9 +237,17 @@ def _check(
 
     binning = ds._generic_check._check_var(
         binning, 'binning',
-        types=bool,
+        types=(bool, int),
         default=False,
     )
+
+    # safety check
+    if (binning is not False) and binning <= 0:
+        msg = (
+            "Arg 'binning' must be a > 0 int\n"
+            f"Provided: {binning}"
+        )
+        raise Exception(msg)
 
     # --------------
     # store
@@ -383,6 +392,7 @@ def _store(
     # flags
     axis=None,
     ravel=None,
+    binning=None,
     # dout
     dout=None,
 ):
@@ -442,6 +452,7 @@ def _store(
         'bounds0': dout['bounds0'],
         'bounds1': dout['bounds1'],
         'x0': dout['x0'],
+        'binning': binning,
     }
 
     # solver output

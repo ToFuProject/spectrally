@@ -148,7 +148,6 @@ def main(
     dfunc = coll.get_spectral_fit_func(
         key=key_model,
         func=['cost', 'jac'],
-        binning=binning,
     )
 
     # -----------------
@@ -163,11 +162,14 @@ def main(
             0.5*(lamb[1:] + lamb[:-1]),
         ]
 
+        nlamb = lamb.size
         lamb_inc = np.linspace(0, 1, binning+2)[1:-1] * lambd
         lamb = (lamb_edges[:, None] + lamb_inc[None, :]).ravel()
 
         # safety check
-        assert lamb.size = coll.ddata[key_lamb]['data'].size * binning
+        assert lamb.size == coll.ddata[key_lamb]['data'].size * binning
+
+        binning = np.arange(0, nlamb, binning)
 
     # ------------
     # Main loop
@@ -191,6 +193,7 @@ def main(
         dx0=dx0,
         # options
         chain=chain,
+        binning=binning,
         # func
         func_cost=dfunc['cost'],
         func_jac=dfunc['jac'],
@@ -272,6 +275,7 @@ def _loop(
     dx0=None,
     # options
     chain=None,
+    binning=None,
     # func
     func_cost=None,
     func_jac=None,
@@ -402,7 +406,7 @@ def _loop(
                     'lamb': lamb,
                     # 'const': const[ii, :],
                     'iok': iok_all[slii],
-                    'binning': binnning,
+                    'binning': binning,
                 },
                 **dsolver_options,
             )
@@ -435,7 +439,11 @@ def _loop(
 
             message.append('')
             msg = str(err)
-            if 'is infeasible' in msg:
+            lerr = [
+                'is infeasible',
+                'Each lower bound must be strictly less than',
+            ]
+            if any([ee in msg for ee in lerr]):
                 msg += _add_err_bounds(
                     key=key,
                     lk_xfree=lk_xfree,
@@ -479,7 +487,7 @@ def _loop(
 
 #############################################
 #############################################
-#       Utilities
+#       Errors
 #############################################
 
 
@@ -496,7 +504,9 @@ def _add_err_bounds(
     # is_out
     # -------------
 
-    is_out = np.nonzero((x0 < bounds0) | (x0 > bounds1))[0]
+    is_out = np.nonzero(
+        (x0 < bounds0) | (x0 > bounds1) | (bounds0 > bounds1)
+    )[0]
 
     # -------------
     # dout, din
@@ -510,15 +520,6 @@ def _add_err_bounds(
             'bounds1': f"{bounds1[ii]:.3e}",
         }
         for ii, k0 in enumerate(lk_xfree) if ii in is_out
-    }
-    din = {
-        k0: {
-            'scale': f"{scales[ii]:.3e}",
-            'x0': f"{x0[ii]:.3e}",
-            'bounds0': f"{bounds0[ii]:.3e}",
-            'bounds1': f"{bounds1[ii]:.3e}",
-        }
-        for ii, k0 in enumerate(lk_xfree) if ii not in is_out
     }
 
     # -------------
