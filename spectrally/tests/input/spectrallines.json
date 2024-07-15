@@ -1,0 +1,114 @@
+{
+    "l00": {
+        "ion": "Ar15+",
+        "lamb0": 3.96731e-10,
+        "source": "file",
+        "symbol": "pec40ic-5",
+        "transition": "36(2)1(1.5)-1(2)0(0.5)",
+        "type": "excit"
+    },
+    "l01": {
+        "ion": "Ar15+",
+        "lamb0": 3.9912200000000003e-10,
+        "source": "file",
+        "symbol": "pec40ca-6",
+        "transition": "19(0)0(11.5)-1(0)0(0.5)",
+        "type": "excit"
+    },
+    "l02": {
+        "ion": "Ar15+",
+        "lamb0": 3.9912200000000003e-10,
+        "source": "file",
+        "symbol": "pec40cl-6",
+        "transition": "19(0)0(11.5)-1(0)0(0.5)",
+        "type": "excit"
+    },
+    "l03": {
+        "ion": "Ar15+",
+        "lamb0": 3.96832e-10,
+        "source": "file",
+        "symbol": "pec40ic-6",
+        "transition": "35(2)1(0.5)-1(2)0(0.5)",
+        "type": "excit"
+    },
+    "l04": {
+        "ion": "Ar15+",
+        "lamb0": 3.98011e-10,
+        "source": "file",
+        "symbol": "pec40ic-7",
+        "transition": "34(2)1(1.5)-1(2)0(0.5)",
+        "type": "excit"
+    },
+    "l05": {
+        "ion": "Ar15+",
+        "lamb0": 3.97233e-10,
+        "source": "file",
+        "symbol": "pec40ls-7",
+        "transition": "21(2)1(2.5)-1(2)0(0.5)",
+        "type": "excit"
+    },
+    "l06": {
+        "ion": "Ar15+",
+        "lamb0": 3.9822500000000004e-10,
+        "source": "file",
+        "symbol": "pec40ic-8",
+        "transition": "33(2)1(0.5)-1(2)0(0.5)",
+        "type": "excit"
+    },
+    "l07": {
+        "ion": "Ar15+",
+        "lamb0": 3.97612e-10,
+        "source": "file",
+        "symbol": "pec40ls-8",
+        "transition": "20(2)1(2.5)-1(2)0(0.5)",
+        "type": "excit"
+    },
+    "l08": {
+        "ion": "Ar16+",
+        "lamb0": 3.94817e-10,
+        "source": "file",
+        "symbol": "pec40ic-6",
+        "transition": "7(1)1(1.0)-1(1)0(0.0)",
+        "type": "excit"
+    },
+    "l09": {
+        "ion": "Ar16+",
+        "lamb0": 3.94817e-10,
+        "source": "file",
+        "symbol": "pec40ls-6",
+        "transition": "5(1)1(1.0)-1(1)0(0.0)",
+        "type": "excit"
+    },
+    "l10": {
+        "ion": "Ar16+",
+        "lamb0": 3.96626e-10,
+        "source": "file",
+        "symbol": "pec40ic-7",
+        "transition": "5(3)1(1.0)-1(1)0(0.0)",
+        "type": "excit"
+    },
+    "l11": {
+        "ion": "Ar16+",
+        "lamb0": 3.96445e-10,
+        "source": "file",
+        "symbol": "pec40ls-7",
+        "transition": "4(3)1(4.0)-1(1)0(0.0)",
+        "type": "excit"
+    },
+    "l12": {
+        "ion": "Ar16+",
+        "lamb0": 3.9604200000000003e-10,
+        "source": "file",
+        "symbol": "pec40ca-9",
+        "transition": "3(0)0(5.5)-1(0)0(0.0)",
+        "type": "excit"
+    },
+    "l13": {
+        "ion": "Ar16+",
+        "lamb0": 3.9604200000000003e-10,
+        "source": "file",
+        "symbol": "pec40cl-9",
+        "transition": "3(0)0(5.5)-1(0)0(0.0)",
+        "type": "excit"
+    }
+}
