@@ -122,6 +122,7 @@ setup(
         "scipy",
         "matplotlib",
         "pandas",
+        "datastock>=0.0.39",
         "bsplines2d>=0.0.15",
     ],
     python_requires=">=3.6",
