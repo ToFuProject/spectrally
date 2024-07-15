@@ -24,8 +24,9 @@ def main(
     key_model=None,
     key_data=None,
     lamb=None,
-    # others
+    # options
     details=None,
+    binning=None,
     # others
     returnas=None,
     store=None,
@@ -40,7 +41,7 @@ def main(
         key_model, ref_nx, ref_nf,
         key_data,
         key_lamb, lamb, ref_lamb,
-        details,
+        details, binning,
         returnas, store, store_key,
     ) = _check(
         coll=coll,
@@ -49,6 +50,7 @@ def main(
         lamb=lamb,
         # others
         details=details,
+        binning=binning,
         # others
         returnas=returnas,
         store=store,
@@ -163,6 +165,7 @@ def main(
         data_out = func(
             x_free=data_in,
             lamb=lamb,
+            binning=binning,
         )
 
     else:
@@ -177,6 +180,7 @@ def main(
             data_out[tuple(sli_out)] = func(
                 x_free=data_in[tuple(sli_in)],
                 lamb=lamb,
+                binning=binning,
             )
 
     # --------------
@@ -224,6 +228,7 @@ def _check(
     lamb=None,
     # others
     details=None,
+    binning=None,
     # others
     returnas=None,
     store=None,
@@ -293,6 +298,24 @@ def _check(
     else:
         _err_lamb(lamb)
 
+    # --------------
+    # binning
+    # --------------
+
+    binning = ds._generic_check._check_var(
+        binning, 'binning',
+        types=(bool, int),
+        default=False,
+    )
+
+    # safety check
+    if (binning is not False) and binning <= 0:
+        msg = (
+            "Arg 'binning' must be a > 0 int\n"
+            f"Provided: {binning}"
+        )
+        raise Exception(msg)
+
     # -----------------
     # details
     # -----------------
@@ -345,7 +368,7 @@ def _check(
         key_model, ref_nx, ref_nf,
         key_data,
         key_lamb, lamb, ref_lamb,
-        details,
+        details, binning,
         returnas, store, store_key,
     )
 
