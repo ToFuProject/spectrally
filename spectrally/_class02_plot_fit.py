@@ -47,7 +47,7 @@ def main(
 
     (
         key_model, key_sol, key_data, key_lamb,
-        details, connect,
+        details, binning, connect,
     ) = _check(
         coll=coll,
         key=key,
@@ -189,6 +189,8 @@ def _check(
     key_data = coll.dobj[wsf][key]['key_data']
     key_lamb = coll.dobj[wsf][key]['key_lamb']
 
+    binning = coll.dobj[wsf][key]['dinternal']['binning']
+
     # -------------
     # details
     # -------------
@@ -211,7 +213,7 @@ def _check(
 
     return (
         key_model, key_sol, key_data, key_lamb,
-        details, connect,
+        details, binning, connect,
     )
 
 
