@@ -248,8 +248,6 @@ class SpectralModel(Previous):
         self,
         key=None,
         func=None,
-        # binning
-        binning=None,
     ):
         """ Return the fitting functions for a given model
         """
@@ -258,8 +256,6 @@ class SpectralModel(Previous):
             coll=self,
             key=key,
             func=func,
-            # binning
-            binning=binning,
         )
 
     # ----------------------------

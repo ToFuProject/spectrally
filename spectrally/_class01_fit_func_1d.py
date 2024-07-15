@@ -24,8 +24,6 @@ def _get_func_details(
     c2=None,
     dind=None,
     param_val=None,
-    # binning
-    binning=None,
 ):
 
     # --------------
@@ -43,7 +41,7 @@ def _get_func_details(
         scales=None,
         iok=None,
         # binning
-        binning=binning,
+        binning=None,
     ):
 
         # ---------------------
@@ -286,7 +284,6 @@ def _get_func_sum(
     c2=None,
     dind=None,
     param_val=None,
-    binning=None,
 ):
 
     # --------------
@@ -299,7 +296,6 @@ def _get_func_sum(
         c2=c2,
         dind=dind,
         param_val=param_val,
-        binning=binning,
     )
 
     # --------------
@@ -312,10 +308,17 @@ def _get_func_sum(
         # scales, iok
         scales=None,
         iok=None,
+        binning=None,
     ):
 
         return np.sum(
-            func_details(x_free, lamb=lamb, scales=scales, iok=iok),
+            func_details(
+                x_free,
+                lamb=lamb,
+                scales=scales,
+                iok=iok,
+                binning=binning,
+            ),
             axis=0,
         )
 
@@ -334,8 +337,6 @@ def _get_func_cost(
     c2=None,
     dind=None,
     param_val=None,
-    # binning
-    binning=None,
 ):
 
     # --------------
@@ -348,7 +349,6 @@ def _get_func_cost(
         c2=c2,
         dind=dind,
         param_val=param_val,
-        binning=binning,
     )
 
     # ------------
@@ -361,6 +361,7 @@ def _get_func_cost(
         # scales, iok
         scales=None,
         iok=None,
+        binning=None,
         # data
         data=None,
         # sum
@@ -369,7 +370,13 @@ def _get_func_cost(
         if iok is not None:
             data = data[iok]
 
-        return func_sum(x_free, lamb=lamb, scales=scales, iok=iok) - data
+        return func_sum(
+            x_free,
+            lamb=lamb,
+            scales=scales,
+            iok=iok,
+            binning=binning,
+        ) - data
 
     return func
 
@@ -387,8 +394,6 @@ def _get_func_jacob(
     dindj=None,
     dind=None,
     param_val=None,
-    # binning
-    binning=None,
 ):
 
     # --------------
@@ -408,7 +413,7 @@ def _get_func_jacob(
         scales=None,
         iok=None,
         # binning
-        binning=binning,
+        binning=None,
         # unused
         **kwdargs,
     ):
@@ -838,10 +843,6 @@ def _get_func_jacob(
         return val
 
     return func
-
-
-
-
 
 
 

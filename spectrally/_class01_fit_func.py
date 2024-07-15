@@ -41,20 +41,16 @@ def main(
     coll=None,
     key=None,
     func=None,
-    # binning
-    binning=None,
 ):
 
     # ----------------
     # check inputs
     # ----------------
 
-    key, key_bs, key_model, func, binning = _check(
+    key, key_bs, key_model, func = _check(
         coll=coll,
         key=key,
         func=func,
-        # binning
-        binning=binning,
     )
 
     # ----------------
@@ -114,7 +110,6 @@ def main(
                 c2=c2,
                 dind=dind,
                 param_val=param_val,
-                binning=binning,
             )
             for k0 in func
         }
@@ -145,8 +140,6 @@ def _check(
     coll=None,
     key=None,
     func=None,
-    # binning
-    binning=None,
 ):
 
     # -------------
@@ -198,24 +191,4 @@ def _check(
         allowed=lok,
     )
 
-    # -------------
-    # binning
-    # -------------
-
-    binning = ds._generic_check._check_var(
-        binning, 'binning',
-        types=(bool, int),
-        default=False,
-    )
-
-    if binning is True:
-        binning = 10
-
-    if isinstance(binning, int) and binning <= 0:
-        msg = (
-            "Arg binning must be a strictly positive integer (default = 10):\n"
-            f"Provided: {binning}"
-        )
-        raise Exception(msg)
-
-    return key, key_bs, key_model, func, binning
+    return key, key_bs, key_model, func
