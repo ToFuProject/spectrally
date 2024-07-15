@@ -116,7 +116,7 @@ class SpectralFit(Previous):
             coll=self,
             key=key,
             # binning
-            binning=None,
+            binning=binning,
             # solver options
             solver=solver,
             dsolver_options=dsolver_options,
