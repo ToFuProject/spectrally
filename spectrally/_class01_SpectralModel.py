@@ -152,6 +152,7 @@ class SpectralModel(Previous):
         lamb=None,
         # options
         details=None,
+        binning=None,
         # others
         returnas=None,
         store=None,
@@ -184,6 +185,7 @@ class SpectralModel(Previous):
             lamb=lamb,
             # options
             details=details,
+            binning=binning,
             # others
             returnas=returnas,
             store=store,
