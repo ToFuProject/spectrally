@@ -93,7 +93,7 @@ def add_data(coll=None):
 
     coll.add_data(
         key='data_linear',
-        data=np.random.poisson( a1 * lamb + a0 ),
+        data=np.random.poisson(a1 * lamb + a0),
         ref='nlamb',
         units='counts',
     )
@@ -107,7 +107,7 @@ def add_data(coll=None):
 
     coll.add_data(
         key='data_exp',
-        data=np.random.poisson( amp * np.exp(-rate/lamb) / lamb ),
+        data=np.random.poisson(amp * np.exp(-rate/lamb) / lamb),
         ref='nlamb',
         units='counts',
     )
@@ -161,7 +161,10 @@ def add_data(coll=None):
         data=np.random.poisson(
             amp * (
                 eta / (1 + ((lamb - lamb0[1]*(1 + vccos)) / gam)**2)
-                + (1-eta) * np.exp(-(lamb - lamb0[1]*(1 + vccos))**2/(2*sigma**2))
+                + (1-eta) * np.exp(
+                    -(lamb - lamb0[1]*(1 + vccos))**2
+                    / (2*sigma**2)
+                )
             )
         ),
         ref='nlamb',
@@ -179,7 +182,9 @@ def add_data(coll=None):
     coll.add_data(
         key='data_pulse1',
         data=np.random.poisson(
-            amp * (lamb>=t0) * (np.exp(-(lamb-t0)/tdown) - np.exp(-(lamb-t0)/tup))
+            amp * (lamb >= t0) * (
+                np.exp(-(lamb-t0)/tdown) - np.exp(-(lamb-t0)/tup)
+            )
         ),
         ref='nlamb',
         units='counts',
@@ -231,7 +236,6 @@ def add_data(coll=None):
         units='counts',
     )
 
-
     # ------------------
     # data 1d
     # ------------------
@@ -254,10 +258,10 @@ def add_data(coll=None):
                 amp[ii] * np.exp(-(lamb-lamb0[ii])**2 / (2*width[ii]**2))
                 for ii in range(len(lamb0))
             ],
-        axis=0,
+            axis=0,
         ),
         size=nlamb,
-    ).astype(float) # + amp0 * 0.10 * np.random.random((nlamb,))
+    ).astype(float)     # + amp0 * 0.10 * np.random.random((nlamb,))
 
     # store
     coll.add_data(
@@ -288,10 +292,10 @@ def add_data(coll=None):
                 )
                 for ii in range(len(lamb0))
             ],
-        axis=0,
+            axis=0,
         ),
         size=(nt, nlamb),
-    ).astype(float) # + amp0 * 0.10 * np.random.random((nlamb,))
+    ).astype(float)     # + amp0 * 0.10 * np.random.random((nlamb,))
 
     # store
     coll.add_data(
@@ -383,9 +387,21 @@ def add_models(coll=None, models=None):
         },
         'sm01': {
             'bck0': 'exp_lamb',
-            'l00': {'type': 'gauss', 'lamb0': 3.92e-10, 'mz': 39.948*scpct.m_u},
-            'l01': {'type': 'lorentz', 'lamb0': 3.95e-10, 'mz': 39.948*scpct.m_u},
-            'l02': {'type': 'voigt', 'lamb0': 3.97e-10, 'mz': 39.948*scpct.m_u},
+            'l00': {
+                'type': 'gauss',
+                'lamb0': 3.92e-10,
+                'mz': 39.948*scpct.m_u,
+            },
+            'l01': {
+                'type': 'lorentz',
+                'lamb0': 3.95e-10,
+                'mz': 39.948*scpct.m_u,
+            },
+            'l02': {
+                'type': 'voigt',
+                'lamb0': 3.97e-10,
+                'mz': 39.948*scpct.m_u,
+            },
         },
         'sm02': {
             'bck0': 'exp_lamb',
@@ -412,7 +428,6 @@ def add_models(coll=None, models=None):
             'g01': {'ref': 'l00_sigma', 'l01_gam': [0, 1, 0]},
         },
     }
-
 
     if models is None:
         models = sorted(dmodel.keys())
@@ -476,7 +491,7 @@ def get_spectral_model_func(coll=None):
     wsm = coll._which_model
     for kmodel in coll.dobj[wsm].keys():
 
-        for ff in ['sum', 'cost']: # , 'details', 'jac']:
+        for ff in ['sum', 'cost']:  # , 'details', 'jac']:
 
             try:
                 _ = coll.get_spectral_fit_func(
@@ -579,7 +594,6 @@ def interpolate_spectral_model(coll=None):
 
 def _get_dxfree(t=None, lamb=None):
 
-    lambm = np.mean(lamb)
     lambD = lamb[-1] - lamb[0]
     tm = np.mean(t)
 
@@ -628,8 +642,8 @@ def _get_dxfree(t=None, lamb=None):
         'smlorentz': np.r_[0.9, -0.006, 0.003e-10],
         'smpvoigt': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
         'smvoigt': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
-        'smpulse1': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10,],
-        'smpulse2': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10,],
+        'smpulse1': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
+        'smpulse2': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
         'smlognorm': np.r_[amp, t0, mu, sigma],
 
         # testing complex models
@@ -660,7 +674,6 @@ def _get_dxfree(t=None, lamb=None):
         ],
     }
     return dxfree
-
 
 
 # ###################################################
@@ -794,7 +807,6 @@ def add_fit_multi(coll=None):
     return
 
 
-
 # ###################################################
 # ###################################################
 #           plot spectral fit input validity
@@ -807,7 +819,10 @@ def plot_input_validity(coll=None, key_data=None):
     # check
 
     add_models(coll)
-    add_fit(coll, key_data=key_data)
+
+    wsm = coll._which_model
+    for k0 in coll.dobj[wsm].keys():
+        add_fit(coll, key_model=k0, key_data=key_data)
 
     # ---------------
     # select data
@@ -836,18 +851,13 @@ def plot_input_validity(coll=None, key_data=None):
 
 def compute_fit(coll=None, key_data=None, binning=None):
 
-    # --------------------
-    # add models if needed
-    # --------------------
-
-    add_models(coll)
-
     # ---------------
     # select data
     # ---------------
 
+    wsf = coll._which_fit
     lk = [
-        k0 for k0, v0 in coll.dobj['spect_fit'].items()
+        k0 for k0, v0 in coll.dobj[wsf].items()
         if v0['key_data'] == key_data
     ]
 
@@ -875,6 +885,12 @@ def compute_fit_single(coll=None, binning=None):
 
     add_models(coll)
 
+    # ---------------
+    # add fits if needed
+    # ---------------
+
+    add_fit_single(coll)
+
     # --------------------
     # compute
     # --------------------
@@ -887,5 +903,28 @@ def compute_fit_single(coll=None, binning=None):
 
     for key_data in lk:
         compute_fit(coll, key_data=key_data, binning=binning)
+
+    return
+
+
+def compute_fit_multi(coll=None, key_data=None, binning=None):
+
+    # --------------------
+    # add models if needed
+    # --------------------
+
+    add_models(coll)
+
+    # ---------------
+    # add fits if needed
+    # ---------------
+
+    add_fit_multi(coll)
+
+    # --------------------
+    # compute
+    # --------------------
+
+    compute_fit(coll, key_data=key_data, binning=binning)
 
     return
