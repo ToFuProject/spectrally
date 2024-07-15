@@ -92,7 +92,11 @@ class Test00_Populate():
         # compute 1d
         _inputs.compute_fit_single(self.coll)
 
-    def test05_compute_spectral_fit_1d_multi(self):
+    # def test05_compute_spectral_fit_1d_singlei_binning(self):
+        # # compute 1d
+        # _inputs.compute_fit_single(self.coll, binning=10)
+
+    def test06_compute_spectral_fit_1d_multi(self):
         # compute 1d
         _inputs.compute_fit(self.coll, key_data='data1d')
 

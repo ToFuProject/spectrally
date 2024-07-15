@@ -834,7 +834,7 @@ def plot_input_validity(coll=None, key_data=None):
 # ###################################################
 
 
-def compute_fit(coll=None, key_data=None):
+def compute_fit(coll=None, key_data=None, binning=None):
 
     # --------------------
     # add models if needed
@@ -859,6 +859,7 @@ def compute_fit(coll=None, key_data=None):
         coll.compute_spectral_fit(
             key=k0,
             strict=True,
+            binning=binning,
             verb=None,
             timing=None,
         )
@@ -866,7 +867,7 @@ def compute_fit(coll=None, key_data=None):
     return
 
 
-def compute_fit_single(coll=None):
+def compute_fit_single(coll=None, binning=None):
 
     # --------------------
     # add models if needed
@@ -885,6 +886,6 @@ def compute_fit_single(coll=None):
     ]
 
     for key_data in lk:
-        compute_fit(coll, key_data=key_data)
+        compute_fit(coll, key_data=key_data, binning=binning)
 
     return
