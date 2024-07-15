@@ -9,7 +9,6 @@ Created on Sat Jul  6 17:31:49 2024
 import numpy as np
 
 
-
 #############################################
 #############################################
 #    DEFAULTS
@@ -109,9 +108,9 @@ def _get_dict(
         dout[ftype][var]['ind'].append(lx_free_keys.index(k0))
         dout[ftype][var]['val'].append(v0)
 
-     # --------------
-     # sort
-     # --------------
+    # --------------
+    # sort
+    # --------------
 
     lktypes = list(dout.items())
     for k0 in lktypes:
@@ -206,7 +205,6 @@ def _get_scales_bounds(
                 din, kfunc, kvar, val,
                 scales=None if ii == 0 else scales
             )
-
 
     # --------------------
     # all exponentials
@@ -536,6 +534,7 @@ def _get_scales_bounds(
         std_max = lambD
 
         mu = 0.5 * (np.log(std**2/(np.exp(sigma**2) - 1)) - sigma**2)
+        mu_abs = np.abs(mu)
         mu_min = 0.5 * (np.log(std_min**2/(np.exp(sigma**2) - 1)) - sigma**2)
         mu_max = 0.5 * (np.log(std_max**2/(np.exp(sigma**2) - 1)) - sigma**2)
 
@@ -555,9 +554,9 @@ def _get_scales_bounds(
         # mu
         kvar = 'mu'
         ind = dind['jac'][kfunc].get(kvar)
-        scales[ind] = mu
-        bounds0[ind] = mu_min / mu
-        bounds1[ind] = mu_max / mu
+        scales[ind] = mu_abs
+        bounds0[ind] = mu_min / mu_abs
+        bounds1[ind] = mu_max / mu_abs
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -585,7 +584,7 @@ def _get_scales_bounds(
 
         # t0
         # max at lamb - (lamb00 + lambD * t0) = exp(mu - sigma**2)
-        kvar ='t0'
+        kvar = 't0'
         ind = dind['jac'][kfunc].get('t0')
         scales[ind] = 1
         bounds0[ind] = 0
@@ -614,6 +613,7 @@ def _get_x0(
     dind=None,
     dx0=None,
     scales=None,
+    binning=None,
 ):
 
     # ------------------
@@ -630,8 +630,11 @@ def _get_x0(
     lambD = lamb[-1] - lamb[0]
     lambd = lamb[1] - lamb[0]
     lambm = np.mean(lamb)
-    lamb_amax = lamb[iok][np.argmax(data[iok])]
-    lamb_amin = lamb[iok][np.argmin(data[iok])]
+    if binning is False:
+        lamb_amax = lamb[iok][np.argmax(data[iok])]
+        lamb_amin = lamb[iok][np.argmin(data[iok])]
+    else:
+        raise NotImplementedError()
 
     data_max = np.nanmax(data[iok])
     data_min = np.nanmin(data[iok])
@@ -962,6 +965,7 @@ def _get_x0(
         # useful for guessing
         sigma = _DEF_X0[kfunc]['sigma']
         mu = 0.5 * (np.log((lambD / 10)**2/(np.exp(sigma**2) - 1)) - sigma**2)
+        mu_sign = np.sign(mu)
         exp = np.exp(mu - sigma**2)
 
         # sigma
@@ -978,7 +982,7 @@ def _get_x0(
         # mu
         kvar = 'mu'
         ind = dind['jac'][kfunc].get(kvar)
-        x0[ind] = 1
+        x0[ind] = mu_sign
 
         for ii, (din, val) in enumerate(ldins):
             _update_din_from_user(
@@ -988,7 +992,7 @@ def _get_x0(
 
         # t0
         # max at lamb - (lamb00 + lambD * t0) = exp(mu - sigma**2)
-        kvar ='t0'
+        kvar = 't0'
         ind = dind['jac'][kfunc].get('t0')
         x0[ind] = (lamb_ext - exp - lamb0) / lambD / scales[ind]
 
