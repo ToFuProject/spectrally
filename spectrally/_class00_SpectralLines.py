@@ -159,10 +159,24 @@ class SpectralLines(Previous):
         create_custom=None,
     ):
         """
-        Load and add lines and pec from openadas, either:
+        Load lines and pec from openadas, either:
             - online = True:  directly from the website
-            - online = False: from pre-downloaded files ~/.spectrally/openadas/
+            - online = False: from pre-downloaded files in ~/.spectrally/openadas/
+
+        Provide wavelengths in m
+
+        Example:
+        --------
+                >>> import spectrally as sp
+                >>> coll = sp.Collection()
+                >>> coll.add_spectral_lines_from_openadas(
+                    element='Mo',
+                    lambmin=3.94e-10,
+                    lambmax=4e-10,
+                )
+
         """
+
         ddata, dref, dobj = _compute.from_openadas(
             lambmin=lambmin,
             lambmax=lambmax,
@@ -206,10 +220,24 @@ class SpectralLines(Previous):
         create_custom=None,
     ):
         """
-        Load and add lines and pec from openadas, either:
-            - online = True:  directly from the website
-            - online = False: from pre-downloaded files in ~/.spectrally/nist/
+        Load lines from nist, either:
+            - cache_from = False:  directly from the website
+            - cache_from = True: from pre-downloaded files in ~/.spectrally/nist/
+
+        Provide wavelengths in m
+
+        Example:
+        --------
+                >>> import spectrally as sp
+                >>> coll = sp.Collection()
+                >>> sp.add_spectral_lines_from_nist(
+                    element='Mo',
+                    lambmin=3.94e-10,
+                    lambmax=4e-10,
+                )
+
         """
+
         dobj = _compute.from_nist(
             lambmin=lambmin,
             lambmax=lambmax,
