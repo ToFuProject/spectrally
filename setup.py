@@ -153,7 +153,7 @@ setup(
     #    'ITER': ['*.csv'],
     # },
     package_data={
-        'spectrally.tests.test_data': ['.npz'],
+        'spectrally.tests.input': ['.npz', '.npy', '.json', '.hist'],
     },
     include_package_data=True,
 
