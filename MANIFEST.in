@@ -4,4 +4,5 @@ include MANIFEST.in
 include LICENSE.txt
 include pyproject.toml
 include _updateversion.py
-recursive-include tofu/tests/input *
+recursive-include spectrally/tests/input *
+recursive-include spectrally/ *.csv

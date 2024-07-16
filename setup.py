@@ -154,6 +154,7 @@ setup(
     # },
     package_data={
         'spectrally.tests.input': ['.npz', '.npy', '.json', '.hist'],
+        'spectrally': ['.csv'],
     },
     include_package_data=True,
 
