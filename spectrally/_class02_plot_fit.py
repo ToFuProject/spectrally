@@ -446,7 +446,7 @@ def _plot_2d(
                     )
 
                     xydata = 'ydata'
-                    km = f'{lfunc[ii]}_{jj}'
+                    km = f'{kax}_{lfunc[ii]}_{jj}'
 
                     coll2.add_mobile(
                         key=km,
