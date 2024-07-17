@@ -331,8 +331,8 @@ def _loop(
     time = np.full(shape_reduced, np.nan)
     sol = np.full(shape_sol, np.nan)
 
-    message = []
-    errmsg = []
+    message = ['' for ii in range(np.prod(shape_reduced))]
+    errmsg = ['' for ii in range(np.prod(shape_reduced))]
 
     # ----------
     # slice_sol
@@ -353,6 +353,7 @@ def _loop(
         # check iok_all
 
         if not iok_reduced[ind]:
+            message[ii] = 'no valid data'
             validity[ind] = -1
             continue
 
@@ -431,15 +432,14 @@ def _loop(
             # sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]
 
             # message
-            message.append(res.message)
-            errmsg.append('')
+            message[ii] = res.message
+            errmsg[ii] = ''
 
         # ---------------
         # manage failures
 
         except Exception as err:
 
-            message.append('')
             msg = str(err)
             lerr = [
                 'is infeasible',

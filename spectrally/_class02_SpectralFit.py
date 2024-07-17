@@ -104,6 +104,12 @@ class SpectralFit(Previous):
         # solver options
         solver=None,
         dsolver_options=None,
+        # options
+        chain=None,
+        dscales=None,
+        dbounds_low=None,
+        dbounds_up=None,
+        dx0=None,
         # storing
         store=None,
         # options
@@ -120,6 +126,12 @@ class SpectralFit(Previous):
             # solver options
             solver=solver,
             dsolver_options=dsolver_options,
+            # options
+            chain=chain,
+            dscales=dscales,
+            dbounds_low=dbounds_low,
+            dbounds_up=dbounds_up,
+            dx0=dx0,
             # storing
             store=store,
             # options

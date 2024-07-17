@@ -39,6 +39,12 @@ def main(
     # solver options
     solver=None,
     dsolver_options=None,
+    # options
+    chain=None,
+    dscales=None,
+    dbounds_low=None,
+    dbounds_up=None,
+    dx0=None,
     # storing
     store=None,
     # options
@@ -61,6 +67,7 @@ def main(
         ref_data, ref_lamb,
         lamb, data, axis,
         binning,
+        chain,
         store,
         strict, verb, timing,
     ) = _check(
@@ -68,6 +75,12 @@ def main(
         key=key,
         # binning
         binning=binning,
+        # options
+        chain=chain,
+        dscales=dscales,
+        dbounds_low=dbounds_low,
+        dbounds_up=dbounds_up,
+        dx0=dx0,
         # storing
         store=store,
         # options
@@ -184,6 +197,12 @@ def _check(
     key=None,
     # binning
     binning=None,
+    # options
+    chain=None,
+    dscales=None,
+    dbounds_low=None,
+    dbounds_up=None,
+    dx0=None,
     # storing
     store=None,
     # options
@@ -249,6 +268,16 @@ def _check(
         raise Exception(msg)
 
     # --------------
+    # chain
+    # --------------
+
+    chain = ds._generic_check._check_var(
+        chain, 'chain',
+        types=bool,
+        default=False,
+    )
+
+    # --------------
     # store
     # --------------
 
@@ -298,6 +327,7 @@ def _check(
         ref_data, ref_lamb,
         lamb, data, axis,
         binning,
+        chain,
         store,
         strict, verb, timing,
     )
