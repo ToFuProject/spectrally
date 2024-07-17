@@ -429,35 +429,33 @@ def _plot_2d(
         refs = (coll2.ddata[dkeys['sum']]['ref'][0],)
         nan = np.full(lamb.shape, np.nan)
 
-        axtype = 'horizontal'
-        lax = [kax for kax, vax in dax.items() if axtype in vax['type']]
-        for kax in lax:
-            ax = dax[kax]['handle']
-            for ii, ff in enumerate(lfunc):
+        kax = 'spectrum'
+        ax = dax[kax]['handle']
+        for ii, ff in enumerate(lfunc):
 
-                for jj in range(nmax):
+            for jj in range(nmax):
 
-                    ll, = ax.plot(
-                        lamb,
-                        nan,
-                        ls='-',
-                        marker='None',
-                        lw=1.,
-                    )
+                ll, = ax.plot(
+                    lamb,
+                    nan,
+                    ls='-',
+                    marker='None',
+                    lw=1.,
+                )
 
-                    xydata = 'ydata'
-                    km = f'{kax}_{lfunc[ii]}_{jj}'
+                xydata = 'ydata'
+                km = f'{lfunc[ii]}_{jj}'
 
-                    coll2.add_mobile(
-                        key=km,
-                        handle=ll,
-                        refs=(refs,),
-                        data=(lfunc[ii],),
-                        dtype=[xydata],
-                        group_vis='Y',  # 'X' <-> 'Y'
-                        axes=kax,
-                        ind=jj,
-                    )
+                coll2.add_mobile(
+                    key=km,
+                    handle=ll,
+                    refs=(refs,),
+                    data=(lfunc[ii],),
+                    dtype=[xydata],
+                    group_vis='Y',  # 'X' <-> 'Y'
+                    axes=kax,
+                    ind=jj,
+                )
 
     return coll2, dgroup0
 
