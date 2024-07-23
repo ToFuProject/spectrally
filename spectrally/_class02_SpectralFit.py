@@ -112,6 +112,7 @@ class SpectralFit(Previous):
         dx0=None,
         # storing
         store=None,
+        overwrite=None,
         # options
         strict=None,
         verb=None,
@@ -134,6 +135,7 @@ class SpectralFit(Previous):
             dx0=dx0,
             # storing
             store=store,
+            overwrite=overwrite,
             # options
             strict=strict,
             verb=verb,

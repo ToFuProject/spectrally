@@ -47,6 +47,7 @@ def main(
     dx0=None,
     # storing
     store=None,
+    overwrite=None,
     # options
     strict=None,
     verb=None,
@@ -68,7 +69,7 @@ def main(
         lamb, data, axis,
         binning,
         chain,
-        store,
+        store, overwrite,
         strict, verb, timing,
     ) = _check(
         coll=coll,
@@ -83,6 +84,7 @@ def main(
         dx0=dx0,
         # storing
         store=store,
+        overwrite=overwrite,
         # options
         strict=strict,
         verb=verb,
@@ -170,6 +172,7 @@ def main(
     if store is True:
         _store(
             coll=coll,
+            overwrite=overwrite,
             # keys
             key=key,
             key_model=key_model,
@@ -205,6 +208,7 @@ def _check(
     dx0=None,
     # storing
     store=None,
+    overwrite=None,
     # options
     strict=None,
     verb=None,
@@ -288,6 +292,20 @@ def _check(
     )
 
     # --------------
+    # overwrite
+    # --------------
+
+    overwrite = ds._generic_check._check_var(
+        overwrite, 'overwrite',
+        types=bool,
+        default=False,
+    )
+
+    if overwrite is True:
+        ksol = coll.dobj[wsf][key]['key_sol']
+        overwrite &= (ksol is not None and ksol in coll.ddata.keys())
+
+    # --------------
     # strict
     # --------------
 
@@ -328,7 +346,7 @@ def _check(
         lamb, data, axis,
         binning,
         chain,
-        store,
+        store, overwrite,
         strict, verb, timing,
     )
 
@@ -413,6 +431,7 @@ def _get_solver_options(
 
 def _store(
     coll=None,
+    overwrite=None,
     # keys
     key=None,
     key_model=None,
@@ -431,6 +450,7 @@ def _store(
     # ------------
 
     wsm = coll._which_model
+    wsf = coll._which_fit
     refx_free = coll.dobj[wsm][key_model]['ref_nx']
     ref = list(coll.ddata[key_data]['ref'])
     ref[axis] = refx_free
@@ -443,13 +463,37 @@ def _store(
 
     # solution
     ksol = f"{key}_sol"
-    coll.add_data(
-        key=ksol,
-        data=dout['sol'].ravel() if ravel is True else dout['sol'],
-        ref=tuple(ref),
-        units=coll.ddata[key_data]['units'],
-        dim='fit_sol',
-    )
+    sol = dout['sol'].ravel() if ravel is True else dout['sol']
+    if ksol in coll.ddata.keys():
+        if overwrite is True:
+            c0 = (
+                coll.ddata[ksol]['ref'] == tuple(ref)
+                and coll.dobj[wsf][key]['key_sol'] == ksol
+            )
+            if c0 is True:
+                coll._ddata[ksol]['data'] = sol
+
+            else:
+                msg = (
+                    "Fit sol '{ksol}' exists in ddata but not in spect_fit!"
+                )
+                raise Exception(msg)
+
+        else:
+            msg = (
+                f"Aborting storing, spect_fit '{key}' was already computed\n"
+                "Use overwrite=True to overwrite the former solution\n"
+            )
+            raise Exception(msg)
+
+    else:
+        coll.add_data(
+            key=ksol,
+            data=sol,
+            ref=tuple(ref),
+            units=coll.ddata[key_data]['units'],
+            dim='fit_sol',
+        )
 
     # other outputs
     lk = [
@@ -459,14 +503,20 @@ def _store(
     dk_out = {k0: f"{key}_{k0}" for k0 in lk}
 
     if ravel is False:
-        for k0, k1 in dk_out.items():
-            coll.add_data(
-                key=k1,
-                data=dout[k0],
-                ref=ref_reduced,
-                units='',
-                dim='fit_out',
-            )
+
+        if overwrite is True:
+            for k0, k1 in dk_out.items():
+                coll._ddata[k1]['data'] = dout[k0]
+
+        else:
+            for k0, k1 in dk_out.items():
+                coll.add_data(
+                    key=k1,
+                    data=dout[k0],
+                    ref=ref_reduced,
+                    units='',
+                    dim='fit_out',
+                )
 
     # ------------
     # store in fit
