@@ -710,7 +710,7 @@ def _get_func_jacob(
                 ival, ivar = vind['val'], vind['var']
                 val[:, ival] = (
                     scales[None, ival]
-                    * ind0 * (exp_down[:, ivar] - exp_up[:, ivar])
+                    * ind0[:, ivar] * (exp_down[:, ivar] - exp_up[:, ivar])
                 )
 
             # t0
@@ -728,8 +728,8 @@ def _get_func_jacob(
                     * (lambD/tdown[:, ivar])
                 )
                 # dt0_ind0 = ind0_t / lambd
-                val[:, ival] = amp * (
-                    ind0 * (dt0_exp_down - dt0_exp_up)
+                val[:, ival] = amp[:, ivar] * (
+                    ind0[:, ivar] * (dt0_exp_down - dt0_exp_up)
                     # + dt0_ind0 * (exp_down - exp_up)
                 )
 
@@ -737,16 +737,22 @@ def _get_func_jacob(
             vind = dind['jac'][kfunc].get('t_up')
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
-                val[:, ival] = amp[:, ivar] * ind0 * scales[None, ival] * (
-                    - exp_up[:, ivar] * (dlamb/tup[:, ivar]**2)
+                val[:, ival] = (
+                    amp[:, ivar]
+                    * ind0[:, ivar] * scales[None, ival] * (
+                        - exp_up[:, ivar] * (dlamb[:, ivar]/tup[:, ivar]**2)
+                    )
                 )
 
             # tdown
             vind = dind['jac'][kfunc].get('t_down')
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
-                val[:, ival] = amp[:, ivar] * ind0 * scales[None, ival] * (
-                    exp_down[:, ivar] * (dlamb/tdown[:, ivar]**2)
+                val[:, ival] = (
+                    amp[:, ivar]
+                    * ind0[:, ivar] * scales[None, ival] * (
+                        exp_down[:, ivar] * (dlamb[:, ivar]/tdown[:, ivar]**2)
+                    )
                 )
 
         # -------------------
@@ -779,8 +785,8 @@ def _get_func_jacob(
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
                 val[:, ival] = scales[None, ival] * (
-                    indup * exp_up[:, ivar]
-                    + inddown * exp_down[:, ivar]
+                    indup[:, ivar] * exp_up[:, ivar]
+                    + inddown[:, ivar] * exp_down[:, ivar]
                 )
 
             # t0
@@ -790,17 +796,17 @@ def _get_func_jacob(
                 dt0_exp_up = (
                     scales[None, ival]
                     * exp_up[:, ivar]
-                    * (-1/tup[:, ivar]**2) * (-2*lambD*dlamb)
+                    * (-1/tup[:, ivar]**2) * (-2*lambD*dlamb[:, ivar])
                 )
                 dt0_exp_down = (
                     scales[None, ival]
                     * exp_down[:, ivar]
-                    * (-1/tdown[:, ivar]**2) * (-2*lambD*dlamb)
+                    * (-1/tdown[:, ivar]**2) * (-2*lambD*dlamb[:, ivar])
                 )
                 # dt0_ind0 = ind0_t / lambd
                 val[:, ival] = amp[:, ivar] * (
-                    indup * dt0_exp_up
-                    + inddown * dt0_exp_down
+                    indup[:, ivar] * dt0_exp_up
+                    + inddown[:, ivar] * dt0_exp_down
                 )
 
             # tup
@@ -808,8 +814,8 @@ def _get_func_jacob(
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
                 val[:, ival] = (
-                    amp[:, ivar] * indup * scales[None, ival] * (
-                        exp_up[:, ivar] * (2*dlamb**2/tup[:, ivar]**3)
+                    amp[:, ivar] * indup[:, ivar] * scales[None, ival] * (
+                        exp_up[:, ivar] * (2*dlamb[:, ivar]**2/tup[:, ivar]**3)
                     )
                 )
 
@@ -818,8 +824,8 @@ def _get_func_jacob(
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
                 val[:, ival] = (
-                    amp[:, ivar] * inddown * scales[None, ival] * (
-                        exp_down[:, ivar] * (2*dlamb**2/tdown[:, ivar]**3)
+                    amp[:, ivar] * inddown[:, ivar] * scales[None, ival] * (
+                        exp_down[:, ivar] * (2*dlamb[:, ivar]**2/tdown[:, ivar]**3)
                     )
                 )
 
