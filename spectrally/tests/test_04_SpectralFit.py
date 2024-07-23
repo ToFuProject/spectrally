@@ -80,25 +80,33 @@ class Test00_Populate():
         # add spectral fit 1d
         _inputs.add_fit_single(self.coll)
 
-    def test02_add_spectral_fit_1d_multi(self):
+    def test02_add_spectral_fit_1d_double(self):
+        # add spectral fit 1d
+        _inputs.add_fit_double(self.coll)
+
+    def test03_add_spectral_fit_1d_multi(self):
         # add spectral fit 1d
         _inputs.add_fit_multi(self.coll)
 
-    def test03_plot_spectral_fit_input_validity_1d(self):
+    def test04_plot_spectral_fit_input_validity_1d(self):
         # plot 1d
         _inputs.plot_input_validity(self.coll, key_data='data1d')
 
-    def test04_compute_spectral_fit_1d_single(self):
+    def test05_compute_spectral_fit_1d_single(self):
         # compute 1d
         _inputs.compute_fit_single(self.coll)
 
-    # def test05_compute_spectral_fit_1d_single_binning(self):
+    def test06_compute_spectral_fit_1d_double(self):
+        # compute 1d
+        _inputs.compute_fit_double(self.coll)
+
+    # def test07_compute_spectral_fit_1d_single_binning(self):
         # # compute 1d
         # _inputs.compute_fit_single(self.coll, binning=10)
 
-    def test06_compute_spectral_fit_1d_multi(self):
-        # compute 1d
-        _inputs.compute_fit_multi(self.coll, key_data='data1d')
+    # def test08_compute_spectral_fit_1d_multi(self):
+    #     # compute 1d
+    #     _inputs.compute_fit_multi(self.coll, key_data='data1d')
 
     # ---------------
     # 2d spectral fit
