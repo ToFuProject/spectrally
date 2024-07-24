@@ -9,7 +9,7 @@ import os
 
 
 # Standard
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 # spectrally-specific
@@ -17,6 +17,7 @@ from ._setup_teardown import setup_module0, teardown_module0
 from .._class01_SpectralModel import SpectralModel as Collection
 # from .._saveload import load
 from .._class01_show import get_available_spectral_model_functions
+from .._class01_display_models import display_spectral_model_function
 from . import _spectralfit_input as _inputs
 
 
@@ -79,14 +80,24 @@ class Test00_Populate():
     def test00_get_available_spectral_model_funcstions(self):
         get_available_spectral_model_functions()
 
-    def test01_add_spectral_model(self):
+    def test01_get_available_spectral_model_funcstions(self):
+        lm = [
+            'linear', 'exp_lamb',
+            'gauss', 'lorentz', 'pvoigt',
+            'pulse1', 'pulse2', 'lognorm',
+        ]
+        for kk in lm:
+            _ = display_spectral_model_function(kk)
+        plt.close('all')
+
+    def test02_add_spectral_model(self):
         _inputs.add_models(self.coll)
 
-    def test02_get_spectral_model_func(self):
+    def test03_get_spectral_model_func(self):
         _inputs.get_spectral_model_func(self.coll)
 
-    def test03_interpolate_spectral_model(self):
+    def test04_interpolate_spectral_model(self):
         _inputs.interpolate_spectral_model(self.coll)
 
-    def test04_plot_spectral_model(self):
+    def test05_plot_spectral_model(self):
         _inputs.plot_spectral_model(self.coll)
