@@ -16,7 +16,7 @@ import datastock as ds
 
 
 # local
-from . import _class01_check_model as _check_models
+from . import _class01_model_dict as _model_dict
 
 
 __all__ = ['get_available_spectral_model_functions']
@@ -44,13 +44,13 @@ def _show(coll=None, which=None, lcol=None, lar=None, show=None):
     lfunc = []
     for k0 in lkey:
         dmod = coll.dobj[which][k0]['dmodel']
-        for k1 in _check_models._LMODEL_ORDER:
+        for k1 in _model_dict._LMODEL_ORDER:
             lk2 = [k2 for k2, v2 in dmod.items() if v2['type'] == k1]
             if len(lk2) > 0 and k1 not in lfunc:
                 lfunc.append(k1)
 
     # reorder
-    lfunc = [k1 for k1 in _check_models._LMODEL_ORDER if k1 in lfunc]
+    lfunc = [k1 for k1 in _model_dict._LMODEL_ORDER if k1 in lfunc]
 
     # ---------------------------
     # column names
@@ -178,14 +178,41 @@ def get_available_spectral_model_functions(
     verb=None,
     returnas=None,
 ):
+    """ Print all te available functions types for spectral fitting
+
+    All arguments are optional
+    >>> get_available_spectral_model_functions()
+
+
+    Parameters
+    ----------
+    sep : str, optional
+        seperator character
+    line : str, optional
+        line character
+    justify : str, optional
+        'left' or 'right'
+    table_sep : str, optional
+        separator character between tables
+    verb : bool, optional
+        Whether to print
+    returnas : bool, optional
+        Whether to return
+
+    Returns
+    -------
+
+    May return the printed msg as str if requested
+
+    """
 
     # ---------------------------
     # get dmodel
     # ---------------------------
 
-    dmodel = _check_models._DMODEL
+    dmodel = _model_dict._DMODEL
 
-    lkeys = _check_models._LMODEL_ORDER
+    lkeys = _model_dict._LMODEL_ORDER
     llvar = [dmodel[kf]['var'] for kf in lkeys]
 
     nvarmax = np.max([len(lvar) for lvar in llvar])

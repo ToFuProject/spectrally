@@ -10,76 +10,8 @@ import scipy.constants as scpct
 import datastock as ds
 
 
-#############################################
-#############################################
-#       DEFAULTS
-#############################################
-
-
-_DMODEL = {
-
-    # ----------
-    # background
-
-    'linear': {
-        'var': ['a0', 'a1'],
-        'description': 'straight line',
-    },
-    'exp_lamb': {
-        'var': ['amp', 'rate'],
-        'description': 'Bremsstrahlung-like exponential',
-    },
-
-    # --------------
-    # spectral lines
-
-    'gauss': {
-        'var': ['amp', 'vccos', 'sigma'],
-        'param': [('lamb0', float), ('mz', float, np.nan)],
-        'description': 'gaussian',
-    },
-    'lorentz': {
-        'var': ['amp', 'vccos', 'gam'],
-        'param': [('lamb0', float), ('mz', float, np.nan)],
-        'description': 'lorentzian',
-    },
-    'pvoigt': {
-        'var': ['amp', 'vccos', 'sigma', 'gam'],
-        'param': [('lamb0', float), ('mz', float, np.nan)],
-        'description': 'pseudo-voigt',
-    },
-    'voigt': {
-        'var': ['amp', 'vccos', 'sigma', 'gam'],
-        'param': [('lamb0', float), ('mz', float, np.nan)],
-        'description': 'voigt',
-    },
-
-    # -----------
-    # pulse shape
-
-    'pulse1': {
-        'var': ['amp', 't0', 't_up', 't_down'],
-        'description': 'asymmetric pulse, 2 exponentials',
-    },
-    'pulse2': {
-        'var': ['amp', 't0', 't_up', 't_down'],
-        'description': 'asymmetric pulse, 2 gaussians',
-    },
-    'lognorm': {
-        'var': ['amp', 't0', 'mu', 'sigma'],
-        'description': 'asymmetric pulse, lognorm',
-    },
-}
-
-
-_LMODEL_ORDER = [
-    # background
-    'linear', 'exp_lamb', # 'exp_E',
-    # spectral lines
-    'gauss', 'lorentz', 'pvoigt', 'voigt',
-    # pulse shape
-    'pulse1', 'pulse2', 'lognorm',
-]
+# local
+from . import _class01_model_dict as _model_dict
 
 
 #############################################
@@ -152,7 +84,7 @@ def _dmodel_err(key, dmodel):
 
     # prepare list of str
     lstr = []
-    for ii, (k0, v0) in enumerate(_DMODEL.items()):
+    for ii, (k0, v0) in enumerate(_model_dict._DMODEL.items()):
         if v0.get('param') is None:
             stri = f"\t- 'f{ii}': '{k0}'"
         else:
@@ -234,7 +166,7 @@ def _check_dmodel(
         # ----------
         # check type
 
-        if typ not in _DMODEL.keys():
+        if typ not in _model_dict._DMODEL.keys():
             dout[k0] = v0
             continue
 
@@ -254,10 +186,10 @@ def _check_dmodel(
         # ---------------------------
         # check parameter (if needed)
 
-        haspar = _DMODEL[typ].get('param') is not None
+        haspar = _model_dict._DMODEL[typ].get('param') is not None
         if haspar is True:
 
-            lpar = _DMODEL[typ]['param']
+            lpar = _model_dict._DMODEL[typ]['param']
 
             # loop on parameters
             dpar = {}
@@ -301,7 +233,10 @@ def _check_dmodel(
         # ----------------
         # assemble
 
-        dmod2[k1] = {'type': typ, 'var': _DMODEL[typ]['var']}
+        dmod2[k1] = {
+            'type': typ,
+            'var': _model_dict._DMODEL[typ]['var'],
+        }
 
         # add parameter
         if haspar is True:
@@ -411,13 +346,19 @@ def _get_var(
 
     if 'param_key' in returnas:
         dout['param_key'] = [
-            [f"{k0}_{tpar[0]}" for tpar in _DMODEL[dmodel[k0]['type']]['param']]
+            [
+                f"{k0}_{tpar[0]}"
+                for tpar in _model_dict._DMODEL[dmodel[k0]['type']]['param']
+            ]
             for k0 in keys if dmodel[k0].get('param') is not None
         ]
 
     if 'param_value' in returnas:
         dout['param_value'] = [
-            [dmodel[k0]['param'][tpar[0]] for tpar in _DMODEL[dmodel[k0]['type']]['param']]
+            [
+                dmodel[k0]['param'][tpar[0]]
+                for tpar in _model_dict._DMODEL[dmodel[k0]['type']]['param']
+            ]
             for k0 in keys if dmodel[k0].get('param') is not None
         ]
 
@@ -581,7 +522,7 @@ def _get_var_dind(
     dind['jac'] = {ktype: {} for ktype in types}
     for ktype in types:
         lf = [k0 for k0 in keys if dmodel[k0]['type'] == ktype]
-        for kvar in _DMODEL[ktype]['var']:
+        for kvar in _model_dict._DMODEL[ktype]['var']:
             lvar = [f"{kf}_{kvar}" for kf in lf]
             lind = [ii for ii, vv in enumerate(lvar) if vv in x_free]
 
