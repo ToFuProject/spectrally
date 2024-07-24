@@ -8,6 +8,7 @@ import warnings
 from ._class02_SpectralFit import SpectralFit as Collection
 from ._saveload import load
 from . import tests
+from ._class01_show import *
 
 
 _PKG = 'spectrally'
