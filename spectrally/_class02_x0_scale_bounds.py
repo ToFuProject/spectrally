@@ -624,10 +624,10 @@ def _get_scales_bounds(
                     scales=None if ii == 0 else scales
                 )
 
-        # t0
-        # max at lamb - (lamb00 + lambD * t0) = exp(mu - sigma**2)
-        kvar = 't0'
-        vind = dind['jac'][kfunc].get('t0')
+        # tau
+        # max at lamb - (lamb00 + lambD * tau) = exp(mu - sigma**2)
+        kvar = 'tau'
+        vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
             ival, ivar = vind['val'], vind['var']
             scales[ival] = 1
@@ -1075,9 +1075,9 @@ def _get_x0(
                 )
 
         # t0
-        # max at lamb - (lamb00 + lambD * t0) = exp(mu - sigma**2)
-        kvar = 't0'
-        vind = dind['jac'][kfunc].get('t0')
+        # max at lamb - (lamb00 + lambD * tau) = exp(mu - sigma**2)
+        kvar = 'tau'
+        vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
             ival, ivar = vind['val'], vind['var']
             x0[ival] = (lamb_ext - exp - lamb0) / lambD / scales[ival]
@@ -1165,8 +1165,8 @@ def _get_scales_bounds_pulse(
                 scales=None if ii == 0 else scales
             )
 
-    # t0
-    kvar = 't0'
+    # tau
+    kvar = 'tau'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
         ival, ivar = vind['val'], vind['var']
@@ -1250,8 +1250,8 @@ def _get_x0_pulse(
                 scales=scales,
             )
 
-    # t0
-    kvar = 't0'
+    # tau
+    kvar = 'tau'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
         ival, ivar = vind['val'], vind['var']

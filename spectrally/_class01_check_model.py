@@ -10,63 +10,8 @@ import scipy.constants as scpct
 import datastock as ds
 
 
-#############################################
-#############################################
-#       DEFAULTS
-#############################################
-
-
-_DMODEL = {
-
-    # ----------
-    # background
-
-    'linear': {'var': ['a0', 'a1']},
-    'exp_lamb': {'var': ['amp', 'rate']},
-
-    # --------------
-    # spectral lines
-
-    'gauss': {
-        'var': ['amp', 'vccos', 'sigma'],
-        'param': [('lamb0', float), ('mz', float, np.nan)],
-    },
-    'lorentz': {
-        'var': ['amp', 'vccos', 'gam'],
-        'param': [('lamb0', float), ('mz', float, np.nan)],
-    },
-    'pvoigt': {
-        'var': ['amp', 'vccos', 'sigma', 'gam'],
-        'param': [('lamb0', float), ('mz', float, np.nan)],
-    },
-    'voigt': {
-        'var': ['amp', 'vccos', 'sigma', 'gam'],
-        'param': [('lamb0', float), ('mz', float, np.nan)],
-    },
-
-    # -----------
-    # pulse shape
-
-    'pulse1': {
-        'var': ['amp', 't0', 't_up', 't_down'],
-    },
-    'pulse2': {
-        'var': ['amp', 't0', 't_up', 't_down'],
-    },
-    'lognorm': {
-        'var': ['amp', 't0', 'mu', 'sigma'],
-    },
-}
-
-
-_LMODEL_ORDER = [
-    # background
-    'linear', 'exp_lamb', 'exp_E',
-    # spectral lines
-    'gauss', 'lorentz', 'pvoigt', 'voigt',
-    # pulse shape
-    'pulse1', 'pulse2', 'lognorm',
-]
+# local
+from . import _class01_model_dict as _model_dict
 
 
 #############################################
@@ -139,7 +84,7 @@ def _dmodel_err(key, dmodel):
 
     # prepare list of str
     lstr = []
-    for ii, (k0, v0) in enumerate(_DMODEL.items()):
+    for ii, (k0, v0) in enumerate(_model_dict._DMODEL.items()):
         if v0.get('param') is None:
             stri = f"\t- 'f{ii}': '{k0}'"
         else:
@@ -221,7 +166,7 @@ def _check_dmodel(
         # ----------
         # check type
 
-        if typ not in _DMODEL.keys():
+        if typ not in _model_dict._DMODEL.keys():
             dout[k0] = v0
             continue
 
@@ -241,10 +186,10 @@ def _check_dmodel(
         # ---------------------------
         # check parameter (if needed)
 
-        haspar = _DMODEL[typ].get('param') is not None
+        haspar = _model_dict._DMODEL[typ].get('param') is not None
         if haspar is True:
 
-            lpar = _DMODEL[typ]['param']
+            lpar = _model_dict._DMODEL[typ]['param']
 
             # loop on parameters
             dpar = {}
@@ -288,7 +233,10 @@ def _check_dmodel(
         # ----------------
         # assemble
 
-        dmod2[k1] = {'type': typ, 'var': _DMODEL[typ]['var']}
+        dmod2[k1] = {
+            'type': typ,
+            'var': _model_dict._DMODEL[typ]['var'],
+        }
 
         # add parameter
         if haspar is True:
@@ -398,13 +346,19 @@ def _get_var(
 
     if 'param_key' in returnas:
         dout['param_key'] = [
-            [f"{k0}_{tpar[0]}" for tpar in _DMODEL[dmodel[k0]['type']]['param']]
+            [
+                f"{k0}_{tpar[0]}"
+                for tpar in _model_dict._DMODEL[dmodel[k0]['type']]['param']
+            ]
             for k0 in keys if dmodel[k0].get('param') is not None
         ]
 
     if 'param_value' in returnas:
         dout['param_value'] = [
-            [dmodel[k0]['param'][tpar[0]] for tpar in _DMODEL[dmodel[k0]['type']]['param']]
+            [
+                dmodel[k0]['param'][tpar[0]]
+                for tpar in _model_dict._DMODEL[dmodel[k0]['type']]['param']
+            ]
             for k0 in keys if dmodel[k0].get('param') is not None
         ]
 
@@ -568,7 +522,7 @@ def _get_var_dind(
     dind['jac'] = {ktype: {} for ktype in types}
     for ktype in types:
         lf = [k0 for k0 in keys if dmodel[k0]['type'] == ktype]
-        for kvar in _DMODEL[ktype]['var']:
+        for kvar in _model_dict._DMODEL[ktype]['var']:
             lvar = [f"{kf}_{kvar}" for kf in lf]
             lind = [ii for ii, vv in enumerate(lvar) if vv in x_free]
 
@@ -600,205 +554,3 @@ def _get_var_dind(
         raise Exception(msg)
 
     return dind
-
-
-#############################################
-#############################################
-#       Show
-#############################################
-
-
-def _show(coll=None, which=None, lcol=None, lar=None, show=None):
-
-    # ---------------------------
-    # list of functions
-    # ---------------------------
-
-    # list of models
-    lkey = [
-        k1 for k1 in coll._dobj.get(which, {}).keys()
-        if show is None or k1 in show
-    ]
-
-    # list of relevant functions
-    lfunc = []
-    for k0 in lkey:
-        dmod = coll.dobj[which][k0]['dmodel']
-        for k1 in _LMODEL_ORDER:
-            lk2 = [k2 for k2, v2 in dmod.items() if v2['type'] == k1]
-            if len(lk2) > 0 and k1 not in lfunc:
-                lfunc.append(k1)
-
-    # reorder
-    lfunc = [k1 for k1 in _LMODEL_ORDER if k1 in lfunc]
-
-    # ---------------------------
-    # column names
-    # ---------------------------
-
-    lcol.append([which] + lfunc + ['constraints', 'free var'])
-
-    # ---------------------------
-    # data array
-    # ---------------------------
-
-    lar0 = []
-    for k0 in lkey:
-
-        # initialize with key
-        arr = [k0]
-
-        # add nb of func of each type
-        dmod = coll.dobj[which][k0]['dmodel']
-        for k1 in lfunc:
-            nn = str(len([k2 for k2, v2 in dmod.items() if v2['type'] == k1]))
-            arr.append(nn)
-
-        # add nb of constraints
-        dconst = coll.dobj[which][k0]['dconstraints']['dconst']
-        nn = str(len([k1 for k1, v1 in dconst.items() if len(v1) > 1]))
-        arr.append(nn)
-
-        # add number of free variables
-        lfree = coll.get_spectral_model_variables(k0, returnas='free')['free']
-        lall = coll.get_spectral_model_variables(k0, returnas='all')['all']
-        arr.append(f"{len(lfree)} / {len(lall)}")
-
-        lar0.append(arr)
-
-    lar.append(lar0)
-
-    return lcol, lar
-
-
-#############################################
-#############################################
-#       Show single model
-#############################################
-
-
-def _show_details(coll=None, key=None, lcol=None, lar=None, show=None):
-
-    # ---------------------------
-    # get dmodel
-    # ---------------------------
-
-    wsm = coll._which_model
-    dmodel = coll.dobj[wsm][key]['dmodel']
-    dconst = coll.dobj[wsm][key]['dconstraints']['dconst']
-
-    lkeys = coll.dobj[wsm][key]['keys']
-    llvar = [dmodel[kf]['var'] for kf in lkeys]
-
-    nvarmax = np.max([len(lvar) for lvar in llvar])
-    lfree = coll.get_spectral_model_variables(key, returnas='free')['free']
-
-    lpar = sorted(set(itt.chain.from_iterable([
-        v0.get('param', {}).keys() for v0 in dmodel.values()
-    ])))
-
-    # ---------------------------
-    # column names
-    # ---------------------------
-
-    lvar = [f"var{ii}" for ii in range(nvarmax)]
-    lcol.append(['func', 'type', ' '] + lvar + [' '] + lpar)
-
-    # ---------------------------
-    # data
-    # ---------------------------
-
-    lar0 = []
-    for kf in lkeys:
-
-        # initialize with key, type
-        arr = [kf, dmodel[kf]['type'], '|']
-
-        # add variables of each func
-        for ii, k1 in enumerate(dmodel[kf]['var']):
-            key = f"{kf}_{k1}"
-            if key in lfree:
-                nn = key
-            else:
-                gg = [kg for kg, vg in dconst.items() if key in vg.keys()][0]
-                nn = f"{key}({dconst[gg]['ref']})"
-
-            arr.append(nn)
-
-        # complement
-        arr += ['' for ii in range(nvarmax - ii - 1)] + ['|']
-
-        # add parameters of each func
-        for k1 in lpar:
-            nn = dmodel[kf].get('param', {}).get(k1, '')
-            if not isinstance(nn, str):
-                nn = f"{nn:.6e}"
-            arr.append(nn)
-
-        lar0.append(arr)
-
-    lar.append(lar0)
-
-    return lcol, lar
-
-
-# =============================================================================
-# def _initial_from_from_model(
-#     coll=None,
-#     key=None,
-#     dmodel=None,
-# ):
-#
-#     # -----------
-#     # initialize
-#     # ----------
-#
-#     wsl = coll._which_lines
-#
-#     dinit = {}
-#     for k0, v0 in dmodel.items():
-#
-#         # -----
-#         # bck
-#
-#         if v0['type'] == 'linear':
-#             dinit[k0] = {'c0': 0, 'c1': 0}
-#
-#         elif v0['type'] == 'exp':
-#             dinit[k0] = {'c0': 0, 'c1': 0}
-#
-#         else:
-#
-#             # if from spectral lines
-#             if k0 in coll.dobj.get(wsl, {}).keys():
-#                 lamb0 = coll.dobj[wsl][k0]['lamb0']
-#             else:
-#                 lamb0 = 0
-#
-#             if v0['type'] == 'gauss':
-#                 dinit[k0] = {
-#                     'amp': 1,
-#                     'shift': lamb0,
-#                     'width': 1,
-#                 }
-#
-#             elif v0['type'] == 'lorentz':
-#                 dinit[k0] = np.r_[0, lamb0, 0]
-#
-#             elif v0['type'] == 'pvoigt':
-#                 dinit[k0] = np.r_[0, lamb0, 0]
-#
-#
-#     # -------------
-#     # lines
-#     # -------------
-#
-#
-#
-#
-#
-#     coll.add_spectral_model(key=key, dmodel=dmodel)
-#     coll.set_spectral_model_initial(key=key, initial=initial)
-#
-#     return
-# =============================================================================
