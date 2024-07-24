@@ -440,6 +440,8 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
         lamb0=3.96e-10,
     )
 
+    lambD = lamb[-1] - lamb[0]
+
     # ---------------
     # dmodels
 
@@ -575,19 +577,19 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_t_up', 'l01_t_up': [0, 1, 0]},
             'g02': {'ref': 'l00_t_down', 'l01_t_down': [0, 1, 0]},
-            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10, 1, 0]},
+            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
         },
         'smpulse22': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_t_up', 'l01_t_up': [0, 1, 0]},
             'g02': {'ref': 'l00_t_down', 'l01_t_down': [0, 1, 0]},
-            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10, 1, 0]},
+            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
         },
         'smlognorm2': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_mu', 'l01_mu': [0, 1, 0]},
             'g02': {'ref': 'l00_sigma', 'l01_sigma': [0, 1, 0]},
-            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10, 1, 0]},
+            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
         },
 
         # multi

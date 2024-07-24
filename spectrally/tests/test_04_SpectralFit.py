@@ -104,9 +104,9 @@ class Test00_Populate():
         # # compute 1d
         # _inputs.compute_fit_single(self.coll, binning=10)
 
-    # def test08_compute_spectral_fit_1d_multi(self):
-    #     # compute 1d
-    #     _inputs.compute_fit_multi(self.coll, key_data='data1d')
+    def test08_compute_spectral_fit_1d_multi(self):
+        # compute 1d
+        _inputs.compute_fit_multi(self.coll, key_data='data1d')
 
     # ---------------
     # 2d spectral fit
