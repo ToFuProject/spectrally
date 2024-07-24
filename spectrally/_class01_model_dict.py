@@ -133,7 +133,7 @@ _DMODEL = {
     # pulse with exponentials
 
     'pulse1': {
-        'var': ['amp', 't0', 't_up', 't_down'],
+        'var': ['amp', 'tau', 't_up', 't_down'],
         'description': 'asymmetric pulse, 2 exponentials',
         'expressions': {
             'main': (
@@ -148,7 +148,7 @@ _DMODEL = {
     # pulse with gaussians
 
     'pulse2': {
-        'var': ['amp', 't0', 't_up', 't_down'],
+        'var': ['amp', 'tau', 't_up', 't_down'],
         'description': 'asymmetric pulse, 2 gaussians',
         'expressions': {
             'main': (
@@ -163,7 +163,7 @@ _DMODEL = {
     # lognorm
 
     'lognorm': {
-        'var': ['amp', 't0', 'mu', 'sigma'],
+        'var': ['amp', 'tau', 'mu', 'sigma'],
         'description': 'asymmetric pulse, lognorm',
         'expressions': {
             'main': r"$\left\{ \begin{array}{ll} f(t > t_0) = \frac{A}{t-t_0} e^{-\frac{\left(\ln(t-t_0) - \mu\right)^2}{2\sigma^2}} \\ t_0 = t[0] + \tau\Delta t  \\ \Delta t = t[-1] - t[0] \end{array} \right.$",

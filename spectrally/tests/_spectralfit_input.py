@@ -579,19 +579,19 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_t_up', 'l01_t_up': [0, 1, 0]},
             'g02': {'ref': 'l00_t_down', 'l01_t_down': [0, 1, 0]},
-            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
+            'g03': {'ref': 'l00_tau', 'l01_tau': [0.04e-10 / lambD, 1, 0]},
         },
         'smpulse22': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_t_up', 'l01_t_up': [0, 1, 0]},
             'g02': {'ref': 'l00_t_down', 'l01_t_down': [0, 1, 0]},
-            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
+            'g03': {'ref': 'l00_tau', 'l01_tau': [0.04e-10 / lambD, 1, 0]},
         },
         'smlognorm2': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_mu', 'l01_mu': [0, 1, 0]},
             'g02': {'ref': 'l00_sigma', 'l01_sigma': [0, 1, 0]},
-            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
+            'g03': {'ref': 'l00_tau', 'l01_tau': [0.04e-10 / lambD, 1, 0]},
         },
 
         # multi
@@ -783,7 +783,8 @@ def _get_dxfree(t=None, lamb=None):
     mu = 0.5 * (np.log(delta**2/(np.exp(sigma**2) - 1)) - sigma**2)
     # mu = -28
 
-    t0 = tmax - np.exp(mu - sigma**2)
+    t0 = (tmax - np.exp(mu - sigma**2))
+    tau = (t0 - lamb[0]) / lambD
     amp = fmax / np.exp(0.5*sigma**2 - mu)
 
     # sm00
@@ -806,9 +807,9 @@ def _get_dxfree(t=None, lamb=None):
 
     # sm03
     # 'bck0_a0', 'bck0_a1',
-    # 'l00_amp', 'l00_t0', 'l00_t_up', 'l00_t_down',
-    # 'l01_amp', 'l01_t0', 'l01_t_up', 'l01_t_down',
-    # 'l02_amp', 'l02_t0', 'l02_mu', 'l02_sigma'
+    # 'l00_amp', 'l00_tau', 'l00_t_up', 'l00_t_down',
+    # 'l01_amp', 'l01_tau', 'l01_t_up', 'l01_t_down',
+    # 'l02_amp', 'l02_tau', 'l02_mu', 'l02_sigma'
 
     dxfree = {
         # testing elementary models
@@ -820,7 +821,7 @@ def _get_dxfree(t=None, lamb=None):
         'smvoigt': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
         'smpulse1': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
         'smpulse2': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
-        'smlognorm': np.r_[amp, t0, mu, sigma],
+        'smlognorm': np.r_[amp, tau, mu, sigma],
 
         # double simple
         'smgauss2': np.r_[1, 0.004, 0.003e-10],
@@ -829,7 +830,7 @@ def _get_dxfree(t=None, lamb=None):
         'smvoigt2': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
         'smpulse12': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
         'smpulse22': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
-        'smlognorm2': np.r_[amp, t0, mu, sigma],
+        'smlognorm2': np.r_[amp, tau, mu, sigma],
 
         # testing complex models
         'sm00': np.r_[
@@ -854,8 +855,8 @@ def _get_dxfree(t=None, lamb=None):
             0.1, 0.,
             2, 3.905e-10, 0.001e-10, 0.004e-10,
             1, 3.935e-10, 0.001e-10, 0.007e-10,
-            amp, t0, mu, sigma,
-            amp, t0 + 0.015e-10, mu, sigma,
+            amp, tau, mu, sigma,
+            amp, tau + 0.015e-10, mu, sigma,
         ],
     }
     return dxfree
