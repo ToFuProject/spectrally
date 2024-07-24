@@ -796,7 +796,7 @@ def _get_dxfree(t=None, lamb=None):
     # 'bck0_amp', 'bck0_rate',
     # 'l00_amp', 'l00_vccos', 'l00_sigma',
     # 'l01_vccos', 'l01_gam',
-    # 'l02_amp', 'l02_vccos', 'l02_sigma',
+    # 'l02_amp', 'l02_vccos',
 
     # sm02
     # 'bck0_amp', 'bck0_rate',
@@ -842,7 +842,7 @@ def _get_dxfree(t=None, lamb=None):
             0.2*lamb[0]*np.exp(rate/lamb[0]), rate,
             1, 0.001, 0.003e-10,
             -0.001, 0.001e-10,
-            1.e-12, 0.001, 0.002e-10,
+            1.e-12, 0.001,
         ][None, :] * np.exp(-(t[:, None] - tm)**2 / 2**2),
         'sm02': np.r_[
             0.2*lamb[0]*np.exp(rate/lamb[0]), rate,
