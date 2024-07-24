@@ -758,10 +758,10 @@ def interpolate_spectral_model(coll=None):
                     lkstore.append(store_key)
 
         # remove data (but not model ref)
-        # del coll._ddata[kdata]
+        del coll._ddata[kdata]
 
     # remove stored output
-    # coll.remove_data(lkstore)
+    coll.remove_data(lkstore)
 
     return
 
@@ -819,6 +819,15 @@ def _get_dxfree(t=None, lamb=None):
         'smpulse1': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
         'smpulse2': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
         'smlognorm': np.r_[amp, t0, mu, sigma],
+
+        # double simple
+        'smgauss2': np.r_[1, 0.004, 0.003e-10],
+        'smlorentz2': np.r_[0.9, -0.006, 0.003e-10],
+        'smpvoigt2': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
+        'smvoigt2': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
+        'smpulse12': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
+        'smpulse22': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
+        'smlognorm2': np.r_[amp, t0, mu, sigma],
 
         # testing complex models
         'sm00': np.r_[
