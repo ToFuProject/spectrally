@@ -566,12 +566,14 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
         'smpvoigt2': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_sigma', 'l01_sigma': [0, 1, 0]},
-            'g02': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
+            'g02': {'ref': 'l00_gam', 'l01_gam': [0, 1, 0]},
+            'g03': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
         },
         'smvoigt2': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_sigma', 'l01_sigma': [0, 1, 0]},
-            'g02': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
+            'g02': {'ref': 'l00_gam', 'l01_gam': [0, 1, 0]},
+            'g03': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
         },
         'smpulse12': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
