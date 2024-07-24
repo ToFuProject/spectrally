@@ -25,22 +25,26 @@ _PATH_INPUT = os.path.join(_PATH_HERE, 'input')
 _MASK_1D = os.path.join(_PATH_INPUT, 'mask1d.npy')
 
 
+# LAMB
+_NLANB = 300
+_LAMB = lamb = np.linspace(3.9, 4, _NLANB)*1e-10
+_LAMB0 = _LAMB[0] + (_LAMB[-1] - _LAMB[0]) * np.r_[0.25, 0.55, 0.75]
+
+
 # ###################################################
 # ###################################################
 #               data
 # ###################################################
 
 
-def add_data(coll=None):
+def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
 
     # ------------------
     # reference vectors
     # ------------------
 
     # lamb
-    nlamb = 300
-    coll.add_ref('nlamb', size=nlamb)
-    lamb = np.linspace(3.9, 4, nlamb)*1e-10
+    coll.add_ref('nlamb', size=lamb.size)
     coll.add_data(
         'lamb',
         data=lamb,
@@ -53,7 +57,6 @@ def add_data(coll=None):
     # derive useful quantities
     Dlamb = lamb[-1] - lamb[0]
     lambm = np.mean(lamb)
-    lamb0 = lamb[0] + Dlamb * np.r_[0.25, 0.55, 0.75]
 
     # phi
     nphi = 100
@@ -115,14 +118,27 @@ def add_data(coll=None):
     # --------
     # gauss
 
-    sigma = Dlamb/8.
-    vccos = Dlamb/10. / lamb0[1]
-    amp = 500 * np.exp((lambm - lamb0[1]*(1+vccos))**2/(2*sigma**2))
+    sigma = Dlamb/20.
+    vccos = Dlamb/10. / lamb0[0]
+    amp = 500 * np.exp((lambm - lamb0[0]*(1+vccos))**2/(2*sigma**2))
 
     coll.add_data(
         key='data_gauss',
         data=np.random.poisson(
-            amp * np.exp(-(lamb - lamb0[1]*(1+vccos))**2/(2*sigma**2))
+            amp * np.exp(-(lamb - lamb0[0]*(1+vccos))**2/(2*sigma**2))
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # double gauss
+
+    coll.add_data(
+        key='data_gauss2',
+        data=np.random.poisson(
+            amp * np.exp(-(lamb - lamb0[0]*(1+vccos))**2/(2*sigma**2))
+            + 0.5*amp * np.exp(-(lamb - lamb0[1]*(1+vccos))**2/(2*sigma**2))
         ),
         ref='nlamb',
         units='counts',
@@ -131,14 +147,27 @@ def add_data(coll=None):
     # --------
     # lorentz
 
-    gam = Dlamb/8.
-    vccos = Dlamb/10. / lamb0[1]
-    amp = 500 * (1 + ((lambm - lamb0[1]*(1 + vccos)) / gam)**2)
+    gam = Dlamb/20.
+    vccos = Dlamb/10. / lamb0[0]
+    amp = 500 * (1 + ((lambm - lamb0[0]*(1 + vccos)) / gam)**2)
 
     coll.add_data(
         key='data_lorentz',
         data=np.random.poisson(
-            amp / (1 + ((lamb - lamb0[1]*(1 + vccos)) / gam)**2)
+            amp / (1 + ((lamb - lamb0[0]*(1 + vccos)) / gam)**2)
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # double lorentz
+
+    coll.add_data(
+        key='data_lorentz2',
+        data=np.random.poisson(
+            amp / (1 + ((lamb - lamb0[0]*(1 + vccos)) / gam)**2)
+            + 0.5* amp / (1 + ((lamb - lamb0[1]*(1 + vccos)) / gam)**2)
         ),
         ref='nlamb',
         units='counts',
@@ -147,26 +176,44 @@ def add_data(coll=None):
     # --------
     # pvoigt
 
-    sigma = Dlamb/8.
-    gam = Dlamb/10.
+    sigma = Dlamb/20.
+    gam = Dlamb/20.
     vccos = Dlamb/10. / lamb0[1]
     eta = 0.2
     amp = 500 / (
-        eta / (1 + ((lambm - lamb0[1]*(1 + vccos)) / gam)**2)
-        + (1-eta) * np.exp(-(lambm - lamb0[1]*(1 + vccos))**2/(2*sigma**2))
+        eta / (1 + ((lambm - lamb0[0]*(1 + vccos)) / gam)**2)
+        + (1-eta) * np.exp(-(lambm - lamb0[0]*(1 + vccos))**2/(2*sigma**2))
+    )
+
+    pvoigt = amp * (
+        eta / (1 + ((lamb - lamb0[0]*(1 + vccos)) / gam)**2)
+        + (1-eta) * np.exp(
+            -(lamb - lamb0[0]*(1 + vccos))**2
+            / (2*sigma**2)
+        )
     )
 
     coll.add_data(
         key='data_pvoigt',
-        data=np.random.poisson(
-            amp * (
-                eta / (1 + ((lamb - lamb0[1]*(1 + vccos)) / gam)**2)
-                + (1-eta) * np.exp(
-                    -(lamb - lamb0[1]*(1 + vccos))**2
-                    / (2*sigma**2)
-                )
-            )
-        ),
+        data=np.random.poisson(pvoigt),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # double pvoigt
+
+    pvoigt2 = amp * (
+        eta / (1 + ((lamb - lamb0[1]*(1 + vccos)) / gam)**2)
+        + (1-eta) * np.exp(
+            -(lamb - lamb0[1]*(1 + vccos))**2
+            / (2*sigma**2)
+        )
+    )
+
+    coll.add_data(
+        key='data_pvoigt2',
+        data=np.random.poisson(pvoigt + 0.5* pvoigt2),
         ref='nlamb',
         units='counts',
     )
@@ -175,8 +222,8 @@ def add_data(coll=None):
     # pulse1
 
     t0 = lamb0[0]
-    tup = Dlamb / 20
-    tdown = Dlamb / 3
+    tup = Dlamb / 30
+    tdown = Dlamb / 5
     amp = 500 / (np.exp(-(lambm-t0)/tdown) - np.exp(-(lambm-t0)/tup))
 
     coll.add_data(
@@ -191,11 +238,30 @@ def add_data(coll=None):
     )
 
     # --------
+    # double pulse1
+
+    deltat = 0.04e-10
+
+    coll.add_data(
+        key='data_pulse12',
+        data=np.random.poisson(
+            amp * (lamb >= t0) * (
+                np.exp(-(lamb-t0)/tdown) - np.exp(-(lamb-t0)/tup)
+            )
+            + 0.5*amp * (lamb >= (t0 + deltat)) * (
+                np.exp(-(lamb-(t0 + deltat))/tdown) - np.exp(-(lamb-(t0 + deltat))/tup)
+            )
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
     # pulse2
 
     t0 = lamb0[0]
-    tup = Dlamb / 20
-    tdown = Dlamb / 3
+    tup = Dlamb / 30
+    tdown = Dlamb / 5
     indup = (lamb < t0)
     inddown = (lamb >= t0)
     amp = 500
@@ -206,6 +272,25 @@ def add_data(coll=None):
             amp * (
                 indup * np.exp(-(lamb - t0)**2/tup**2)
                 + inddown * np.exp(-(lamb - t0)**2/tdown**2)
+            )
+        ),
+        ref='nlamb',
+        units='counts',
+    )
+
+    # --------
+    # double pulse2
+
+    coll.add_data(
+        key='data_pulse22',
+        data=np.random.poisson(
+            amp * (
+                indup * np.exp(-(lamb - t0)**2/tup**2)
+                + inddown * np.exp(-(lamb - t0)**2/tdown**2)
+            )
+            + 0.5 * amp * (
+                (lamb < (t0+deltat)) * np.exp(-(lamb - (t0+deltat))**2/tup**2)
+                + (lamb >= (t0+deltat)) * np.exp(-(lamb - (t0+deltat))**2/tdown**2)
             )
         ),
         ref='nlamb',
@@ -236,6 +321,22 @@ def add_data(coll=None):
         units='counts',
     )
 
+    # --------
+    # double lognorm
+
+    iok = (lamb >= (t0 + deltat))
+    data2 = np.zeros((lamb.size,))
+    data2[iok] = (amp / (lamb[iok] - (t0 + deltat))) * np.exp(
+        -(np.log(lamb[iok] - (t0 + deltat)) - mu)**2 / (2.*sigma**2)
+    )
+
+    coll.add_data(
+        key='data_lognorm2',
+        data=np.random.poisson(data + 0.5 * data2),
+        ref='nlamb',
+        units='counts',
+    )
+
     # ------------------
     # data 1d
     # ------------------
@@ -260,7 +361,7 @@ def add_data(coll=None):
             ],
             axis=0,
         ),
-        size=nlamb,
+        size=lamb.size,
     ).astype(float)     # + amp0 * 0.10 * np.random.random((nlamb,))
 
     # store
@@ -294,7 +395,7 @@ def add_data(coll=None):
             ],
             axis=0,
         ),
-        size=(nt, nlamb),
+        size=(nt, lamb.size),
     ).astype(float)     # + amp0 * 0.10 * np.random.random((nlamb,))
 
     # store
@@ -322,7 +423,7 @@ def add_data(coll=None):
 # ###################################################
 
 
-def add_models(coll=None, models=None):
+def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
 
     # ---------------
     # check
@@ -339,11 +440,13 @@ def add_models(coll=None, models=None):
         lamb0=3.96e-10,
     )
 
+    lambD = lamb[-1] - lamb[0]
+
     # ---------------
     # dmodels
 
     dmodel = {
-        # Testing fit only
+        # Testing single fit only
         'smlinear': {
             'bck0': 'linear',
         },
@@ -372,6 +475,36 @@ def add_models(coll=None, models=None):
             'l00': 'lognorm',
         },
 
+        # Testing double fits with contraints
+        'smgauss2': {
+            'l00': {'type': 'gauss', 'lamb0': lamb0[0]},
+            'l01': {'type': 'gauss', 'lamb0': lamb0[0]},
+        },
+        'smlorentz2': {
+            'l00': {'type': 'lorentz', 'lamb0': lamb0[0]},
+            'l01': {'type': 'lorentz', 'lamb0': lamb0[0]},
+        },
+        'smpvoigt2': {
+            'l00': {'type': 'pvoigt', 'lamb0': lamb0[0]},
+            'l01': {'type': 'pvoigt', 'lamb0': lamb0[0]},
+        },
+        'smvoigt2': {
+            'l00': {'type': 'voigt', 'lamb0': lamb0[0]},
+            'l01': {'type': 'voigt', 'lamb0': lamb0[0]},
+        },
+        'smpulse12': {
+            'l00': {'type': 'pulse1', 'lamb0': lamb0[0]},
+            'l01': {'type': 'pulse1', 'lamb0': lamb0[0]},
+        },
+        'smpulse22': {
+            'l00': {'type': 'pulse2', 'lamb0': lamb0[0]},
+            'l01': {'type': 'pulse2', 'lamb0': lamb0[0]},
+        },
+        'smlognorm2': {
+            'l00': {'type': 'lognorm', 'lamb0': lamb0[0]},
+            'l01': {'type': 'lognorm', 'lamb0': lamb0[0]},
+        },
+
         # testing model population
         'sm-1': {
             'bck0': 'linear',
@@ -398,7 +531,7 @@ def add_models(coll=None, models=None):
                 'mz': 39.948*scpct.m_u,
             },
             'l02': {
-                'type': 'voigt',
+                'type': 'gauss',
                 'lamb0': 3.97e-10,
                 'mz': 39.948*scpct.m_u,
             },
@@ -419,9 +552,52 @@ def add_models(coll=None, models=None):
     }
 
     dconstraints = {
+        # double
+        'smgauss2': {
+            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
+            'g01': {'ref': 'l00_sigma', 'l01_sigma': [0, 1, 0]},
+            'g02': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
+        },
+        'smlorentz2': {
+            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
+            'g01': {'ref': 'l00_gam', 'l01_gam': [0, 1, 0]},
+            'g02': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
+        },
+        'smpvoigt2': {
+            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
+            'g01': {'ref': 'l00_sigma', 'l01_sigma': [0, 1, 0]},
+            'g02': {'ref': 'l00_gam', 'l01_gam': [0, 1, 0]},
+            'g03': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
+        },
+        'smvoigt2': {
+            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
+            'g01': {'ref': 'l00_sigma', 'l01_sigma': [0, 1, 0]},
+            'g02': {'ref': 'l00_gam', 'l01_gam': [0, 1, 0]},
+            'g03': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
+        },
+        'smpulse12': {
+            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
+            'g01': {'ref': 'l00_t_up', 'l01_t_up': [0, 1, 0]},
+            'g02': {'ref': 'l00_t_down', 'l01_t_down': [0, 1, 0]},
+            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
+        },
+        'smpulse22': {
+            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
+            'g01': {'ref': 'l00_t_up', 'l01_t_up': [0, 1, 0]},
+            'g02': {'ref': 'l00_t_down', 'l01_t_down': [0, 1, 0]},
+            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
+        },
+        'smlognorm2': {
+            'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
+            'g01': {'ref': 'l00_mu', 'l01_mu': [0, 1, 0]},
+            'g02': {'ref': 'l00_sigma', 'l01_sigma': [0, 1, 0]},
+            'g03': {'ref': 'l00_t0', 'l01_t0': [0.04e-10 / lambD, 1, 0]},
+        },
+
+        # multi
         'sm01': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
-            'g01': {'ref': 'l00_sigma', 'l02_gam': [0, 1, 0]},
+            'g01': {'ref': 'l00_sigma', 'l02_sigma': [0, 1, 0]},
         },
         'sm02': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 1, 0]},
@@ -584,10 +760,10 @@ def interpolate_spectral_model(coll=None):
                     lkstore.append(store_key)
 
         # remove data (but not model ref)
-        # del coll._ddata[kdata]
+        del coll._ddata[kdata]
 
     # remove stored output
-    # coll.remove_data(lkstore)
+    coll.remove_data(lkstore)
 
     return
 
@@ -620,7 +796,7 @@ def _get_dxfree(t=None, lamb=None):
     # 'bck0_amp', 'bck0_rate',
     # 'l00_amp', 'l00_vccos', 'l00_sigma',
     # 'l01_vccos', 'l01_gam',
-    # 'l02_amp', 'l02_vccos', 'l02_sigma',
+    # 'l02_amp', 'l02_vccos',
 
     # sm02
     # 'bck0_amp', 'bck0_rate',
@@ -646,6 +822,15 @@ def _get_dxfree(t=None, lamb=None):
         'smpulse2': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
         'smlognorm': np.r_[amp, t0, mu, sigma],
 
+        # double simple
+        'smgauss2': np.r_[1, 0.004, 0.003e-10],
+        'smlorentz2': np.r_[0.9, -0.006, 0.003e-10],
+        'smpvoigt2': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
+        'smvoigt2': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
+        'smpulse12': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
+        'smpulse22': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
+        'smlognorm2': np.r_[amp, t0, mu, sigma],
+
         # testing complex models
         'sm00': np.r_[
             0.1 - lamb[0] * 0.1/lambD, 0.1 / lambD,
@@ -657,7 +842,7 @@ def _get_dxfree(t=None, lamb=None):
             0.2*lamb[0]*np.exp(rate/lamb[0]), rate,
             1, 0.001, 0.003e-10,
             -0.001, 0.001e-10,
-            1.e-12, 0.001, 0.002e-10,
+            1.e-12, 0.001,
         ][None, :] * np.exp(-(t[:, None] - tm)**2 / 2**2),
         'sm02': np.r_[
             0.2*lamb[0]*np.exp(rate/lamb[0]), rate,
@@ -718,6 +903,7 @@ def add_fit(coll=None, key_model=None, key_data=None):
         lk = [
             k0 for k0, v0 in coll.dobj['spect_fit'].items()
             if v0['key_data'] == key_data
+            and v0['key_model'] == key_model
         ]
         if len(lk) > 0:
             return
@@ -795,10 +981,28 @@ def add_fit_single(coll=None):
     return
 
 
+def add_fit_double(coll=None):
+
+    lk = [
+        ('smgauss2', 'data_gauss2'),
+        ('smlorentz2', 'data_lorentz2'),
+        ('smpvoigt2', 'data_pvoigt2'),
+        ('smpulse12', 'data_pulse12'),
+        ('smpulse22', 'data_pulse22'),
+        ('smlognorm2', 'data_lognorm2'),
+    ]
+
+    for (key_model, key_data) in lk:
+        add_fit(coll=coll, key_model=key_model, key_data=key_data)
+
+    return
+
+
 def add_fit_multi(coll=None):
 
     lk = [
-        ('sm00', 'data1d'),
+        # ('sm00', 'data1d'),
+        ('sm01', 'data1d'),
     ]
 
     for (key_model, key_data) in lk:
@@ -899,6 +1103,35 @@ def compute_fit_single(coll=None, binning=None):
         'data_linear', 'data_exp',
         'data_gauss', 'data_lorentz', 'data_pvoigt',
         'data_pulse1', 'data_pulse2', 'data_lognorm',
+    ]
+
+    for key_data in lk:
+        compute_fit(coll, key_data=key_data, binning=binning)
+
+    return
+
+
+def compute_fit_double(coll=None, binning=None):
+
+    # --------------------
+    # add models if needed
+    # --------------------
+
+    add_models(coll)
+
+    # ---------------
+    # add fits if needed
+    # ---------------
+
+    add_fit_single(coll)
+
+    # --------------------
+    # compute
+    # --------------------
+
+    lk = [
+        'data_gauss2', 'data_lorentz2', 'data_pvoigt2',
+        'data_pulse12', 'data_pulse22', 'data_lognorm2',
     ]
 
     for key_data in lk:

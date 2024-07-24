@@ -569,21 +569,26 @@ def _get_var_dind(
     for ktype in types:
         lf = [k0 for k0 in keys if dmodel[k0]['type'] == ktype]
         for kvar in _DMODEL[ktype]['var']:
-            dind['jac'][ktype][kvar] = np.array(
-                [
-                    x_free.index(f"{kf}_{kvar}")
-                    for kf in lf
-                    if f"{kf}_{kvar}" in x_free
-                ],
+            lvar = [f"{kf}_{kvar}" for kf in lf]
+            lind = [ii for ii, vv in enumerate(lvar) if vv in x_free]
+
+            inds = np.array(
+                [x_free.index(lvar[ii]) for ii in lind],
                 dtype=int,
             )
+
+            if inds.size > 0:
+                dind['jac'][ktype][kvar] = {
+                    'val': inds,
+                    'var': np.array(lind, dtype=int),
+                }
 
     # ---------------
     # safety checks
     # ---------------
 
     lind = sorted(itt.chain.from_iterable([
-        list(itt.chain.from_iterable([v1.tolist() for v1 in v0.values()]))
+        list(itt.chain.from_iterable([v1['val'].tolist() for v1 in v0.values()]))
         for v0 in dind['jac'].values()
     ]))
     if not np.allclose(lind, np.arange(len(x_free))):
