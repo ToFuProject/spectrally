@@ -21,8 +21,14 @@ _DMODEL = {
     # ----------
     # background
 
-    'linear': {'var': ['a0', 'a1']},
-    'exp_lamb': {'var': ['amp', 'rate']},
+    'linear': {
+        'var': ['a0', 'a1'],
+        'description': 'straight line',
+    },
+    'exp_lamb': {
+        'var': ['amp', 'rate'],
+        'description': 'Bremsstrahlung-like exponential',
+    },
 
     # --------------
     # spectral lines
@@ -30,18 +36,22 @@ _DMODEL = {
     'gauss': {
         'var': ['amp', 'vccos', 'sigma'],
         'param': [('lamb0', float), ('mz', float, np.nan)],
+        'description': 'gaussian',
     },
     'lorentz': {
         'var': ['amp', 'vccos', 'gam'],
         'param': [('lamb0', float), ('mz', float, np.nan)],
+        'description': 'lorentzian',
     },
     'pvoigt': {
         'var': ['amp', 'vccos', 'sigma', 'gam'],
         'param': [('lamb0', float), ('mz', float, np.nan)],
+        'description': 'pseudo-voigt',
     },
     'voigt': {
         'var': ['amp', 'vccos', 'sigma', 'gam'],
         'param': [('lamb0', float), ('mz', float, np.nan)],
+        'description': 'voigt',
     },
 
     # -----------
@@ -49,12 +59,15 @@ _DMODEL = {
 
     'pulse1': {
         'var': ['amp', 't0', 't_up', 't_down'],
+        'description': 'asymmetric pulse, 2 exponentials',
     },
     'pulse2': {
         'var': ['amp', 't0', 't_up', 't_down'],
+        'description': 'asymmetric pulse, 2 gaussians',
     },
     'lognorm': {
         'var': ['amp', 't0', 'mu', 'sigma'],
+        'description': 'asymmetric pulse, lognorm',
     },
 }
 

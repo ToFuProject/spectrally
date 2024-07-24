@@ -198,7 +198,10 @@ def get_available_spectral_model_functions(
     # ---------------------------
 
     lvar = [f"var{ii}" for ii in range(nvarmax)]
-    lcol = [['use case', ' ', 'func type', ' '] + lvar + [' '] + lpar]
+    lcol = [
+        ['use case', ' ', 'func type', ' ', 'description', ' ']
+        + lvar + [' '] + lpar
+    ]
 
     # ---------------------------
     # data
@@ -219,7 +222,7 @@ def get_available_spectral_model_functions(
             use = ''
 
         # initialize with key, type
-        arr = [use, '|', kf, '|']
+        arr = [use, '|', kf, '|', dmodel[kf]['description'], '|']
 
         # add variables of each func
         for ii, k1 in enumerate(dmodel[kf]['var']):
