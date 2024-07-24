@@ -80,7 +80,7 @@ class Test00_Populate():
     def test00_get_available_spectral_model_funcstions(self):
         get_available_spectral_model_functions()
 
-    def test01_get_available_spectral_model_funcstions(self):
+    def test01_display_spectral_model_function(self):
         lm = [
             'linear', 'exp_lamb',
             'gauss', 'lorentz', 'pvoigt',

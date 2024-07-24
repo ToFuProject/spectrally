@@ -323,6 +323,7 @@ def _plot(
     for kax in lax:
         ax = dax[kax]['handle']
 
+        # main expression
         ax.text(
             0.,
             0.5,
@@ -334,10 +335,25 @@ def _plot(
             verticalalignment='center',
         )
 
+        # reference
+        ref = dfunc['expressions'].get('ref')
+        if ref is not None:
+            ax.text(
+                0.,
+                0.1,
+                ref,
+                size=16,
+                fontweight='bold',
+                transform=ax.transAxes,
+                horizontalalignment='left',
+                verticalalignment='center',
+            )
+
+        # others
         nexp = len(dfunc['expressions']) - 1
         for ii, (k0, v0) in enumerate(dfunc['expressions'].items()):
 
-            if k0 == 'main':
+            if k0 in ['main', 'ref']:
                 continue
 
             ax.text(

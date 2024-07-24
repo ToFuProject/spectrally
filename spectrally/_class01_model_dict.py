@@ -102,8 +102,9 @@ _DMODEL = {
         'description': 'pseudo-voigt',
         'expressions': {
             'main': (
-                r"$A \left[\frac{\eta}{1 + \left(\frac{\lambda - \lambda_0(1 + \frac{v}{c}\cos)}{\gamma}\right)^2} + (1-\eta)e^{-\frac{\left(\lambda - \lambda_0(1 + \frac{v}{c}\cos)\right)^2}{2\sigma^2}}\right]$"
+                r"$\left\{ \begin{array}{ll} A \left[\frac{\eta}{1 + \left(\frac{\lambda - \lambda_0(1 + \frac{v}{c}\cos)}{\gamma}\right)^2} + (1-\eta)e^{-\frac{\left(\lambda - \lambda_0(1 + \frac{v}{c}\cos)\right)^2}{2\sigma^2}}\right] \\ \eta = g(\sigma, \gamma) \end{array} \right.$"
             ),
+            'ref': "https://en.wikipedia.org/wiki/Voigt_profile",
             'argmax': r"$\lambda_{max} = \lambda_0(1 + \frac{v}{c}\cos)$",
             'max': r"$f(\lambda_{max}) = A$",
             'Ti': "",

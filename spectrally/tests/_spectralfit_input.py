@@ -1042,9 +1042,8 @@ def plot_input_validity(coll=None, key_data=None):
 
     for k0 in lk:
         _ = coll.plot_spectral_fit_input_validity(k0)
+        plt.close('all')
 
-    # close
-    plt.close('all')
     return
 
 

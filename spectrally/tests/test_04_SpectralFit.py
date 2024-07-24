@@ -123,5 +123,5 @@ class Test00_Populate():
     #   Special cases
     # ------------------------
 
-    def test99_HXR_pulses(self):
+    def test99_compute_HXR_pulses(self):
         _hxr_pulses.main(self.coll)
