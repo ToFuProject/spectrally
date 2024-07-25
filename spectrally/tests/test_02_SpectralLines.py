@@ -89,7 +89,7 @@ class Test00_Populate():
                 # flag that it is running on Github
                 (
                     '/runner/.spectrally/nist/',       # MacOS and linux
-                    'runneradmin\.spectrally\nist',    # Windows
+                    'runneradmin',    # Windows
                 ),
             ]
             din = {
