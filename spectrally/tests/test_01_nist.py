@@ -103,20 +103,23 @@ class Test_nist(object):
                 del out
 
             except Exception as err:
-                c0 = all([
-                    ss in str(err)
-                    for ss in [
-                        '503 Server Error: Service Unavailable for url:',
-                        'File could not be downloaded:',
-                        '=> Maybe check internet connection?',
-                        # flag that it is running on Github
-                        '/runner/.spectrally/nist/',
-                    ]
-                ])
-                if c0:
+
+                lstr = [
+                    '503 Server Error: Service Unavailable for url:',
+                    'File could not be downloaded:',
+                    '=> Maybe check internet connection?',
+                    # flag that it is running on Github
+                    '/runner/.spectrally/nist/',
+                ]
+                din = {
+                    ii: ss in str(err) for ii, ss in enumerate(lstr)
+                }
+                if all([vv for vv in din.values()]):
                     pass
                 else:
-                    raise err
+                    lstr = ["\t- {k0}: {v0}" for k0, v0 in din.items()]
+                    msg = "\n\n" + "\n".join(lstr) + "\n"
+                    raise Exception(msg) from err
 
     # ------------------------
     #  clear cache
