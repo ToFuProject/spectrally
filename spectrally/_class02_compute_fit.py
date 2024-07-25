@@ -70,7 +70,7 @@ def main(
         binning,
         chain,
         store, overwrite,
-        strict, verb, timing,
+        strict, verb, verb_scp, timing,
     ) = _check(
         coll=coll,
         key=key,
@@ -107,7 +107,7 @@ def main(
     dsolver_options = _get_solver_options(
         solver=solver,
         dsolver_options=dsolver_options,
-        verb=verb,
+        verb_scp=verb_scp,
     )
 
     # ------------
@@ -119,6 +119,19 @@ def main(
 
     else:
         pass
+
+    # -----------
+    # verb
+
+    if verb >= 1:
+        msg = (
+            "\n\n-------------------------------------------\n"
+            f"\tComputing spectral fit '{key}'\n"
+        )
+        print(msg)
+
+    # --------
+    # run
 
     dout = compute(
         coll=coll,
@@ -146,6 +159,7 @@ def main(
         # options
         strict=strict,
         verb=verb,
+        verb_scp=verb_scp,
         timing=timing,
     )
 
@@ -170,6 +184,7 @@ def main(
     # ------------
 
     if store is True:
+
         _store(
             coll=coll,
             overwrite=overwrite,
@@ -184,6 +199,8 @@ def main(
             binning=binning,
             # dout
             dout=dout,
+            # verb
+            verb=verb,
         )
 
     return dout
@@ -327,6 +344,16 @@ def _check(
     )
     if verb is True:
         verb = def_verb
+    elif verb is False:
+        verb = 0
+
+    # verb_scp
+    verb_scp = {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 2,
+    }[verb]
 
     # --------------
     # timing
@@ -347,7 +374,7 @@ def _check(
         binning,
         chain,
         store, overwrite,
-        strict, verb, timing,
+        strict, verb, verb_scp, timing,
     )
 
 
@@ -360,7 +387,7 @@ def _check(
 def _get_solver_options(
     solver=None,
     dsolver_options=None,
-    verb=None,
+    verb_scp=None,
 ):
 
     # -------------------
@@ -392,7 +419,7 @@ def _get_solver_options(
             diff_step=None,
             max_nfev=None,
             loss='linear',
-            verbose=verb,
+            verbose=verb_scp,
         )
 
     else:
@@ -443,6 +470,8 @@ def _store(
     binning=None,
     # dout
     dout=None,
+    # verb
+    verb=None,
 ):
 
     # ------------
@@ -497,7 +526,7 @@ def _store(
 
     # other outputs
     lk = [
-        'cost', 'chi2n', 'time', 'success', 'nfev',
+        'cost', 'chi2n', 'time', 'status', 'nfev',
         'msg', 'validity', 'errmsg',
     ]
     dk_out = {k0: f"{key}_{k0}" for k0 in lk}
@@ -547,5 +576,13 @@ def _store(
     else:
         for k0, k1 in dk_out.items():
             coll._dobj[wsf][key]['dsolver'][k0] = k1
+
+    # ---------
+    # verb
+    # ----------
+
+    if verb >= 2:
+        msg = f"Storing under key '{ksol}'"
+        print(msg)
 
     return
