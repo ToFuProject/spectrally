@@ -117,7 +117,7 @@ class Test_nist(object):
                 if all([vv for vv in din.values()]):
                     pass
                 else:
-                    lstr = ["\t- {k0}: {v0}" for k0, v0 in din.items()]
+                    lstr = [f"\t- {k0}: {v0}" for k0, v0 in din.items()]
                     msg = "\n\n" + "\n".join(lstr) + "\n"
                     raise Exception(msg) from err
 
