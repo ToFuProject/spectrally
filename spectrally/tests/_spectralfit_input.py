@@ -896,7 +896,11 @@ def get_spectral_model_moments(coll=None):
 
     wsm = coll._which_model
     for kmodel in coll.dobj[wsm].keys():
-        _ = coll.get_spectral_model_moments(kmodel, key_data=f"xfree_{kmodel}")
+        _ = coll.get_spectral_model_moments(
+            kmodel,
+            key_data=f"xfree_{kmodel}",
+            lamb='lamb',
+        )
 
     return
 
