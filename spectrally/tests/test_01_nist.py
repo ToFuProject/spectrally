@@ -87,19 +87,44 @@ class Test_nist(object):
                 continue
             print(f'{ii} / {itot}  -  {comb}')
 
-            # out = nist.step01_search_online_by_wavelengthA(
-                # lambmin=comb[0],
-                # lambmax=comb[1],
-                # ion=comb[2],
-                # verb=True,
-                # return_dout=True,
-                # return_dsources=True,
-                # cache_from=comb[3],
-                # cache_info=True,
-                # format_for_DataStock=comb[4],
-                # create_custom=True,
-            # )
-            # del out
+            try:
+                out = nist.step01_search_online_by_wavelengthA(
+                    lambmin=comb[0],
+                    lambmax=comb[1],
+                    ion=comb[2],
+                    verb=True,
+                    return_dout=True,
+                    return_dsources=True,
+                    cache_from=comb[3],
+                    cache_info=True,
+                    format_for_DataStock=comb[4],
+                    create_custom=True,
+                )
+                del out
+
+            except Exception as err:
+
+                lstr = [
+                    '503 Server Error: Service Unavailable for url:',
+                    'File could not be downloaded:',
+                    '=> Maybe check internet connection?',
+                    # flag that it is running on Github
+                    (
+                        '/runner/.spectrally/nist/',       # MacOS and linux
+                        'runneradmin',    # Windows
+                    ),
+                ]
+                din = {
+                    ii: ss in str(err) if isinstance(ss, str)
+                    else any([s2 in str(err) for s2 in ss])
+                    for ii, ss in enumerate(lstr)
+                }
+                if all([vv for vv in din.values()]):
+                    pass
+                else:
+                    lstr = [f"\t- {k0}: {v0}" for k0, v0 in din.items()]
+                    msg = "\n\n" + "\n".join(lstr) + "\n"
+                    raise Exception(msg) from err
 
     # ------------------------
     #  clear cache
