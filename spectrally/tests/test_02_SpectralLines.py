@@ -75,11 +75,34 @@ class Test00_Populate():
         )
 
     def test03_add_spectral_lines_from_nist(self):
-        self.coll.add_spectral_lines_from_nist(
-            lambmin=3.94e-10,
-            lambmax=4e-10,
-            element='Ar',
-        )
+        try:
+            self.coll.add_spectral_lines_from_nist(
+                lambmin=3.94e-10,
+                lambmax=4e-10,
+                element='Ar',
+            )
+        except Exception as err:
+            lstr = [
+                '503 Server Error: Service Unavailable for url:',
+                'File could not be downloaded:',
+                '=> Maybe check internet connection?',
+                # flag that it is running on Github
+                (
+                    '/runner/.spectrally/nist/',       # MacOS and linux
+                    'runneradmin',    # Windows
+                ),
+            ]
+            din = {
+                ii: ss in str(err) if isinstance(ss, str)
+                else any([s2 in str(err) for s2 in ss])
+                for ii, ss in enumerate(lstr)
+            }
+            if all([vv for vv in din.values()]):
+                pass
+            else:
+                lstr = [f"\t- {k0}: {v0}" for k0, v0 in din.items()]
+                msg = "\n\n" + "\n".join(lstr) + "\n"
+                raise Exception(msg) from err
 
     # ----------------
     # removing
@@ -87,16 +110,14 @@ class Test00_Populate():
 
     def test04_remove_spectral_lines(self):
         # populate
-        self.coll.add_spectral_lines_from_file(self.pfe_json)
-        self.coll.add_spectral_lines_from_nist(
-            lambmin=3.94e-10,
-            lambmax=4e-10,
-            element='Ar',
-        )
+        wsl = self.coll._which_lines
+        if len(self.coll.dobj.get(wsl, {})) == 0:
+            self.coll.add_spectral_lines_from_file(self.pfe_json)
+
         # remove
         lines = [
-            k0 for k0, v0 in self.coll.dobj[self.coll._which_lines].items()
-            if v0['source'] != 'file'
+            k0 for k0, v0 in self.coll.dobj[wsl].items()
+            if v0['ion'] != 'Ar16+'
         ]
         self.coll.remove_spectral_lines(lines)
 

@@ -446,8 +446,9 @@ def _csv_parser(
             msg = (
                 str(err)
                 + "\n\nFile could not be downloaded:\n"
-                + "\t{}\n".format(url)
-                + "  => Maybe check internet connection?"
+                f"\t{url}\n"
+                f"\t to target: {pfe}\n"
+                "  => Maybe check internet connection?"
             )
             raise Exception(msg)
 
