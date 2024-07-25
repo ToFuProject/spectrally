@@ -174,7 +174,13 @@ setup(
     # Theye are generally preferable over scripts because they provide
     # cross-platform support and allow pip to create the appropriate form
     # of executable for the target platform.
-    # entry_points={},
+    entry_points={
+        'console_scripts': [
+            'spectrally-version=scripts.spectrallyversion:main',
+            'specrally-custom=scripts.spectrallycustom:main',
+            'spectrally=scripts.spectrally_bash:main',
+        ],
+    },
     # include_dirs=[np.get_include()],
 
     py_modules=['_updateversion'],
