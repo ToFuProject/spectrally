@@ -87,19 +87,19 @@ class Test_nist(object):
                 continue
             print(f'{ii} / {itot}  -  {comb}')
 
-            # out = nist.step01_search_online_by_wavelengthA(
-                # lambmin=comb[0],
-                # lambmax=comb[1],
-                # ion=comb[2],
-                # verb=True,
-                # return_dout=True,
-                # return_dsources=True,
-                # cache_from=comb[3],
-                # cache_info=True,
-                # format_for_DataStock=comb[4],
-                # create_custom=True,
-            # )
-            # del out
+            out = nist.step01_search_online_by_wavelengthA(
+                lambmin=comb[0],
+                lambmax=comb[1],
+                ion=comb[2],
+                verb=True,
+                return_dout=True,
+                return_dsources=True,
+                cache_from=comb[3],
+                cache_info=True,
+                format_for_DataStock=comb[4],
+                create_custom=True,
+            )
+            del out
 
     # ------------------------
     #  clear cache
