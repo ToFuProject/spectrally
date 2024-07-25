@@ -26,7 +26,7 @@ _PKGPATH = os.path.dirname(_HERE)
 _ENTRYPOINTS_PATH = os.path.join(_PKGPATH, _PKG, 'entrypoints')
 
 
-_LOPTIONS = ['--version', 'custom', 'plot', 'calc']
+_LOPTIONS = ['--version', 'custom']
 _LOPSTRIP = [ss.strip('--') for ss in _LOPTIONS]
 
 
@@ -68,13 +68,6 @@ def spectrally_bash(option=None, ddef=None, **kwdargs):
         import spectrallycustom
         _ = sys.path.pop(1)
         spectrallycustom.custom(ddef=ddef, **kwdargs)
-
-    # plot
-    elif option == 'plot':
-        sys.path.insert(1, _ENTRYPOINTS_PATH)
-        import spectrallyplot
-        _ = sys.path.pop(1)
-        spectrallyplot.call_tfloadimas(ddef=ddef, **kwdargs)
 
     return
 
