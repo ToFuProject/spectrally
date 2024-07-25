@@ -108,16 +108,11 @@ class Test00_Populate():
         wsl = self.coll._which_lines
         if len(self.coll.dobj.get(wsl, {})) == 0:
             self.coll.add_spectral_lines_from_file(self.pfe_json)
-            self.coll.add_spectral_lines_from_nist(
-                lambmin=3.94e-10,
-                lambmax=4e-10,
-                element='Ar',
-            )
 
         # remove
         lines = [
             k0 for k0, v0 in self.coll.dobj[wsl].items()
-            if v0['source'] != 'file'
+            if v0['ion'] != 'Ar16+'
         ]
         self.coll.remove_spectral_lines(lines)
 
