@@ -52,11 +52,21 @@ def main(
     # options
     strict=None,
     verb=None,
+    verb_scp=None,
     timing=None,
 ):
     """ Fit 1d spectra
 
     """
+
+    # -----------
+    # verb
+
+    if verb >= 2:
+        msg = (
+            "Preparing input data (scales, bounds, x0...)\n"
+        )
+        print(msg)
 
     # ------------
     # iok
@@ -205,6 +215,7 @@ def main(
         lk_xfree=lk_xfree,
         strict=strict,
         verb=verb,
+        verb_scp=verb_scp,
         timing=timing,
     )
 
@@ -287,6 +298,7 @@ def _loop(
     lk_xfree=None,
     strict=None,
     verb=None,
+    verb_scp=None,
     timing=None,
 ):
 
@@ -311,20 +323,49 @@ def _loop(
     # nspect
     nspect = int(np.prod(shape_reduced))
 
-    # verb init
-    if verb is not False:
-        end = '\r'
-
     # timing init
     if timing is True:
         t0 = dtm.datetime.now()
+
+    # -----------------
+    # prepare verb
+    # -----------------
+
+    # verb init
+    if verb == 1:
+        end = '\r'
+    elif verb in [2, 3]:
+        end = '\n'
+
+    # iterations
+    if verb >= 1:
+        sep = '  '
+        ditems = {
+            'spectrum ind': {
+                'just': max(13, len(str(shape_reduced))*2+3),
+                'val': None,
+            },
+            'nfev': {'just': 6, 'val': None},
+            'cost_final': {'just': 10, 'val': None},
+            'status': {'just': 6, 'val': None},
+            # 'termination': {'just': 12, 'val': None},
+        }
+        litems = ['spectrum ind', 'nfev', 'cost_final', 'status']
+
+        if verb in [1, 2]:
+            msg = (
+                sep.join([k0.ljust(ditems[k0]['just']) for k0 in litems])
+                + '\n'
+                + sep.join(['-'*ditems[k0]['just'] for k0 in litems])
+            )
+            print(msg)
 
     # -----------------
     # initialize
     # -----------------
 
     validity = np.zeros(shape_reduced, dtype=int)
-    success = np.full(shape_reduced, np.nan)
+    status = np.full(shape_reduced, np.nan)
     cost = np.full(shape_reduced, np.nan)
     chi2n = np.full(shape_reduced, np.nan)
     nfev = np.full(shape_reduced, np.nan)
@@ -383,7 +424,7 @@ def _loop(
         # verb
 
         if verb == 3:
-            msg = f"\nspect {ii+1} / {nspect}"
+            msg = f"\nspectrum {ind} / {shape_reduced}"
             print(msg)
 
         # -----------
@@ -422,7 +463,7 @@ def _loop(
             time[ind] = round(dti, ndigits=6)
 
             # other outputs
-            success[ind] = res.success
+            status[ind] = res.status
             cost[ind] = res.cost
             nfev[ind] = res.nfev
 
@@ -461,6 +502,32 @@ def _loop(
                 errmsg[ii] = msg
                 validity[ii] = -2
 
+        # -------------
+        # verb
+
+        finally:
+
+            if verb in [1, 2]:
+                ditems['spectrum ind']['val'] = f"{ind} / {shape_reduced}"
+                ditems['status']['val'] = f"{status[ind]:.0f}"
+                ditems['cost_final']['val'] = f"{cost[ind]:.4e}"
+                ditems['nfev']['val'] = f"{nfev[ind]:.0f}"
+
+                msg = (
+                    sep.join([
+                        ditems[k0]['val'].ljust(ditems[k0]['just'])
+                        for k0 in litems
+                    ])
+                )
+                print(msg, end=end)
+
+    # -------------
+    # adjust verb
+    # -------------
+
+    if verb == 2:
+        print()
+
     # --------------
     # prepare output
     # --------------
@@ -472,7 +539,7 @@ def _loop(
         'nfev': nfev,
         'cost': cost,
         'chi2n': chi2n,
-        'success': success,
+        'status': status,
         'time': time,
         'errmsg': np.reshape(errmsg, shape_reduced),
         'scales': scales,
