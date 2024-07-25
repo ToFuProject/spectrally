@@ -203,6 +203,8 @@ def main(
             verb=verb,
         )
 
+        dout = None
+
     return dout
 
 

@@ -9,6 +9,9 @@ Created on Sat Jul  6 17:31:49 2024
 import numpy as np
 
 
+from . import _class01_model_dict
+
+
 #############################################
 #############################################
 #    DEFAULTS
@@ -96,7 +99,16 @@ def _get_dict(
     for k0, v0 in din.items():
 
         # get func name and type + variable name
-        ftype = [k1 for k1, v1 in dmodel.items() if k0 in v1.keys()][0]
+        ftype = dmodel['_'.join(k0.split('_')[:-1])]['type']
+        if not ftype in _class01_model_dict._DMODEL.keys():
+            msg = (
+                "Unknown function type for variable:\n"
+                f"\t- var: {k0}\n"
+                f"\t- ftype: {ftype}\n"
+            )
+            raise Exception(msg)
+
+
         var = k0.split('_')[-1]
 
         if ftype not in dout.keys():
@@ -112,13 +124,13 @@ def _get_dict(
     # sort
     # --------------
 
-    lktypes = list(dout.items())
+    lktypes = list(dout.keys())
     for k0 in lktypes:
         lkvar = list(dout[k0].keys())
         for k1 in lkvar:
             inds = np.argsort(dout[k0][k1]['ind'])
-            dout[k0][var]['ind'] = np.array(dout[k0][k1]['ind'])[inds]
-            dout[k0][var]['val'] = np.array(dout[k0][k1]['val'])[inds]
+            dout[k0][k1]['ind'] = np.array(dout[k0][k1]['ind'])[inds]
+            dout[k0][k1]['val'] = np.array(dout[k0][k1]['val'])[inds]
 
     return dout
 
