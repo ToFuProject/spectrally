@@ -56,6 +56,7 @@ _DMODEL = {
         'description': 'Bremsstrahlung-like exponential',
         'expressions': {
             'main': r"$\frac{A}{\lambda} e^{-\frac{rate}{\lambda}}$",
+            'Te': r"$k_BT_e [eV] = \frac{hc}{rate} \times \frac{1}{e}$",
         },
     },
 
@@ -74,8 +75,8 @@ _DMODEL = {
             'main': r"$A e^{-\frac{\left(\lambda - \lambda_0(1 + \frac{v}{c}\cos)\right)^2}{2\sigma^2}}$",
             'argmax': r"$\lambda_{max} = \lambda_0(1 + \frac{v}{c}\cos)$",
             'max': r"$f(\lambda_{max}) = A$",
+            'Ti': r"$k_BT_i [eV] = m_z c^2 \left(\frac{\sigma}{\lambda_0}\right)^2 \times e$",
             "FWHM": "",
-            'Ti': "",
         },
     },
 
@@ -107,7 +108,7 @@ _DMODEL = {
             'ref': "https://en.wikipedia.org/wiki/Voigt_profile",
             'argmax': r"$\lambda_{max} = \lambda_0(1 + \frac{v}{c}\cos)$",
             'max': r"$f(\lambda_{max}) = A$",
-            'Ti': "",
+            'Ti': r"$k_BT_i [eV] = m_z c^2 \left(\frac{\sigma}{\lambda_0}\right)^2 \times e$",
         },
     },
 
@@ -122,7 +123,7 @@ _DMODEL = {
             'main': r"$$",
             'argmax': "",
             'max': "",
-            'Ti': "",
+            'Ti': r"$k_BT_i [eV] = m_z c^2 \left(\frac{\sigma}{\lambda_0}\right)^2 \times e$",
         },
     },
 
