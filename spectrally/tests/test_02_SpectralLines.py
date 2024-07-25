@@ -87,10 +87,15 @@ class Test00_Populate():
                 'File could not be downloaded:',
                 '=> Maybe check internet connection?',
                 # flag that it is running on Github
-                '/runner/.spectrally/nist/',
+                (
+                    '/runner/.spectrally/nist/',       # MacOS and linux
+                    'runneradmin\.spectrally\nist',    # Windows
+                ),
             ]
             din = {
-                ii: ss in str(err) for ii, ss in enumerate(lstr)
+                ii: ss in str(err) if isinstance(ss, str)
+                else any([s2 in str(err) for s2 in ss])
+                for ii, ss in enumerate(lstr)
             }
             if all([vv for vv in din.values()]):
                 pass
