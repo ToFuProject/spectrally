@@ -54,7 +54,16 @@ def _dmodel(
 
     # add ref_nfun
     knfunc = f"nf_{key}"
-    coll.add_ref(knfunc, size=len(dmodel))
+    if knfunc not in coll.dref.keys():
+        coll.add_ref(knfunc, size=len(dmodel))
+    elif coll.dref[knfunc]['size'] != len(dmodel):
+        msg = (
+            f"add_model('{key}') requires adding ref knfunc = '{knfunc}'"
+            " but it already exists and doesn't have the correct value!\n"
+            f"\t- existing: {coll.dref[knfunc]['size']}\n"
+            f"\t- requested: {len(dmodel)}\n"
+        )
+        raise Exception(msg)
 
     # dmodel
     dobj = {

@@ -50,7 +50,16 @@ def _dconstraints(
 
     # add ref_nx (number of free parameters)
     knfree = f"nx_{key}"
-    coll.add_ref(knfree, size=len(dconstraints['groups']))
+    if knfree not in coll.dref.keys():
+        coll.add_ref(knfree, size=len(dconstraints['groups']))
+    elif coll.dref[knfree]['size'] != len(dconstraints['groups']):
+        msg = (
+            f"add_model('{key}') requires adding ref knfree = '{knfree}'"
+            " but it already exists and doesn't have the correct value!\n"
+            f"\t- existing: {coll.dref[knfree]['size']}\n"
+            f"\t- requested: {len(dconstraints['groups'])}\n"
+        )
+        raise Exception(msg)
 
     # dconstraints
     wsm = coll._which_model
