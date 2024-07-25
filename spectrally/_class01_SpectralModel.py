@@ -199,7 +199,7 @@ class SpectralModel(Previous):
 
     def get_spectral_model_moments(
         self,
-        key_model=None,
+        key=None,
         key_data=None,
         lamb=None,
     ):
@@ -216,7 +216,7 @@ class SpectralModel(Previous):
         Parameters
         ----------
         key_model : str
-            key to the desired spectral model
+            key to the desired spectral model (or spectral fit)
         key_data : str
             key to the data to be used as input for the model's free variables
         lamb:str or 1d np.ndarray, optional
@@ -231,7 +231,7 @@ class SpectralModel(Previous):
 
         dout = _moments.main(
             coll=self,
-            key_model=key_model,
+            key=key,
             key_data=key_data,
             lamb=lamb,
         )

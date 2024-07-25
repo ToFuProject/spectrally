@@ -65,6 +65,7 @@ class Test00_Populate():
 
         # add data
         _inputs.add_data(self.coll)
+        _inputs.add_xfree(self.coll)
 
         # add spectral lines
         pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
@@ -99,5 +100,8 @@ class Test00_Populate():
     def test04_interpolate_spectral_model(self):
         _inputs.interpolate_spectral_model(self.coll)
 
-    def test05_plot_spectral_model(self):
+    def test05_get_spectral_model_moments(self):
+        _inputs.get_spectral_model_moments(self.coll)
+
+    def test06_plot_spectral_model(self):
         _inputs.plot_spectral_model(self.coll)

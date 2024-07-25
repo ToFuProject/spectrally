@@ -664,7 +664,7 @@ def _get_func_jacob(
             vind = dind['jac'][kfunc].get('gam')
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
-                dg_fl = 2 * scales[ival]
+                dg_fl = 2
                 dg_ftot = (1/5) * ftot_norm**(-4./5.) * dg_fl * (
                     2.69269*fg**4 + 2.42843*fg**3*2*fl
                     + 4.47163*fg**2*3*fl**2 + 0.07842*fg*4*fl**3 + 5*fl**4
