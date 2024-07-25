@@ -110,7 +110,7 @@ class Test_nist(object):
                         'File could not be downloaded:',
                         '=> Maybe check internet connection?',
                         # flag that it is running on Github
-                        '/home/runner/.spectrally/nist/',
+                        '/runner/.spectrally/nist/',
                     ]
                 ])
                 if c0:
