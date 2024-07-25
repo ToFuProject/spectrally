@@ -313,7 +313,7 @@ def _get_func_moments(
 
             # argmax
             dout[kfunc]['argmax'] = _get_line_argmax(
-                vccos, param_val, dind, kfunc, shape, axis,
+                vccos, param_val, dind, kfunc, amp.shape, axis,
             )
 
             # integral
@@ -342,7 +342,7 @@ def _get_func_moments(
 
             # argmax
             dout[kfunc]['argmax'] = _get_line_argmax(
-                vccos, param_val, dind, kfunc, shape, axis,
+                vccos, param_val, dind, kfunc, amp.shape, axis,
             )
 
             # integral
@@ -360,7 +360,7 @@ def _get_func_moments(
 
             # argmax
             dout[kfunc]['argmax'] = _get_line_argmax(
-                vccos, param_val, dind, kfunc, shape, axis,
+                vccos, param_val, dind, kfunc, amp.shape, axis,
             )
 
             # integral
@@ -389,7 +389,7 @@ def _get_func_moments(
 
             # argmax
             dout[kfunc]['argmax'] = _get_line_argmax(
-                vccos, param_val, dind, kfunc, shape, axis,
+                vccos, param_val, dind, kfunc, amp.shape, axis,
             )
 
             # integral
