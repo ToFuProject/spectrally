@@ -364,13 +364,13 @@ def _get_func_moments(
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']]
-            t0 = x_full[dind[kfunc]['t0']['ind']]
+            tau = x_full[dind[kfunc]['tau']['ind']]
             tup = x_full[dind[kfunc]['t_up']['ind']]
             tdown = x_full[dind[kfunc]['t_down']['ind']]
 
             # variables
             dout[kfunc]['amp'] = amp
-            dout[kfunc]['t0'] = t0
+            dout[kfunc]['tau'] = tau
             dout[kfunc]['tup'] = tup
             dout[kfunc]['tdown'] = tdown
 
@@ -387,13 +387,13 @@ def _get_func_moments(
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']]
-            t0 = x_full[dind[kfunc]['t0']['ind']]
+            tau = x_full[dind[kfunc]['tau']['ind']]
             tup = x_full[dind[kfunc]['t_up']['ind']]
             tdown = x_full[dind[kfunc]['t_down']['ind']]
 
             # variables
             dout[kfunc]['amp'] = amp
-            dout[kfunc]['t0'] = t0
+            dout[kfunc]['tau'] = tau
             dout[kfunc]['tup'] = tup
             dout[kfunc]['tdown'] = tdown
 
@@ -407,7 +407,7 @@ def _get_func_moments(
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']]
-            t0 = x_full[dind[kfunc]['t0']['ind']]
+            tau = x_full[dind[kfunc]['tau']['ind']]
             sigma = x_full[dind[kfunc]['sigma']['ind']]
             mu = x_full[dind[kfunc]['mu']['ind']]
 
@@ -418,7 +418,7 @@ def _get_func_moments(
 
             # variables
             dout[kfunc]['amp'] = amp
-            dout[kfunc]['t0'] = t0
+            dout[kfunc]['tau'] = tau
             dout[kfunc]['sigma'] = sigma
             dout[kfunc]['mu'] = mu
 
@@ -426,9 +426,9 @@ def _get_func_moments(
             dout[kfunc]['integ'] = np.full(mu.shape, np.nan)
 
             # lamb_max
-            # lamb - (lamb00 + lambD * t0) = exp(mu - sigma**2)
+            # lamb - (lamb00 + lambD * tau) = exp(mu - sigma**2)
             exp = np.exp(mu - sigma**2)
-            dout[kfunc]['lamb_max'] = exp + (lamb0 + lambD * t0)
+            dout[kfunc]['lamb_max'] = exp + (lamb0 + lambD * tau)
 
         return dout
 
