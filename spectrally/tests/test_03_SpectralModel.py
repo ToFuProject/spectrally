@@ -65,6 +65,7 @@ class Test00_Populate():
 
         # add data
         _inputs.add_data(self.coll)
+        _inputs.add_xfree(self.coll)
 
         # add spectral lines
         pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
