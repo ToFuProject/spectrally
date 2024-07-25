@@ -11,8 +11,10 @@ import itertools as itt
 
 import numpy as np
 import scipy.constants as scpct
+import datastock as ds
 
 
+from . import _class01_model_dict as _model_dict
 from . import _class01_interpolate as _interpolate
 
 
@@ -24,7 +26,7 @@ from . import _class01_interpolate as _interpolate
 
 def main(
     coll=None,
-    key_model=None,
+    key=None,
     key_data=None,
     lamb=None,
     dmz=None,
@@ -34,11 +36,20 @@ def main(
     # check inputs
     # ------------
 
+    # key_model vs key_fit
+    key_model, key_data, lamb = _check(
+        coll=coll,
+        key=key,
+        key_data=key_data,
+        lamb=lamb,
+    )
+
+    # all other variables
     (
         key_model, ref_nx, ref_nf,
         key_data,
         key_lamb, lamb, ref_lamb,
-        details,
+        details, binning,
         returnas, store, store_key,
     ) = _interpolate._check(
         coll=coll,
@@ -116,6 +127,37 @@ def main(
 #############################################
 
 
+def _check(coll=None, key=None, key_data=None, lamb=None):
+
+    # ---------------------
+    # key_model vs key_fit
+    # ---------------------
+
+    wsm = coll._which_model
+    wsf = coll._which_fit
+
+    lokm = list(coll.dobj.get(wsm, {}).keys())
+    lokf = list(coll.dobj.get(wsf, {}).keys())
+
+    key = ds._generic_check._check_var(
+        key, 'key',
+        types=str,
+        allowed=lokm + lokf,
+    )
+
+    if key in lokf:
+        key_fit = key
+        key = coll.dobj[wsf][key_fit]['key_model']
+
+        if key_data is None:
+            key_data = coll.dobj[wsf][key_fit]['key_sol']
+
+        if lamb is None:
+            lamb = coll.dobj[wsf][key_fit]['key_lamb']
+
+    return key, key_data, lamb
+
+
 def _check_mz(
     dmz=None,
     dind=None,
@@ -179,7 +221,10 @@ def _get_func_moments(
         # ----------
         # initialize
 
-        dout = {k0: {} for k0 in dind.keys() if k0 not in ['func', 'nfunc']}
+        dout = {
+            k0: {} for k0 in dind.keys()
+            if k0 not in ['func', 'nfunc', 'jac']
+        }
 
         # ----------------------------
         # get x_full from constraints
@@ -206,11 +251,22 @@ def _get_func_moments(
             else:
                 x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
 
+        sli = [None if ii == axis else slice(None) for ii in range(x_free.ndim)]
+        extract = _get_var_extract_func(x_full, dind, axis, sli)
+
         # -------------------
         # rescale
 
         if scale is not None:
             pass
+
+        # ---------------------
+        # extract all variables
+
+        for kfunc, v0 in _model_dict.DMODEL.items():
+            if dind.get(kfunc) is not None:
+                for kvar in v0['var']:
+                    dout[kfunc][kvar] = extract(kfunc, kvar)
 
         # ------------------
         # sum all linear
@@ -218,12 +274,8 @@ def _get_func_moments(
         kfunc = 'linear'
         if dind.get(kfunc) is not None:
 
-            a0 = x_full[dind[kfunc]['a0']['ind']]
-            a1 = x_full[dind[kfunc]['a1']['ind']]
-
-            # variables
-            dout[kfunc]['a0'] = a0
-            dout[kfunc]['a1'] = a1
+            a0 = dout[kfunc]['a0']
+            a1 = dout[kfunc]['a1']
 
             # integral
             if lamb is not None:
@@ -238,18 +290,13 @@ def _get_func_moments(
         kfunc = 'exp_lamb'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']]
-            rate = x_full[dind[kfunc]['rate']['ind']]
-
-            # variables
-            dout[kfunc]['amp'] = amp
-            dout[kfunc]['rate'] = rate
-
             # physics
+            rate = dout[kfunc]['rate']
             dout[kfunc]['Te'] = (scpct.h * scpct.c / rate) / scpct.e
 
             # integral
             if lamb is not None:
+                amp = dout[kfunc]['rate']
                 dout[kfunc]['integ'] = (
                     (amp / rate)
                     * (np.exp(lamb[-1] * rate) - np.exp(lamb[0] * rate))
@@ -261,21 +308,18 @@ def _get_func_moments(
         kfunc = 'gauss'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']]
-            sigma = x_full[dind[kfunc]['sigma']['ind']]
-            vccos = x_full[dind[kfunc]['vccos']['ind']]
-            lamb0 = param_val[dind[kfunc]['lamb0']]
-
-            # variables
-            dout[kfunc]['amp'] = amp
-            dout[kfunc]['sigma'] = sigma
-            dout[kfunc]['vccos'] = vccos
+            amp = dout[kfunc]['amp']
+            sigma = dout[kfunc]['sigma']
 
             # physics
             if dind[kfunc].get('mz') is not None:
-                mz = param_val[dind[kfunc]['mz']]
-                dout[kfunc]['Ti'] = (
-                    (sigma / lamb0)**2 * mz * scpct.c**2 * scpct.e
+                dout[kfunc]['Ti'] = _get_Ti(
+                    sigma,
+                    param_val,
+                    dind,
+                    kfunc,
+                    sigma.shape,
+                    axis,
                 )
 
             # integral
@@ -287,19 +331,11 @@ def _get_func_moments(
         kfunc = 'lorentz'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']]
-            gam = x_full[dind[kfunc]['gam']['ind']]
-            vccos = x_full[dind[kfunc]['vccos']['ind']]
-            lamb0 = param_val[dind[kfunc]['lamb0']]
-
-            # variables
-            dout[kfunc]['amp'] = amp
-            dout[kfunc]['gam'] = gam
-            dout[kfunc]['vccos'] = vccos
+            amp = dout[kfunc]['amp']
+            gam = dout[kfunc]['gam']
 
             # integral
             dout[kfunc]['integ'] = amp * np.pi * gam
-
 
         # --------------------
         # sum all pseudo-voigt
@@ -307,27 +343,22 @@ def _get_func_moments(
         kfunc = 'pvoigt'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']]
-            sigma = x_full[dind[kfunc]['sigma']['ind']]
-            gam = x_full[dind[kfunc]['gam']['ind']]
-            vccos = x_full[dind[kfunc]['vccos']['ind']]
-            lamb0 = param_val[dind[kfunc]['lamb0']]
-
-            # variables
-            dout[kfunc]['amp'] = amp
-            dout[kfunc]['sigma'] = sigma
-            dout[kfunc]['gam'] = gam
-            dout[kfunc]['vccos'] = vccos
+            amp = dout[kfunc]['amp']
+            sigma = dout[kfunc]['sigma']
 
             # physics
             if dind[kfunc].get('mz') is not None:
-                mz = param_val[dind[kfunc]['mz']]
-                dout[kfunc]['Ti'] = (
-                    (sigma / lamb0)**2 * mz * scpct.c**2 * scpct.e
+                dout[kfunc]['Ti'] = _get_Ti(
+                    sigma,
+                    param_val,
+                    dind,
+                    kfunc,
+                    sigma.shape,
+                    axis,
                 )
 
             # integral
-            dout[kfunc]['integ'] = np.full(amp.shape, np.nan)
+            dout[kfunc]['integ'] = np.full(sigma.shape, np.nan)
 
         # --------------------
         # sum all voigt
@@ -335,23 +366,18 @@ def _get_func_moments(
         kfunc = 'voigt'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']]
-            sigma = x_full[dind[kfunc]['sigma']['ind']]
-            gam = x_full[dind[kfunc]['gam']['ind']]
-            vccos = x_full[dind[kfunc]['vccos']['ind']]
-            lamb0 = param_val[dind[kfunc]['lamb0']]
-
-            # variables
-            dout[kfunc]['amp'] = amp
-            dout[kfunc]['sigma'] = sigma
-            dout[kfunc]['gam'] = gam
-            dout[kfunc]['vccos'] = vccos
+            amp = dout[kfunc]['amp']
+            sigma = dout[kfunc]['sigma']
 
             # physics
             if dind[kfunc].get('mz') is not None:
-                mz = param_val[dind[kfunc]['mz']]
-                dout[kfunc]['Ti'] = (
-                    (sigma / lamb0)**2 * mz * scpct.c**2 / scpct.e
+                dout[kfunc]['Ti'] = _get_Ti(
+                    sigma,
+                    param_val,
+                    dind,
+                    kfunc,
+                    sigma.shape,
+                    axis,
                 )
 
             # integral
@@ -363,19 +389,12 @@ def _get_func_moments(
         kfunc = 'pulse1'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']]
-            tau = x_full[dind[kfunc]['tau']['ind']]
-            tup = x_full[dind[kfunc]['t_up']['ind']]
-            tdown = x_full[dind[kfunc]['t_down']['ind']]
-
-            # variables
-            dout[kfunc]['amp'] = amp
-            dout[kfunc]['tau'] = tau
-            dout[kfunc]['tup'] = tup
-            dout[kfunc]['tdown'] = tdown
+            amp = dout[kfunc]['amp']
+            t_down = dout[kfunc]['t_down']
+            t_up = dout[kfunc]['t_up']
 
             # integral
-            dout[kfunc]['integ'] = amp * (tdown - tup)
+            dout[kfunc]['integ'] = amp * (t_down - t_up)
 
             # lamb_max
             dout[kfunc]['lamb_max'] = None
@@ -386,19 +405,12 @@ def _get_func_moments(
         kfunc = 'pulse2'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']]
-            tau = x_full[dind[kfunc]['tau']['ind']]
-            tup = x_full[dind[kfunc]['t_up']['ind']]
-            tdown = x_full[dind[kfunc]['t_down']['ind']]
-
-            # variables
-            dout[kfunc]['amp'] = amp
-            dout[kfunc]['tau'] = tau
-            dout[kfunc]['tup'] = tup
-            dout[kfunc]['tdown'] = tdown
+            amp = dout[kfunc]['amp']
+            t_down = dout[kfunc]['t_down']
+            t_up = dout[kfunc]['t_up']
 
             # integral
-            dout[kfunc]['integ'] = amp/2 * np.sqrt(np.pi) * (tup + tdown)
+            dout[kfunc]['integ'] = amp/2 * np.sqrt(np.pi) * (t_up + t_down)
 
         # ------------------
         # sum all lognorm
@@ -406,21 +418,10 @@ def _get_func_moments(
         kfunc = 'lognorm'
         if dind.get(kfunc) is not None:
 
-            amp = x_full[dind[kfunc]['amp']['ind']]
-            tau = x_full[dind[kfunc]['tau']['ind']]
-            sigma = x_full[dind[kfunc]['sigma']['ind']]
-            mu = x_full[dind[kfunc]['mu']['ind']]
-
-            # max at t - t0 = exp(mu - sigma**2)
-            # max = amp * exp(sigma**2/2 - mu)
-            # variance = (exp(sigma**2) - 1) * exp(2mu + sigma**2)
-            # skewness = (exp(sigma**2) + 2) * sqrt(exp(sigma**2) - 1)
-
-            # variables
-            dout[kfunc]['amp'] = amp
-            dout[kfunc]['tau'] = tau
-            dout[kfunc]['sigma'] = sigma
-            dout[kfunc]['mu'] = mu
+            amp = dout[kfunc]['amp']
+            tau = dout[kfunc]['tau']
+            sigma = dout[kfunc]['sigma']
+            mu = dout[kfunc]['mu']
 
             # integral
             dout[kfunc]['integ'] = np.full(mu.shape, np.nan)
@@ -433,3 +434,31 @@ def _get_func_moments(
         return dout
 
     return func
+
+
+# #####################################################################
+# #####################################################################
+#                   Mutualizing
+# #####################################################################
+
+
+def _get_var_extract_func(x_full, dind, axis, sli):
+    def func(kfunc, kvar, dind=dind, axis=axis, sli=sli, x_full=x_full):
+        sli[axis] = dind[kfunc][kvar]['ind']
+        return x_full[tuple(sli)]
+    return func
+
+def _get_Ti(sigma, param_val, dind, kfunc, shape, axis):
+
+    # extract lamb0, mz
+    lamb0 = param_val[dind[kfunc]['lamb0']]
+    mz = param_val[dind[kfunc]['mz']]
+
+    # reshape lamb0 and mz
+    reshape = [1 for ii in shape]
+    reshape[axis] = lamb0.size
+    reshape = tuple(reshape)
+    lamb0 = lamb0.reshape(reshape)
+    mz = mz.reshape(reshape)
+
+    return (sigma / lamb0)**2 * mz * scpct.c**2 / scpct.e
