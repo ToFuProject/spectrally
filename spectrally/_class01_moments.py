@@ -215,7 +215,6 @@ def _get_func_moments(
         # ----------
         # prepare
 
-        lamb0 = lamb[0]
         lambD = lamb[-1] - lamb[0]
 
         # ----------
@@ -263,7 +262,7 @@ def _get_func_moments(
         # ---------------------
         # extract all variables
 
-        for kfunc, v0 in _model_dict.DMODEL.items():
+        for kfunc, v0 in _model_dict._DMODEL.items():
             if dind.get(kfunc) is not None:
                 for kvar in v0['var']:
                     dout[kfunc][kvar] = extract(kfunc, kvar)
@@ -310,6 +309,15 @@ def _get_func_moments(
 
             amp = dout[kfunc]['amp']
             sigma = dout[kfunc]['sigma']
+            vccos = dout[kfunc]['vccos']
+
+            # argmax
+            dout[kfunc]['argmax'] = _get_line_argmax(
+                vccos, param_val, dind, kfunc, shape, axis,
+            )
+
+            # integral
+            dout[kfunc]['integ'] = amp * sigma * np.sqrt(2 * np.pi)
 
             # physics
             if dind[kfunc].get('mz') is not None:
@@ -322,9 +330,6 @@ def _get_func_moments(
                     axis,
                 )
 
-            # integral
-            dout[kfunc]['integ'] = amp * sigma * np.sqrt(2 * np.pi)
-
         # -------------------
         # sum all Lorentzians
 
@@ -333,6 +338,12 @@ def _get_func_moments(
 
             amp = dout[kfunc]['amp']
             gam = dout[kfunc]['gam']
+            vccos = dout[kfunc]['vccos']
+
+            # argmax
+            dout[kfunc]['argmax'] = _get_line_argmax(
+                vccos, param_val, dind, kfunc, shape, axis,
+            )
 
             # integral
             dout[kfunc]['integ'] = amp * np.pi * gam
@@ -345,6 +356,15 @@ def _get_func_moments(
 
             amp = dout[kfunc]['amp']
             sigma = dout[kfunc]['sigma']
+            vccos = dout[kfunc]['vccos']
+
+            # argmax
+            dout[kfunc]['argmax'] = _get_line_argmax(
+                vccos, param_val, dind, kfunc, shape, axis,
+            )
+
+            # integral
+            dout[kfunc]['integ'] = np.full(sigma.shape, np.nan)
 
             # physics
             if dind[kfunc].get('mz') is not None:
@@ -356,9 +376,6 @@ def _get_func_moments(
                     sigma.shape,
                     axis,
                 )
-
-            # integral
-            dout[kfunc]['integ'] = np.full(sigma.shape, np.nan)
 
         # --------------------
         # sum all voigt
@@ -368,6 +385,15 @@ def _get_func_moments(
 
             amp = dout[kfunc]['amp']
             sigma = dout[kfunc]['sigma']
+            vccos = dout[kfunc]['vccos']
+
+            # argmax
+            dout[kfunc]['argmax'] = _get_line_argmax(
+                vccos, param_val, dind, kfunc, shape, axis,
+            )
+
+            # integral
+            dout[kfunc]['integ'] = amp
 
             # physics
             if dind[kfunc].get('mz') is not None:
@@ -380,9 +406,6 @@ def _get_func_moments(
                     axis,
                 )
 
-            # integral
-            dout[kfunc]['integ'] = amp
-
         # ------------------
         # sum all pulse1
 
@@ -390,14 +413,26 @@ def _get_func_moments(
         if dind.get(kfunc) is not None:
 
             amp = dout[kfunc]['amp']
+            tau = dout[kfunc]['tau']
             t_down = dout[kfunc]['t_down']
             t_up = dout[kfunc]['t_up']
 
             # integral
             dout[kfunc]['integ'] = amp * (t_down - t_up)
 
-            # lamb_max
-            dout[kfunc]['lamb_max'] = None
+            # prepare
+            t0 = lamb[0] + lambD * tau
+            dtdu = t_down - t_up
+            lntdu = np.log(t_down / t_up)
+
+            # position of max
+            dout[kfunc]['argmax'] = t0 + lntdu * t_down*t_up / dtdu
+
+            # value at max
+            dout[kfunc]['max'] = amp * (
+                np.exp(-lntdu * t_up / dtdu)
+                - np.exp(-lntdu * t_down / dtdu)
+            )
 
         # ------------------
         # sum all pulse2
@@ -406,11 +441,21 @@ def _get_func_moments(
         if dind.get(kfunc) is not None:
 
             amp = dout[kfunc]['amp']
+            tau = dout[kfunc]['tau']
             t_down = dout[kfunc]['t_down']
             t_up = dout[kfunc]['t_up']
 
             # integral
             dout[kfunc]['integ'] = amp/2 * np.sqrt(np.pi) * (t_up + t_down)
+
+            # prepare
+            t0 = lamb[0] + lambD * tau
+
+            # position of max
+            dout[kfunc]['argmax'] = t0
+
+            # value at max
+            dout[kfunc]['max'] = amp
 
         # ------------------
         # sum all lognorm
@@ -426,10 +471,14 @@ def _get_func_moments(
             # integral
             dout[kfunc]['integ'] = np.full(mu.shape, np.nan)
 
-            # lamb_max
-            # lamb - (lamb00 + lambD * tau) = exp(mu - sigma**2)
-            exp = np.exp(mu - sigma**2)
-            dout[kfunc]['lamb_max'] = exp + (lamb0 + lambD * tau)
+            # prepare
+            t0 = lamb[0] + lambD * tau
+
+            # position of max
+            dout[kfunc]['argmax'] = t0 + np.exp(mu - sigma**2)
+
+            # value at max
+            dout[kfunc]['max'] = amp * np.exp(0.5*sigma**2 - mu)
 
         return dout
 
@@ -447,6 +496,18 @@ def _get_var_extract_func(x_full, dind, axis, sli):
         sli[axis] = dind[kfunc][kvar]['ind']
         return x_full[tuple(sli)]
     return func
+
+def _get_line_argmax(vccos, param_val, dind, kfunc, shape, axis):
+
+    # extract lamb0
+    lamb0 = param_val[dind[kfunc]['lamb0']]
+
+    # reshape lamb0
+    reshape = [1 for ii in shape]
+    reshape[axis] = lamb0.size
+    lamb0 = lamb0.reshape(tuple(reshape))
+
+    return lamb0 * (1 + vccos)
 
 def _get_Ti(sigma, param_val, dind, kfunc, shape, axis):
 
