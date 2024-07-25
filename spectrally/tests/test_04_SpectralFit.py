@@ -101,8 +101,8 @@ class Test00_Populate():
         _inputs.compute_fit_double(self.coll)
 
     # def test07_compute_spectral_fit_1d_single_binning(self):
-        # # compute 1d
-        # _inputs.compute_fit_single(self.coll, binning=10)
+    #     # compute 1d
+    #     _inputs.compute_fit_single(self.coll, binning=10)
 
     def test08_compute_spectral_fit_1d_multi(self):
         # compute 1d

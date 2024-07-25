@@ -213,7 +213,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
 
     coll.add_data(
         key='data_pvoigt2',
-        data=np.random.poisson(pvoigt + 0.5* pvoigt2),
+        data=np.random.poisson(pvoigt + 0.5 * pvoigt2),
         ref='nlamb',
         units='counts',
     )
@@ -1166,7 +1166,7 @@ def compute_fit_double(coll=None, binning=None):
     # add fits if needed
     # ---------------
 
-    add_fit_single(coll)
+    add_fit_double(coll)
 
     # --------------------
     # compute
