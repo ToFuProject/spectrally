@@ -124,7 +124,7 @@ setup(
         "pandas",
         "requests",
         "datastock>=0.0.39",
-        "bsplines2d>=0.0.15",
+        "bsplines2d>=0.0.16",
     ],
     python_requires=">=3.6",
 
