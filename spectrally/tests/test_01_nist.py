@@ -87,19 +87,36 @@ class Test_nist(object):
                 continue
             print(f'{ii} / {itot}  -  {comb}')
 
-            out = nist.step01_search_online_by_wavelengthA(
-                lambmin=comb[0],
-                lambmax=comb[1],
-                ion=comb[2],
-                verb=True,
-                return_dout=True,
-                return_dsources=True,
-                cache_from=comb[3],
-                cache_info=True,
-                format_for_DataStock=comb[4],
-                create_custom=True,
-            )
-            del out
+            try:
+                out = nist.step01_search_online_by_wavelengthA(
+                    lambmin=comb[0],
+                    lambmax=comb[1],
+                    ion=comb[2],
+                    verb=True,
+                    return_dout=True,
+                    return_dsources=True,
+                    cache_from=comb[3],
+                    cache_info=True,
+                    format_for_DataStock=comb[4],
+                    create_custom=True,
+                )
+                del out
+
+            except Exception as err:
+                c0 = all([
+                    ss in str(err)
+                    for ss in [
+                        '503 Server Error: Service Unavailable for url:',
+                        'File could not be downloaded:',
+                        '=> Maybe check internet connection?',
+                        # flag that it is running on Github
+                        '/home/runner/.spectrally/nist/',
+                    ]
+                ])
+                if c0:
+                    pass
+                else:
+                    raise err
 
     # ------------------------
     #  clear cache

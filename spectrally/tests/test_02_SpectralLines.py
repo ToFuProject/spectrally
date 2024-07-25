@@ -82,20 +82,20 @@ class Test00_Populate():
                 element='Ar',
             )
         except Exception as err:
-            # c0 = all([
-            #     ss in str(err)
-            #     for ss in [
-            #         '503 Server Error: Service Unavailable for url:',
-            #         'File could not be downloaded:',
-            #         '=> Maybe check internet connection?',
-            #         # flag that it is running on Github
-            #         '/home/runner/.spectrally/nist/',
-            #     ]
-            # ])
-            # if c0:
-            #     pass
-            # else:
-            raise err
+            c0 = all([
+                ss in str(err)
+                for ss in [
+                    '503 Server Error: Service Unavailable for url:',
+                    'File could not be downloaded:',
+                    '=> Maybe check internet connection?',
+                    # flag that it is running on Github
+                    '/home/runner/.spectrally/nist/',
+                ]
+            ])
+            if c0:
+                pass
+            else:
+                raise err
 
     # ----------------
     # removing
