@@ -148,11 +148,11 @@ def main(
         # binning
         binning=binning,
         # options
-        chain=None,
-        dscales=None,
-        dbounds_low=None,
-        dbounds_up=None,
-        dx0=None,
+        chain=chain,
+        dscales=dscales,
+        dbounds_low=dbounds_low,
+        dbounds_up=dbounds_up,
+        dx0=dx0,
         # solver options
         solver=solver,
         dsolver_options=dsolver_options,
