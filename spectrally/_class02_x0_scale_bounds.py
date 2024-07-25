@@ -212,7 +212,7 @@ def _get_scales_bounds(
 
     # --------------------
     # all exponentials
-    # ------------------
+    # --------------------
 
     kfunc = 'exp_lamb'
     if dind.get(kfunc) is not None:

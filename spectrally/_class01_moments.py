@@ -351,7 +351,7 @@ def _get_func_moments(
             if dind[kfunc].get('mz') is not None:
                 mz = param_val[dind[kfunc]['mz']]
                 dout[kfunc]['Ti'] = (
-                    (sigma / lamb0)**2 * mz * scpct.c**2 * scpct.e
+                    (sigma / lamb0)**2 * mz * scpct.c**2 / scpct.e
                 )
 
             # integral
