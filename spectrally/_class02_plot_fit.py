@@ -422,42 +422,44 @@ def _plot_2d(
 
     if details is True:
 
+        reflamb = coll2.ddata[dkeys['lamb']]['ref'][0]
         lamb = coll2.ddata[dkeys['lamb']]['data']
         nmax = dgroup0['X']['nmax']
         wsm = coll._which_model
         lfunc = coll.dobj[wsm][key_model]['keys']
-        refs = (coll2.ddata[dkeys['sum']]['ref'][0],)
+
+        refs = coll2.ddata[dkeys['sum']]['ref']
+        axis = refs.index(reflamb)
+        refs = (refs[axis - 1],)
         nan = np.full(lamb.shape, np.nan)
 
-        axtype = 'horizontal'
-        lax = [kax for kax, vax in dax.items() if axtype in vax['type']]
-        for kax in lax:
-            ax = dax[kax]['handle']
-            for ii, ff in enumerate(lfunc):
+        kax = 'spectrum'
+        ax = dax[kax]['handle']
+        for ii, ff in enumerate(lfunc):
 
-                for jj in range(nmax):
+            for jj in range(nmax):
 
-                    ll, = ax.plot(
-                        lamb,
-                        nan,
-                        ls='-',
-                        marker='None',
-                        lw=1.,
-                    )
+                ll, = ax.plot(
+                    lamb,
+                    nan,
+                    ls='-',
+                    marker='None',
+                    lw=1.,
+                )
 
-                    xydata = 'ydata'
-                    km = f'{lfunc[ii]}_{jj}'
+                xydata = 'ydata'
+                km = f'{lfunc[ii]}_{jj}'
 
-                    coll2.add_mobile(
-                        key=km,
-                        handle=ll,
-                        refs=(refs,),
-                        data=(lfunc[ii],),
-                        dtype=[xydata],
-                        group_vis='Y',  # 'X' <-> 'Y'
-                        axes=kax,
-                        ind=jj,
-                    )
+                coll2.add_mobile(
+                    key=km,
+                    handle=ll,
+                    refs=(refs,),
+                    data=(lfunc[ii],),
+                    dtype=[xydata],
+                    group_vis='Y',  # 'X' <-> 'Y'
+                    axes=kax,
+                    ind=jj,
+                )
 
     return coll2, dgroup0
 

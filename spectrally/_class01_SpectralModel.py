@@ -7,6 +7,7 @@ import copy
 
 from ._class00_SpectralLines import SpectralLines as Previous
 from . import _class01_check_model as _check_model
+from . import _class01_show as _show
 from . import _class01_check_constraints as _check_constraints
 from . import _class01_fit_func as _fit_func
 from . import _class01_interpolate as _interpolate
@@ -101,13 +102,13 @@ class SpectralModel(Previous):
 
     def _get_show_obj(self, which=None):
         if which == self._which_model:
-            return _check_model._show
+            return _show._show
         else:
             return super()._get_show_obj(which)
 
     def _get_show_details(self, which=None):
         if which == self._which_model:
-            return _check_model._show_details
+            return _show._show_details
         else:
             super()._get_show_details(which)
 
@@ -198,7 +199,7 @@ class SpectralModel(Previous):
 
     def get_spectral_model_moments(
         self,
-        key_model=None,
+        key=None,
         key_data=None,
         lamb=None,
     ):
@@ -215,7 +216,7 @@ class SpectralModel(Previous):
         Parameters
         ----------
         key_model : str
-            key to the desired spectral model
+            key to the desired spectral model (or spectral fit)
         key_data : str
             key to the data to be used as input for the model's free variables
         lamb:str or 1d np.ndarray, optional
@@ -230,7 +231,7 @@ class SpectralModel(Previous):
 
         dout = _moments.main(
             coll=self,
-            key_model=key_model,
+            key=key,
             key_data=key_data,
             lamb=lamb,
         )

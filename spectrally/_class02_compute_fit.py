@@ -39,8 +39,15 @@ def main(
     # solver options
     solver=None,
     dsolver_options=None,
+    # options
+    chain=None,
+    dscales=None,
+    dbounds_low=None,
+    dbounds_up=None,
+    dx0=None,
     # storing
     store=None,
+    overwrite=None,
     # options
     strict=None,
     verb=None,
@@ -61,15 +68,23 @@ def main(
         ref_data, ref_lamb,
         lamb, data, axis,
         binning,
-        store,
-        strict, verb, timing,
+        chain,
+        store, overwrite,
+        strict, verb, verb_scp, timing,
     ) = _check(
         coll=coll,
         key=key,
         # binning
         binning=binning,
+        # options
+        chain=chain,
+        dscales=dscales,
+        dbounds_low=dbounds_low,
+        dbounds_up=dbounds_up,
+        dx0=dx0,
         # storing
         store=store,
+        overwrite=overwrite,
         # options
         strict=strict,
         verb=verb,
@@ -92,7 +107,7 @@ def main(
     dsolver_options = _get_solver_options(
         solver=solver,
         dsolver_options=dsolver_options,
-        verb=verb,
+        verb_scp=verb_scp,
     )
 
     # ------------
@@ -104,6 +119,19 @@ def main(
 
     else:
         pass
+
+    # -----------
+    # verb
+
+    if verb >= 1:
+        msg = (
+            "\n\n-------------------------------------------\n"
+            f"\tComputing spectral fit '{key}'\n"
+        )
+        print(msg)
+
+    # --------
+    # run
 
     dout = compute(
         coll=coll,
@@ -120,17 +148,18 @@ def main(
         # binning
         binning=binning,
         # options
-        chain=None,
-        dscales=None,
-        dbounds_low=None,
-        dbounds_up=None,
-        dx0=None,
+        chain=chain,
+        dscales=dscales,
+        dbounds_low=dbounds_low,
+        dbounds_up=dbounds_up,
+        dx0=dx0,
         # solver options
         solver=solver,
         dsolver_options=dsolver_options,
         # options
         strict=strict,
         verb=verb,
+        verb_scp=verb_scp,
         timing=timing,
     )
 
@@ -155,8 +184,10 @@ def main(
     # ------------
 
     if store is True:
+
         _store(
             coll=coll,
+            overwrite=overwrite,
             # keys
             key=key,
             key_model=key_model,
@@ -168,7 +199,11 @@ def main(
             binning=binning,
             # dout
             dout=dout,
+            # verb
+            verb=verb,
         )
+
+        dout = None
 
     return dout
 
@@ -184,8 +219,15 @@ def _check(
     key=None,
     # binning
     binning=None,
+    # options
+    chain=None,
+    dscales=None,
+    dbounds_low=None,
+    dbounds_up=None,
+    dx0=None,
     # storing
     store=None,
+    overwrite=None,
     # options
     strict=None,
     verb=None,
@@ -249,6 +291,16 @@ def _check(
         raise Exception(msg)
 
     # --------------
+    # chain
+    # --------------
+
+    chain = ds._generic_check._check_var(
+        chain, 'chain',
+        types=bool,
+        default=False,
+    )
+
+    # --------------
     # store
     # --------------
 
@@ -257,6 +309,20 @@ def _check(
         types=bool,
         default=True,
     )
+
+    # --------------
+    # overwrite
+    # --------------
+
+    overwrite = ds._generic_check._check_var(
+        overwrite, 'overwrite',
+        types=bool,
+        default=False,
+    )
+
+    if overwrite is True:
+        ksol = coll.dobj[wsf][key]['key_sol']
+        overwrite &= (ksol is not None and ksol in coll.ddata.keys())
 
     # --------------
     # strict
@@ -280,6 +346,16 @@ def _check(
     )
     if verb is True:
         verb = def_verb
+    elif verb is False:
+        verb = 0
+
+    # verb_scp
+    verb_scp = {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 2,
+    }[verb]
 
     # --------------
     # timing
@@ -298,8 +374,9 @@ def _check(
         ref_data, ref_lamb,
         lamb, data, axis,
         binning,
-        store,
-        strict, verb, timing,
+        chain,
+        store, overwrite,
+        strict, verb, verb_scp, timing,
     )
 
 
@@ -312,7 +389,7 @@ def _check(
 def _get_solver_options(
     solver=None,
     dsolver_options=None,
-    verb=None,
+    verb_scp=None,
 ):
 
     # -------------------
@@ -344,7 +421,7 @@ def _get_solver_options(
             diff_step=None,
             max_nfev=None,
             loss='linear',
-            verbose=verb,
+            verbose=verb_scp,
         )
 
     else:
@@ -383,6 +460,7 @@ def _get_solver_options(
 
 def _store(
     coll=None,
+    overwrite=None,
     # keys
     key=None,
     key_model=None,
@@ -394,6 +472,8 @@ def _store(
     binning=None,
     # dout
     dout=None,
+    # verb
+    verb=None,
 ):
 
     # ------------
@@ -401,6 +481,7 @@ def _store(
     # ------------
 
     wsm = coll._which_model
+    wsf = coll._which_fit
     refx_free = coll.dobj[wsm][key_model]['ref_nx']
     ref = list(coll.ddata[key_data]['ref'])
     ref[axis] = refx_free
@@ -413,30 +494,60 @@ def _store(
 
     # solution
     ksol = f"{key}_sol"
-    coll.add_data(
-        key=ksol,
-        data=dout['sol'].ravel() if ravel is True else dout['sol'],
-        ref=tuple(ref),
-        units=coll.ddata[key_data]['units'],
-        dim='fit_sol',
-    )
+    sol = dout['sol'].ravel() if ravel is True else dout['sol']
+    if ksol in coll.ddata.keys():
+        if overwrite is True:
+            c0 = (
+                coll.ddata[ksol]['ref'] == tuple(ref)
+                and coll.dobj[wsf][key]['key_sol'] == ksol
+            )
+            if c0 is True:
+                coll._ddata[ksol]['data'] = sol
+
+            else:
+                msg = (
+                    "Fit sol '{ksol}' exists in ddata but not in spect_fit!"
+                )
+                raise Exception(msg)
+
+        else:
+            msg = (
+                f"Aborting storing, spect_fit '{key}' was already computed\n"
+                "Use overwrite=True to overwrite the former solution\n"
+            )
+            raise Exception(msg)
+
+    else:
+        coll.add_data(
+            key=ksol,
+            data=sol,
+            ref=tuple(ref),
+            units=coll.ddata[key_data]['units'],
+            dim='fit_sol',
+        )
 
     # other outputs
     lk = [
-        'cost', 'chi2n', 'time', 'success', 'nfev',
+        'cost', 'chi2n', 'time', 'status', 'nfev',
         'msg', 'validity', 'errmsg',
     ]
     dk_out = {k0: f"{key}_{k0}" for k0 in lk}
 
     if ravel is False:
-        for k0, k1 in dk_out.items():
-            coll.add_data(
-                key=k1,
-                data=dout[k0],
-                ref=ref_reduced,
-                units='',
-                dim='fit_out',
-            )
+
+        if overwrite is True:
+            for k0, k1 in dk_out.items():
+                coll._ddata[k1]['data'] = dout[k0]
+
+        else:
+            for k0, k1 in dk_out.items():
+                coll.add_data(
+                    key=k1,
+                    data=dout[k0],
+                    ref=ref_reduced,
+                    units='',
+                    dim='fit_out',
+                )
 
     # ------------
     # store in fit
@@ -467,5 +578,13 @@ def _store(
     else:
         for k0, k1 in dk_out.items():
             coll._dobj[wsf][key]['dsolver'][k0] = k1
+
+    # ---------
+    # verb
+    # ----------
+
+    if verb >= 2:
+        msg = f"Storing under key '{ksol}'"
+        print(msg)
 
     return

@@ -122,8 +122,8 @@ setup(
         "scipy",
         "matplotlib",
         "pandas",
-        "datastock>=0.0.39",
-        "bsplines2d>=0.0.15",
+        "requests",
+        "bsplines2d>=0.0.16",
     ],
     python_requires=">=3.6",
 
@@ -152,7 +152,8 @@ setup(
     #    'ITER': ['*.csv'],
     # },
     package_data={
-        'spectrally.tests.test_data': ['.npz'],
+        'spectrally.tests.input': ['.npz', '.npy', '.json', '.hist'],
+        'spectrally': ['.csv'],
     },
     include_package_data=True,
 
@@ -172,7 +173,13 @@ setup(
     # Theye are generally preferable over scripts because they provide
     # cross-platform support and allow pip to create the appropriate form
     # of executable for the target platform.
-    # entry_points={},
+    entry_points={
+        'console_scripts': [
+            'spectrally-version=scripts.spectrallyversion:main',
+            'specrally-custom=scripts.spectrallycustom:main',
+            'spectrally=scripts.spectrally_bash:main',
+        ],
+    },
     # include_dirs=[np.get_include()],
 
     py_modules=['_updateversion'],

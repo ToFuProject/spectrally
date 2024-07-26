@@ -4,5 +4,5 @@ scipy
 matplotlib
 pandas
 astropy
-datastock>=0.0.39
-bsplines2d>=0.0.15
+requests
+bsplines2d>=0.0.16
