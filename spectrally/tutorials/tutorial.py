@@ -28,7 +28,7 @@ __all__ = ['main']
 
 
 _PATH_HERE = os.path.dirname(__file__)
-_PATH_INPUT = os.path.join(_PATH_HERE, 'tests', 'input')
+_PATH_INPUT = os.path.join(os.path.dirname(_PATH_HERE), 'tests', 'input')
 
 
 # ######################################################
@@ -37,7 +37,7 @@ _PATH_INPUT = os.path.join(_PATH_HERE, 'tests', 'input')
 # ######################################################
 
 
-def main(data='sxr', chain=True):
+def main(data='sxr', chain=None):
     """ Tutorial on how to use spectrally
 
     Two examples 'sxr' and 'hxr' are available
@@ -65,6 +65,9 @@ def main(data='sxr', chain=True):
     # ------------------------
 
     coll = sp.Collection()
+
+    # make sure data is lower-case
+    data = data.lower()
 
     # -----------------
     # create wavelength vector and time-dependent gaussian spectrum
@@ -451,6 +454,16 @@ def _add_spectral_fit(coll=None, data=None):
 
 
 def _compute_spectral_fit(coll=None, data=None, chain=None):
+
+    # ------------
+    # check inputs
+    # ------------
+
+    if chain is None:
+        if data == 'sxr':
+            chain = True
+        else:
+            chain = False
 
     # ------------
     # SXR
