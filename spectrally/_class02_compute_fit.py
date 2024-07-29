@@ -272,6 +272,24 @@ def _check(
     ref_lamb = coll.ddata[key_lamb]['ref']
     axis = ref_data.index(ref_lamb[0])
 
+    # ---------------------------------
+    # voigt not handled for fitting yet
+    # ---------------------------------
+
+    wsm = coll._which_model
+    lvoigt = [
+        k0 for k0, v0 in coll.dobj[wsm][key_model]['dmodel'].items()
+        if v0['type'] == 'voigt'
+    ]
+    if len(lvoigt) > 0:
+        msg = (
+            "Fitting is not implemented for voigt profiles yet\n"
+            f"\t- key_model: `{key_model}`\n"
+            f"\t- voigt functions: {lvoigt}\n"
+            "Consider using another spectral model with pvoigt instead"
+        )
+        raise Exception(msg)
+
     # --------------
     # binning
     # --------------
