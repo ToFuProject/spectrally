@@ -509,10 +509,10 @@ def _get_scales_bounds(
                 )
 
     # ------------------
-    # all pulse1
+    # all pulse_exp
     # ------------------
 
-    kfunc = 'pulse1'
+    kfunc = 'pulse_exp'
     if dind.get(kfunc) is not None:
 
         _get_scales_bounds_pulse(
@@ -535,10 +535,10 @@ def _get_scales_bounds(
         )
 
     # ------------------
-    # all pulse2
+    # all pulse_gauss
     # ------------------
 
-    kfunc = 'pulse2'
+    kfunc = 'pulse_gauss'
     if dind.get(kfunc) is not None:
 
         _get_scales_bounds_pulse(
@@ -996,10 +996,10 @@ def _get_x0(
                 )
 
     # ------------------
-    # all pulse1
+    # all pulse_exp
     # ------------------
 
-    kfunc = 'pulse1'
+    kfunc = 'pulse_exp'
     if dind.get(kfunc) is not None:
 
         _get_x0_pulse(
@@ -1022,10 +1022,10 @@ def _get_x0(
         )
 
     # ------------------
-    # all pulse2
+    # all pulse_gauss
     # ------------------
 
-    kfunc = 'pulse2'
+    kfunc = 'pulse_gauss'
     if dind.get(kfunc) is not None:
 
         _get_x0_pulse(

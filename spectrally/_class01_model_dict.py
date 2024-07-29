@@ -21,7 +21,7 @@ _LMODEL_ORDER = [
     # spectral lines
     'gauss', 'lorentz', 'pvoigt', 'voigt',
     # pulse shape
-    'pulse1', 'pulse2', 'lognorm',
+    'pulse_exp', 'pulse_gauss', 'lognorm',
 ]
 
 
@@ -134,7 +134,7 @@ _DMODEL = {
     # -----------
     # pulse with exponentials
 
-    'pulse1': {
+    'pulse_exp': {
         'var': ['amp', 'tau', 't_up', 't_down'],
         'description': 'asymmetric pulse, 2 exponentials',
         'expressions': {
@@ -149,7 +149,7 @@ _DMODEL = {
     # -----------
     # pulse with gaussians
 
-    'pulse2': {
+    'pulse_gauss': {
         'var': ['amp', 'tau', 't_up', 't_down'],
         'description': 'asymmetric pulse, 2 gaussians',
         'expressions': {

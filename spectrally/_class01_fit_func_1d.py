@@ -191,9 +191,9 @@ def _get_func_details(
             )
 
         # ------------------
-        # sum all pulse1
+        # sum all pulse_exp
 
-        kfunc = 'pulse1'
+        kfunc = 'pulse_exp'
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
@@ -213,9 +213,9 @@ def _get_func_details(
             )
 
         # ------------------
-        # sum all pulse2
+        # sum all pulse_gauss
 
-        kfunc = 'pulse2'
+        kfunc = 'pulse_gauss'
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']][:, None]
@@ -689,9 +689,9 @@ def _get_func_jacob(
                 )
 
         # -------------------
-        # all pulse1
+        # all pulse_exp
 
-        kfunc = 'pulse1'
+        kfunc = 'pulse_exp'
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']][None, :]
@@ -756,9 +756,9 @@ def _get_func_jacob(
                 )
 
         # -------------------
-        # all pulse2
+        # all pulse_gauss
 
-        kfunc = 'pulse2'
+        kfunc = 'pulse_gauss'
         if dind.get(kfunc) is not None:
 
             amp = x_full[dind[kfunc]['amp']['ind']][None, :]

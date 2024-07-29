@@ -89,8 +89,8 @@ def main(data='sxr', chain=None):
         _ = sp.display_spectral_model_function('gauss')
 
     elif data == 'hxr':
-        _ = sp.display_spectral_model_function('pulse1')
-        _ = sp.display_spectral_model_function('pulse2')
+        _ = sp.display_spectral_model_function('pulse_exp')
+        _ = sp.display_spectral_model_function('pulse_gauss')
         _ = sp.display_spectral_model_function('lognorm')
 
     # ------------------
@@ -340,27 +340,27 @@ def _add_spectral_model(coll=None, data=None):
             },
         }
 
-        # first model : bck with only offset + pulse1
+        # first model : bck with only offset + pulse_exp
         coll.add_spectral_model(
             key='sm_exp',
             dmodel={
                 'bck': 'linear',
-                'p0': {'type': 'pulse1'},
+                'p0': {'type': 'pulse_exp'},
             },
             dconstraints=dconstraints,
         )
 
-        # first model : bck with only offset + pulse1
+        # first model : bck with only offset + pulse_gauss
         coll.add_spectral_model(
             key='sm_gauss',
             dmodel={
                 'bck': 'linear',
-                'p0': {'type': 'pulse2'},
+                'p0': {'type': 'pulse_gauss'},
             },
             dconstraints=dconstraints,
         )
 
-        # first model : bck with only offset + pulse1
+        # first model : bck with only offset + lognorm
         coll.add_spectral_model(
             key='sm_lognorm',
             dmodel={
