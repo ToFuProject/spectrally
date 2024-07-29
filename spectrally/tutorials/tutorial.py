@@ -36,7 +36,7 @@ _PATH_HERE = os.path.dirname(__file__)
 # ######################################################
 
 
-def main(data='sxr'):
+def main(data='sxr', chain=True):
     """ Tutorial on how to use spectrally
 
     Two examples 'sxr' and 'hxr' are available
@@ -114,7 +114,7 @@ def main(data='sxr'):
     # compute spectral fit
     # ---------------------
 
-    _compute_spectral_fit(coll=coll, data=data)
+    _compute_spectral_fit(coll=coll, data=data, chain=chain)
 
     # ---------------------
     # plot fit
@@ -343,7 +343,7 @@ def _add_spectral_model(coll=None, data=None):
                 'bck': 'linear',
                 'p0': {'type': 'pulse1'},
             },
-            dconstraints=dict(dconstraints),
+            dconstraints=dconstraints,
         )
 
         # first model : bck with only offset + pulse1
@@ -353,7 +353,7 @@ def _add_spectral_model(coll=None, data=None):
                 'bck': 'linear',
                 'p0': {'type': 'pulse2'},
             },
-            dconstraints=dict(dconstraints),
+            dconstraints=dconstraints,
         )
 
         # first model : bck with only offset + pulse1
@@ -363,7 +363,7 @@ def _add_spectral_model(coll=None, data=None):
                 'bck': 'linear',
                 'p0': {'type': 'lognorm'},
             },
-            dconstraints=dict(dconstraints),
+            dconstraints=dconstraints,
         )
 
     return
@@ -449,7 +449,7 @@ def _add_spectral_fit(coll=None, data=None):
 # ######################################################
 
 
-def _compute_spectral_fit(coll=None, data=None):
+def _compute_spectral_fit(coll=None, data=None, chain=None):
 
     # ------------
     # SXR
@@ -458,7 +458,7 @@ def _compute_spectral_fit(coll=None, data=None):
     if data == 'sxr':
 
         for k0 in ['sf0', 'sf1']:
-            coll.compute_spectral_fit(k0, chain=True, verb=2, strict=True)
+            coll.compute_spectral_fit(k0, chain=chain, verb=2, strict=True)
 
         # ---------------------
         # compute spectral fit with user-provided scales, bounds and x0
@@ -511,7 +511,7 @@ def _compute_spectral_fit(coll=None, data=None):
             dbounds_up=dbounds_up,
             dx0=dx0,
             # options
-            chain=True,
+            chain=chain,
             verb=2,
             strict=True,
         )
@@ -523,7 +523,7 @@ def _compute_spectral_fit(coll=None, data=None):
     else:
 
         for k0 in coll.dobj['spect_fit'].keys():
-            coll.compute_spectral_fit(k0, chain=True, verb=2, strict=True)
+            coll.compute_spectral_fit(k0, chain=chain, verb=2, strict=True)
 
     return
 
