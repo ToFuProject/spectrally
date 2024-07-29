@@ -85,7 +85,7 @@ class Test00_Populate():
         lm = [
             'linear', 'exp_lamb',
             'gauss', 'lorentz', 'pvoigt',
-            'pulse1', 'pulse2', 'lognorm',
+            'pulse_exp', 'pulse_gauss', 'lognorm',
         ]
         for kk in lm:
             _ = display_spectral_model_function(kk)

@@ -219,7 +219,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     )
 
     # --------
-    # pulse1
+    # pulse_exp
 
     t0 = lamb0[0]
     tup = Dlamb / 30
@@ -227,7 +227,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     amp = 500 / (np.exp(-(lambm-t0)/tdown) - np.exp(-(lambm-t0)/tup))
 
     coll.add_data(
-        key='data_pulse1',
+        key='data_pulse_exp',
         data=np.random.poisson(
             amp * (lamb >= t0) * (
                 np.exp(-(lamb-t0)/tdown) - np.exp(-(lamb-t0)/tup)
@@ -238,12 +238,12 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     )
 
     # --------
-    # double pulse1
+    # double pulse_exp
 
     deltat = 0.04e-10
 
     coll.add_data(
-        key='data_pulse12',
+        key='data_pulse_exp2',
         data=np.random.poisson(
             amp * (lamb >= t0) * (
                 np.exp(-(lamb-t0)/tdown) - np.exp(-(lamb-t0)/tup)
@@ -257,7 +257,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     )
 
     # --------
-    # pulse2
+    # pulse_gauss
 
     t0 = lamb0[0]
     tup = Dlamb / 30
@@ -267,7 +267,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     amp = 500
 
     coll.add_data(
-        key='data_pulse2',
+        key='data_pulse_gauss',
         data=np.random.poisson(
             amp * (
                 indup * np.exp(-(lamb - t0)**2/tup**2)
@@ -279,10 +279,10 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     )
 
     # --------
-    # double pulse2
+    # double pulse_gauss
 
     coll.add_data(
-        key='data_pulse22',
+        key='data_pulse_gauss2',
         data=np.random.poisson(
             amp * (
                 indup * np.exp(-(lamb - t0)**2/tup**2)
@@ -508,8 +508,8 @@ def _get_dxfree(t=None, lamb=None):
         'smlorentz': np.r_[0.9, -0.006, 0.003e-10],
         'smpvoigt': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
         'smvoigt': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
-        'smpulse1': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
-        'smpulse2': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
+        'smpulse_exp': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
+        'smpulse_gauss': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
         'smlognorm': np.r_[amp, tau, mu, sigma],
 
         # double simple
@@ -517,8 +517,8 @@ def _get_dxfree(t=None, lamb=None):
         'smlorentz2': np.r_[0.9, -0.006, 0.003e-10],
         'smpvoigt2': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
         'smvoigt2': np.r_[1.1, -0.001, 0.003e-10, 0.003e-10],
-        'smpulse12': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
-        'smpulse22': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
+        'smpulse_exp2': np.r_[2, 3.905e-10, 0.001e-10, 0.004e-10],
+        'smpulse_gauss2': np.r_[1, 3.935e-10, 0.001e-10, 0.007e-10],
         'smlognorm2': np.r_[amp, tau, mu, sigma],
 
         # testing complex models
@@ -601,11 +601,11 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
         'smvoigt': {
             'l00': 'voigt',
         },
-        'smpulse1': {
-            'l00': 'pulse1',
+        'smpulse_exp': {
+            'l00': 'pulse_exp',
         },
-        'smpulse2': {
-            'l00': 'pulse2',
+        'smpulse_gauss': {
+            'l00': 'pulse_gauss',
         },
         'smlognorm': {
             'l00': 'lognorm',
@@ -628,13 +628,13 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
             'l00': {'type': 'voigt', 'lamb0': lamb0[0]},
             'l01': {'type': 'voigt', 'lamb0': lamb0[0]},
         },
-        'smpulse12': {
-            'l00': {'type': 'pulse1', 'lamb0': lamb0[0]},
-            'l01': {'type': 'pulse1', 'lamb0': lamb0[0]},
+        'smpulse_exp2': {
+            'l00': {'type': 'pulse_exp', 'lamb0': lamb0[0]},
+            'l01': {'type': 'pulse_exp', 'lamb0': lamb0[0]},
         },
-        'smpulse22': {
-            'l00': {'type': 'pulse2', 'lamb0': lamb0[0]},
-            'l01': {'type': 'pulse2', 'lamb0': lamb0[0]},
+        'smpulse_gauss2': {
+            'l00': {'type': 'pulse_gauss', 'lamb0': lamb0[0]},
+            'l01': {'type': 'pulse_gauss', 'lamb0': lamb0[0]},
         },
         'smlognorm2': {
             'l00': {'type': 'lognorm', 'lamb0': lamb0[0]},
@@ -680,8 +680,8 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
         },
         'sm03': {
             'bck0': 'linear',
-            'l00': {'type': 'pulse1'},
-            'l01': {'type': 'pulse2'},
+            'l00': {'type': 'pulse_exp'},
+            'l01': {'type': 'pulse_gauss'},
             'l02': {'type': 'lognorm'},
             'l03': {'type': 'lognorm'},
         },
@@ -711,13 +711,13 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
             'g02': {'ref': 'l00_gam', 'l01_gam': [0, 1, 0]},
             'g03': {'ref': 'l00_vccos', 'l01_vccos': [(lamb0[1] - lamb0[0])/lamb0[0], 1, 0]},
         },
-        'smpulse12': {
+        'smpulse_exp2': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_t_up', 'l01_t_up': [0, 1, 0]},
             'g02': {'ref': 'l00_t_down', 'l01_t_down': [0, 1, 0]},
             'g03': {'ref': 'l00_tau', 'l01_tau': [0.04e-10 / lambD, 1, 0]},
         },
-        'smpulse22': {
+        'smpulse_gauss2': {
             'g00': {'ref': 'l00_amp', 'l01_amp': [0, 0.5, 0]},
             'g01': {'ref': 'l00_t_up', 'l01_t_up': [0, 1, 0]},
             'g02': {'ref': 'l00_t_down', 'l01_t_down': [0, 1, 0]},
@@ -1014,8 +1014,8 @@ def add_fit_single(coll=None):
         ('smgauss', 'data_gauss'),
         ('smlorentz', 'data_lorentz'),
         ('smpvoigt', 'data_pvoigt'),
-        ('smpulse1', 'data_pulse1'),
-        ('smpulse2', 'data_pulse2'),
+        ('smpulse_exp', 'data_pulse_exp'),
+        ('smpulse_gauss', 'data_pulse_gauss'),
         ('smlognorm', 'data_lognorm'),
     ]
 
@@ -1031,8 +1031,8 @@ def add_fit_double(coll=None):
         ('smgauss2', 'data_gauss2'),
         ('smlorentz2', 'data_lorentz2'),
         ('smpvoigt2', 'data_pvoigt2'),
-        ('smpulse12', 'data_pulse12'),
-        ('smpulse22', 'data_pulse22'),
+        ('smpulse_exp2', 'data_pulse_exp2'),
+        ('smpulse_gauss2', 'data_pulse_gauss2'),
         ('smlognorm2', 'data_lognorm2'),
     ]
 
@@ -1145,7 +1145,7 @@ def compute_fit_single(coll=None, binning=None):
     lk = [
         'data_linear', 'data_exp',
         'data_gauss', 'data_lorentz', 'data_pvoigt',
-        'data_pulse1', 'data_pulse2', 'data_lognorm',
+        'data_pulse_exp', 'data_pulse_gauss', 'data_lognorm',
     ]
 
     for key_data in lk:
@@ -1174,7 +1174,7 @@ def compute_fit_double(coll=None, binning=None):
 
     lk = [
         'data_gauss2', 'data_lorentz2', 'data_pvoigt2',
-        'data_pulse12', 'data_pulse22', 'data_lognorm2',
+        'data_pulse_exp2', 'data_pulse_gauss2', 'data_lognorm2',
     ]
 
     for key_data in lk:
