@@ -105,7 +105,7 @@ def _dmodel_err(key, dmodel):
             lstr.append("\t# background-oriented")
         elif k0 == 'gauss':
             lstr.append("\t# spectral lines-oriented")
-        elif k0 == 'pulse1':
+        elif k0 == 'pulse_exp':
             lstr.append("\t# pulse-oriented")
         lstr.append(stri)
 
