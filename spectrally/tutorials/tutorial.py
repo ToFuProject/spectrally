@@ -28,6 +28,7 @@ __all__ = ['main']
 
 
 _PATH_HERE = os.path.dirname(__file__)
+_PATH_INPUT = os.path.join(_PATH_HERE, 'tests', 'input')
 
 
 # ######################################################
@@ -234,7 +235,7 @@ def _add_data(coll=None, data=None):
         # load file
 
         # pfe = path/file.ext
-        pfe = os.path.join(_PATH_HERE, 'HXR_pulses.npz')
+        pfe = os.path.join(_PATH_INPUT, 'HXR_pulses.npz')
 
         # load
         dout = dict(np.load(pfe, allow_pickle=True))
