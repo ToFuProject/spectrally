@@ -98,7 +98,7 @@ def main(
         key='sm_exp',
         dmodel={
             'bck': 'linear',
-            'pulse': 'pulse1',
+            'pulse': 'pulse_exp',
         },
         dconstraints={
             'gbck': {'ref': 'bck_a0', 'bck_a1': [0, 0, 0]},
@@ -110,7 +110,7 @@ def main(
         key='sm_gauss',
         dmodel={
             'bck': 'linear',
-            'pulse': 'pulse2',
+            'pulse': 'pulse_gauss',
         },
         dconstraints={
             'gbck': {'ref': 'bck_a0', 'bck_a1': [0, 0, 0]},

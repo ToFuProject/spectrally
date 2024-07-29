@@ -243,7 +243,7 @@ def get_available_spectral_model_functions(
             use = 'bck'
         elif kf == 'gauss':
             use = 'lines'
-        elif kf == 'pulse1':
+        elif kf == 'pulse_exp':
             use = 'pulses'
         else:
             use = ''

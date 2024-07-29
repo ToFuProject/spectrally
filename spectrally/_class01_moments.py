@@ -407,9 +407,9 @@ def _get_func_moments(
                 )
 
         # ------------------
-        # sum all pulse1
+        # sum all pulse_exp
 
-        kfunc = 'pulse1'
+        kfunc = 'pulse_exp'
         if dind.get(kfunc) is not None:
 
             amp = dout[kfunc]['amp']
@@ -435,9 +435,9 @@ def _get_func_moments(
             )
 
         # ------------------
-        # sum all pulse2
+        # sum all pulse_gauss
 
-        kfunc = 'pulse2'
+        kfunc = 'pulse_gauss'
         if dind.get(kfunc) is not None:
 
             amp = dout[kfunc]['amp']
