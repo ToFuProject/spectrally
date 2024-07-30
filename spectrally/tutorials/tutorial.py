@@ -322,6 +322,7 @@ def _add_spectral_model(coll=None, data=None):
                 'g2': {
                     'ref': 'bck_a0',
                     'bck_a1': [0, 0, 0],
+                    'bck_a2': [0, 0, 0],
                 },
             },
         )
@@ -337,6 +338,7 @@ def _add_spectral_model(coll=None, data=None):
             'g0': {
                 'ref': 'bck_a0',
                 'bck_a1': [0, 0, 0],
+                'bck_a2': [0, 0, 0],
             },
         }
 
