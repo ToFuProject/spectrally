@@ -49,6 +49,7 @@ def _get_func_details(
         # for pulses
         lamb00 = lamb[0]
         lambD = lamb[-1] - lamb[0]
+        lambm = 0.5*(lamb[-1] + lamb[0])
 
         # iok
         if iok is not None:
@@ -75,16 +76,22 @@ def _get_func_details(
             x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
 
         # ------------------
-        # sum all linear
+        # sum all poly
 
-        kfunc = 'linear'
+        kfunc = 'poly'
         if dind.get(kfunc) is not None:
 
             a0 = x_full[dind[kfunc]['a0']['ind']][:, None]
             a1 = x_full[dind[kfunc]['a1']['ind']][:, None]
+            a2 = x_full[dind[kfunc]['a2']['ind']][:, None]
 
             ind = dind['func'][kfunc]['ind']
-            val[ind, ...] = a0 + lamb * a1
+            lamb_rel = (lamb - lambm) / lambD
+            val[ind, ...] = (
+                a0
+                + a1 * lamb_rel
+                + a2 * lamb_rel**2
+            )
 
         # --------------------
         # sum all exponentials
@@ -426,6 +433,7 @@ def _get_func_jacob(
         # for pulses
         lamb00 = lamb[0]
         lambD = lamb[-1] - lamb[0]
+        lambm = 0.5*(lamb[-1] + lamb[0])
 
         # iok
         if iok is not None:
@@ -453,10 +461,12 @@ def _get_func_jacob(
             x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
 
         # -------
-        # linear
+        # poly
 
-        kfunc = 'linear'
+        kfunc = 'poly'
         if dind.get(kfunc) is not None:
+
+            lamb_rel = (lamb - lambm) / lambD
 
             vind = dind['jac'][kfunc].get('a0')
             if vind is not None:
@@ -466,7 +476,12 @@ def _get_func_jacob(
             vind = dind['jac'][kfunc].get('a1')
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
-                val[:, ival] = lamb * scales[None, ival]
+                val[:, ival] = lamb_rel * scales[None, ival]
+
+            vind = dind['jac'][kfunc].get('a2')
+            if vind is not None:
+                ival, ivar = vind['val'], vind['var']
+                val[:, ival] = lamb_rel**2 * scales[None, ival]
 
         # --------
         # exp_lamb

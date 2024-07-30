@@ -97,7 +97,7 @@ def main(
     coll.add_spectral_model(
         key='sm_exp',
         dmodel={
-            'bck': 'linear',
+            'bck': 'poly',
             'pulse': 'pulse_exp',
         },
         dconstraints={
@@ -109,7 +109,7 @@ def main(
     coll.add_spectral_model(
         key='sm_gauss',
         dmodel={
-            'bck': 'linear',
+            'bck': 'poly',
             'pulse': 'pulse_gauss',
         },
         dconstraints={
@@ -121,7 +121,7 @@ def main(
     coll.add_spectral_model(
         key='sm_lognorm',
         dmodel={
-            'bck': 'linear',
+            'bck': 'poly',
             'pulse': 'lognorm',
         },
         dconstraints={

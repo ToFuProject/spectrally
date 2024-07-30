@@ -56,7 +56,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
 
     # derive useful quantities
     Dlamb = lamb[-1] - lamb[0]
-    lambm = np.mean(lamb)
+    lambm = 0.5*(lamb[-1] + lamb[0])
 
     # phi
     nphi = 100
@@ -89,14 +89,17 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     # ------------------
 
     # --------
-    # linear
+    # poly
 
-    a1 = (300 - 500) / (lamb[-1] - lamb[0])
-    a0 = 500 - a1 * lamb[0]
+    lamb_rel = (lamb - lambm) / Dlamb
+
+    a0 = 5000
+    a1 = 1500
+    a2 = -3000
 
     coll.add_data(
-        key='data_linear',
-        data=np.random.poisson(a1 * lamb + a0),
+        key='data_poly',
+        data=np.random.poisson(a0 + a1*lamb_rel + a2*lamb_rel**2),
         ref='nlamb',
         units='counts',
     )
@@ -477,7 +480,7 @@ def _get_dxfree(t=None, lamb=None):
     amp = fmax / np.exp(0.5*sigma**2 - mu)
 
     # sm00
-    # 'bck0_a0', 'bck0_a1',
+    # 'bck0_a0', 'bck0_a1', 'bck_a2',
     # 'l00_amp', 'l00_vccos', 'l00_sigma',
     # 'l08_amp', 'l08_vccos', 'l08_gam',
     # 'l12_amp', 'l12_vccos', 'l12_sigma', 'l12_gam',
@@ -495,14 +498,15 @@ def _get_dxfree(t=None, lamb=None):
     # 'l02_amp', 'l02_vccos', 'l02_sigma', 'l02_gam'
 
     # sm03
-    # 'bck0_a0', 'bck0_a1',
+    # 'bck0_a0', 'bck0_a1', 'bck_a2',
     # 'l00_amp', 'l00_tau', 'l00_t_up', 'l00_t_down',
     # 'l01_amp', 'l01_tau', 'l01_t_up', 'l01_t_down',
     # 'l02_amp', 'l02_tau', 'l02_mu', 'l02_sigma'
 
     dxfree = {
         # testing elementary models
-        'smlinear': np.r_[0.1 - lamb[0] * 0.1/lambD, 0.1 / lambD],
+        # 'smpoly': np.r_[0.1 - lamb[0] * 0.1/lambD, 0.1 / lambD],
+        'smpoly': np.r_[0.2, 0.01, 0.02],
         'smexp': np.r_[0.2*lamb[0]*np.exp(rate/lamb[0]), rate],
         'smgauss': np.r_[1, 0.004, 0.003e-10],
         'smlorentz': np.r_[0.9, -0.006, 0.003e-10],
@@ -523,7 +527,7 @@ def _get_dxfree(t=None, lamb=None):
 
         # testing complex models
         'sm00': np.r_[
-            0.1 - lamb[0] * 0.1/lambD, 0.1 / lambD,
+           0.2, 0.01, 0.02,
             1, 0.004, 0.003e-10,
             0.9, -0.006, 0.003e-10,
             1.1, -0.001, 0.003e-10, 0.003e-10,
@@ -541,7 +545,7 @@ def _get_dxfree(t=None, lamb=None):
             1e-12, 0.001, 0.003e-10, 0.001e-10,
         ],
         'sm03': np.r_[
-            0.1, 0.,
+            0.2, 0.01, 0.02,
             2, 3.905e-10, 0.001e-10, 0.004e-10,
             1, 3.935e-10, 0.001e-10, 0.007e-10,
             amp, tau, mu, sigma,
@@ -583,8 +587,8 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
 
     dmodel = {
         # Testing single fit only
-        'smlinear': {
-            'bck0': 'linear',
+        'smpoly': {
+            'bck0': 'poly',
         },
         'smexp': {
             'bck0': 'exp_lamb',
@@ -643,13 +647,13 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
 
         # testing model population
         'sm-1': {
-            'bck0': 'linear',
+            'bck0': 'poly',
             'll0': 'gauss',
             'll1': 'gauss',
             'll2': 'lorentz',
         },
         'sm00': {
-            'bck0': 'linear',
+            'bck0': 'poly',
             'l00': {'type': 'gauss'},     # from spectral line
             'l08': {'type': 'lorentz'},   # from spectral line
             'l12': {'type': 'pvoigt'},    # from spectral line
@@ -679,7 +683,7 @@ def add_models(coll=None, models=None, lamb=_LAMB, lamb0=_LAMB0):
             'l02': {'type': 'voigt', 'lamb0': 3.97e-10},
         },
         'sm03': {
-            'bck0': 'linear',
+            'bck0': 'poly',
             'l00': {'type': 'pulse_exp'},
             'l01': {'type': 'pulse_gauss'},
             'l02': {'type': 'lognorm'},
@@ -1009,7 +1013,7 @@ def add_fit(coll=None, key_model=None, key_data=None):
 def add_fit_single(coll=None):
 
     lk = [
-        ('smlinear', 'data_linear'),
+        ('smpoly', 'data_poly'),
         ('smexp', 'data_exp'),
         ('smgauss', 'data_gauss'),
         ('smlorentz', 'data_lorentz'),
@@ -1143,7 +1147,7 @@ def compute_fit_single(coll=None, binning=None):
     # --------------------
 
     lk = [
-        'data_linear', 'data_exp',
+        'data_poly', 'data_exp',
         'data_gauss', 'data_lorentz', 'data_pvoigt',
         'data_pulse_exp', 'data_pulse_gauss', 'data_lognorm',
     ]

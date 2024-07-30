@@ -184,7 +184,7 @@ def _get_scale(
     # bck
     # ------------
 
-    if typ == 'linear':
+    if typ == 'poly':
 
         if var == 'c0':
             pass
