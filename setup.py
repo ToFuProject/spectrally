@@ -19,7 +19,7 @@ import _updateversion as up
 # == Getting version =====================================================
 _HERE = os.path.abspath(os.path.dirname(__file__))
 
-version = up.updateversion()
+version = '0.0.3' # up.updateversion()
 
 print("")
 print("Version for setup.py : ", version)
