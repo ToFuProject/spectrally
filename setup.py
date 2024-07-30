@@ -175,9 +175,9 @@ setup(
     # of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'spectrally-version=scripts.spectrallyversion:main',
-            'specrally-custom=scripts.spectrallycustom:main',
-            'spectrally=scripts.spectrally_bash:main',
+            'spectrally-version=spectrally.scripts.spectrallyversion:main',
+            'specrally-custom=spectrally.scripts.spectrallycustom:main',
+            'spectrally=spectrally.scripts.spectrally_bash:main',
         ],
     },
     # include_dirs=[np.get_include()],
