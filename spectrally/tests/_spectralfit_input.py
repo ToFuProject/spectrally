@@ -93,9 +93,9 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
 
     lamb_rel = (lamb - lambm) / Dlamb
 
-    a0 = 500
-    a1 = 0.5
-    a2 = -1
+    a0 = 5000
+    a1 = 1500
+    a2 = -3000
 
     coll.add_data(
         key='data_poly',
