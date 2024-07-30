@@ -203,10 +203,11 @@ def _get_dpar_xfree(ftype, xx):
 
     if ftype == 'poly':
 
-        a1 = -1/Dx
-        a0 = 2 - a1 * x0
+        a0 = 1
+        a1 = -0.2 / Dx
+        a2 = -1 / Dx
 
-        xfree = np.r_[a0, a1]
+        xfree = np.r_[a0, a1, a2]
 
     elif ftype == 'exp_lamb':
 

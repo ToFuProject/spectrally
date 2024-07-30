@@ -216,6 +216,7 @@ def _get_func_moments(
         # prepare
 
         lambD = lamb[-1] - lamb[0]
+        lambm = 0.5*(lamb[0] + lamb[-1])
 
         # ----------
         # initialize
@@ -275,6 +276,7 @@ def _get_func_moments(
 
             a0 = dout[kfunc]['a0']
             a1 = dout[kfunc]['a1']
+            a2 = dout[kfunc]['a2']
 
             # integral
             if lamb is not None:
@@ -282,6 +284,13 @@ def _get_func_moments(
                     a0 * (lamb[-1] - lamb[0])
                     + a1 * (lamb[-1]**2 - lamb[0]**2)/2
                 )
+
+            # argmax, max
+            dout[kfunc]['argmax'] = np.full(a0.shape, np.nan)
+            dout[kfunc]['max'] = np.full(a1.shape, np.nan)
+            iok = a2 != 0
+            dout[kfunc]['argmax'][iok] = lambm - lambD * a1[iok]/(2*a2[iok])
+            dout[kfunc]['max'][iok] = a0[iok] - a1[iok]**2 / (4*a2[iok])
 
         # --------------------
         # sum all exponentials
