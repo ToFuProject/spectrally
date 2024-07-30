@@ -177,10 +177,10 @@ def _get_scales_bounds(
     ldins = [(dscales, scales), (dbounds_low, bounds0), (dbounds_up, bounds1)]
 
     # ------------------
-    # all linear
+    # all poly
     # ------------------
 
-    kfunc = 'linear'
+    kfunc = 'poly'
     if dind.get(kfunc) is not None:
 
         a1max = (data_max - data_min) / lambD
@@ -703,10 +703,10 @@ def _get_x0(
     ldins = [(dx0, x0)]
 
     # ------------------
-    # all linear
+    # all poly
     # ------------------
 
-    kfunc = 'linear'
+    kfunc = 'poly'
     if dind.get(kfunc) is not None:
 
         a1max = ((data_max - data_min) / lambD) / 10

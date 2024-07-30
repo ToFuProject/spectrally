@@ -17,7 +17,7 @@ import numpy as np
 
 _LMODEL_ORDER = [
     # background
-    'linear', 'exp_lamb', # 'exp_E',
+    'poly', 'exp_lamb', # 'exp_E',
     # spectral lines
     'gauss', 'lorentz', 'pvoigt', 'voigt',
     # pulse shape
@@ -38,13 +38,13 @@ _DMODEL = {
     # -------------------
 
     # -----------
-    # linear
+    # poly
 
-    'linear': {
-        'var': ['a0', 'a1'],
+    'poly': {
+        'var': ['a0', 'a1', 'a2'],
         'description': 'straight line',
         'expressions': {
-            'main': r"$a_0 + a_1\lambda$",
+            'main': r"$a_0 + a_1\frac{\lambda - <\lambda>}{\Delta \lambda} + a_2\left(\frac{\lambda - <\lambda>}{\Delta \lambda}\right)^2$",
         },
     },
 

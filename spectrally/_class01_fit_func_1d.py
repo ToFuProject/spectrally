@@ -75,9 +75,9 @@ def _get_func_details(
             x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
 
         # ------------------
-        # sum all linear
+        # sum all poly
 
-        kfunc = 'linear'
+        kfunc = 'poly'
         if dind.get(kfunc) is not None:
 
             a0 = x_full[dind[kfunc]['a0']['ind']][:, None]
@@ -453,9 +453,9 @@ def _get_func_jacob(
             x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
 
         # -------
-        # linear
+        # poly
 
-        kfunc = 'linear'
+        kfunc = 'poly'
         if dind.get(kfunc) is not None:
 
             vind = dind['jac'][kfunc].get('a0')

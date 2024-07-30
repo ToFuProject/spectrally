@@ -268,9 +268,9 @@ def _get_func_moments(
                     dout[kfunc][kvar] = extract(kfunc, kvar)
 
         # ------------------
-        # sum all linear
+        # sum all poly
 
-        kfunc = 'linear'
+        kfunc = 'poly'
         if dind.get(kfunc) is not None:
 
             a0 = dout[kfunc]['a0']

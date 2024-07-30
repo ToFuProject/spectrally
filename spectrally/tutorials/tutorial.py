@@ -48,7 +48,7 @@ def main(data='sxr', chain=None):
     ----------
     data : str, optional
         Flag indicating which example to run. The default is 'sxr'.
-        - 'sxr': a double-gaussian spectrum with linear background
+        - 'sxr': a double-gaussian spectrum with poly background
         - 'hxr': a series of experimental pulse shapes
 
     Returns
@@ -174,8 +174,8 @@ def _add_data(coll=None, data=None):
         lamb1 = 3.98e-10 + 0.001e-10 * np.sin(t[:, None])
 
 
-        # linear
-        linear = (1 + np.cos(t)[:, None]) * 15 * np.ones((1, nlamb))
+        # poly
+        poly = (1 + np.cos(t)[:, None]) * 15 * np.ones((1, nlamb))
 
         gauss0 = (
             (1 + np.cos(t)[:, None]) * 50
@@ -189,7 +189,7 @@ def _add_data(coll=None, data=None):
 
 
         spectra = (
-            linear
+            poly
             + gauss0
             + gauss1
             + np.random.random((nt, nlamb)) * 5
@@ -300,7 +300,7 @@ def _add_spectral_model(coll=None, data=None):
         coll.add_spectral_model(
             key='sm0',
             dmodel={
-                'bck': 'linear',
+                'bck': 'poly',
                 'l0': {'type': 'gauss', 'lamb0': 3.96e-10, 'mz': mz},
                 'l1': {'type': 'gauss', 'lamb0': 3.98e-10, 'mz': mz},
             },
@@ -310,7 +310,7 @@ def _add_spectral_model(coll=None, data=None):
         coll.add_spectral_model(
             key='sm1',
             dmodel={
-                'bck': 'linear',
+                'bck': 'poly',
                 'l0': {'type': 'gauss', 'lamb0': 3.96e-10, 'mz': mz},
                 'l1': {'type': 'gauss', 'lamb0': 3.98e-10, 'mz': mz},
             },
@@ -332,7 +332,7 @@ def _add_spectral_model(coll=None, data=None):
 
     else:
 
-        # constraints for all models: the linear back has a slope of 0
+        # constraints for all models: the poly back has a slope of 0
         dconstraints = {
             'g0': {
                 'ref': 'bck_a0',
@@ -344,7 +344,7 @@ def _add_spectral_model(coll=None, data=None):
         coll.add_spectral_model(
             key='sm_exp',
             dmodel={
-                'bck': 'linear',
+                'bck': 'poly',
                 'p0': {'type': 'pulse_exp'},
             },
             dconstraints=dconstraints,
@@ -354,7 +354,7 @@ def _add_spectral_model(coll=None, data=None):
         coll.add_spectral_model(
             key='sm_gauss',
             dmodel={
-                'bck': 'linear',
+                'bck': 'poly',
                 'p0': {'type': 'pulse_gauss'},
             },
             dconstraints=dconstraints,
@@ -364,7 +364,7 @@ def _add_spectral_model(coll=None, data=None):
         coll.add_spectral_model(
             key='sm_lognorm',
             dmodel={
-                'bck': 'linear',
+                'bck': 'poly',
                 'p0': {'type': 'lognorm'},
             },
             dconstraints=dconstraints,

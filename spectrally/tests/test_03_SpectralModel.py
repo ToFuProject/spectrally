@@ -83,7 +83,7 @@ class Test00_Populate():
 
     def test01_display_spectral_model_function(self):
         lm = [
-            'linear', 'exp_lamb',
+            'poly', 'exp_lamb',
             'gauss', 'lorentz', 'pvoigt',
             'pulse_exp', 'pulse_gauss', 'lognorm',
         ]
