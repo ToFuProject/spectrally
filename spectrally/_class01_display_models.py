@@ -204,8 +204,8 @@ def _get_dpar_xfree(ftype, xx):
     if ftype == 'poly':
 
         a0 = 1
-        a1 = -0.2 / Dx
-        a2 = -1 / Dx
+        a1 = -0.2
+        a2 = -1
 
         xfree = np.r_[a0, a1, a2]
 

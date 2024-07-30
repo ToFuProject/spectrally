@@ -45,7 +45,7 @@ _DMODEL = {
         'description': 'polynomial (up to deg = 2)',
         'expressions': {
             'main': r"$\left\{ \begin{array}{ll} a_0 + a_1\frac{\lambda - <\lambda>}{\Delta\lambda} + a_2\left(\frac{\lambda - <\lambda>}{\Delta\lambda}\right)^2\\ <\lambda> = \frac{\lambda[0] + \lambda[-1]}{2} \\ \Delta\lambda = \lambda[-1] - \lambda[0]\end{array} \right.$",
-            'argmax': r"$\lambda_{max} = -\frac{a_1}{2a_2}\Delta\lambda + <\lambda>$",
+            'argmax': r"$\lambda_{max} = <\lambda> - \frac{a_1}{2a_2}\Delta\lambda$",
             'max': r"$f(\lambda_{max}) = a_0 - \frac{a_1^2}{4a_2}$",
         },
     },

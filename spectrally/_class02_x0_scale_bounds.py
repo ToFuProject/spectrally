@@ -186,13 +186,13 @@ def _get_scales_bounds(
         a1max = (data_max - data_min) / lambD
 
         # -------
-        # a1
+        # a0
 
-        kvar = 'a1'
+        kvar = 'a0'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
             ival, ivar = vind['val'], vind['var']
-            scales[ival] = a1max
+            scales[ival] = max(np.abs(data_max), np.abs(data_min))
             bounds0[ival] = -10.
             bounds1[ival] = 10.
 
@@ -203,16 +203,30 @@ def _get_scales_bounds(
                 )
 
         # -------
-        # a0
+        # a1
 
-        kvar = 'a0'
+        kvar = 'a1'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
             ival, ivar = vind['val'], vind['var']
-            scales[ival] = max(
-                np.abs(data_min - a1max*lamb[0]),
-                np.abs(data_max + a1max*lamb[0]),
-            )
+            scales[ival] = max(np.abs(data_max), np.abs(data_min))
+            bounds0[ival] = -10.
+            bounds1[ival] = 10.
+
+            for ii, (din, val) in enumerate(ldins):
+                _update_din_from_user(
+                    din, kfunc, kvar, val,
+                    scales=None if ii == 0 else scales
+                )
+
+        # -------
+        # a2
+
+        kvar = 'a2'
+        vind = dind['jac'][kfunc].get(kvar)
+        if vind is not None:
+            ival, ivar = vind['val'], vind['var']
+            scales[ival] = max(np.abs(data_max), np.abs(data_min))
             bounds0[ival] = -10.
             bounds1[ival] = 10.
 
@@ -709,22 +723,7 @@ def _get_x0(
     kfunc = 'poly'
     if dind.get(kfunc) is not None:
 
-        a1max = ((data_max - data_min) / lambD) / 10
-
-        # -------
-        # a1
-
-        kvar = 'a1'
-        vind = dind['jac'][kfunc].get(kvar)
-        if vind is not None:
-            ival, ivar = vind['val'], vind['var']
-            x0[ival] = a1max / scales[ival]
-
-            for ii, (din, val) in enumerate(ldins):
-                _update_din_from_user(
-                    din, kfunc, kvar, val,
-                    scales=scales,
-                )
+        # a1max = ((data_max - data_min) / lambD) / 10
 
         # -------
         # a0
@@ -733,7 +732,37 @@ def _get_x0(
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
             ival, ivar = vind['val'], vind['var']
-            x0[ival] = np.abs(data_min - a1max*lamb[0]) / scales[ival]
+            x0[ival] = data_mean / scales[ival]
+
+            for ii, (din, val) in enumerate(ldins):
+                _update_din_from_user(
+                    din, kfunc, kvar, val,
+                    scales=scales,
+                )
+
+        # -------
+        # a1
+
+        kvar = 'a1'
+        vind = dind['jac'][kfunc].get(kvar)
+        if vind is not None:
+            ival, ivar = vind['val'], vind['var']
+            x0[ival] = 0. / scales[ival]
+
+            for ii, (din, val) in enumerate(ldins):
+                _update_din_from_user(
+                    din, kfunc, kvar, val,
+                    scales=scales,
+                )
+
+        # -------
+        # a2
+
+        kvar = 'a2'
+        vind = dind['jac'][kfunc].get(kvar)
+        if vind is not None:
+            ival, ivar = vind['val'], vind['var']
+            x0[ival] = 0. / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
                 _update_din_from_user(
