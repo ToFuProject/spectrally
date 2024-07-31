@@ -435,6 +435,7 @@ def _get_func_moments(
             lntdu = np.log(t_down / t_up)
 
             # position of max
+            dout[kfunc]['t0'] = t0
             dout[kfunc]['argmax'] = t0 + lntdu * t_down*t_up / dtdu
 
             # value at max
@@ -461,6 +462,7 @@ def _get_func_moments(
             t0 = lamb[0] + lambD * tau
 
             # position of max
+            dout[kfunc]['t0'] = t0
             dout[kfunc]['argmax'] = t0
 
             # value at max
@@ -484,6 +486,7 @@ def _get_func_moments(
             t0 = lamb[0] + lambD * tau
 
             # position of max
+            dout[kfunc]['t0'] = t0
             dout[kfunc]['argmax'] = t0 + np.exp(mu - sigma**2)
 
             # value at max
