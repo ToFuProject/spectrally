@@ -46,7 +46,7 @@ def main(
     # -------------------
 
     (
-        key_model, key_sol, key_data, key_lamb,
+        key_fit, key_model, key_sol, key_data, key_lamb,
         details, binning, connect,
     ) = _check(
         coll=coll,
@@ -60,9 +60,7 @@ def main(
     # -------------------
 
     dout = coll.interpolate_spectral_model(
-        key_model=key_model,
-        key_data=key_sol,
-        lamb=key_lamb,
+        key_model=key_fit,
         # options
         details=details,
         # others
@@ -212,7 +210,7 @@ def _check(
     )
 
     return (
-        key_model, key_sol, key_data, key_lamb,
+        key, key_model, key_sol, key_data, key_lamb,
         details, binning, connect,
     )
 
@@ -321,14 +319,14 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
 
         if dkeys.get('sum_min') is not None:
             # plot fit
-            ax.fill(
+            ax.fill_between(
                 coll2.ddata[dkeys['lamb']]['data'],
                 coll2.ddata[dkeys['sum_min']]['data'],
                 coll2.ddata[dkeys['sum_max']]['data'],
                 ec='None',
                 lw=0.,
                 fc=ll.get_color(),
-                alpha=0.5,
+                alpha=0.3,
             )
 
     # ------------
