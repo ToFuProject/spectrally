@@ -418,6 +418,7 @@ def _get_solver_options(
     solver = ds._generic_check._check_var(
         solver, 'solver',
         types=str,
+        # default='scipy.least_squares',
         default='scipy.curve_fit',
         allowed=lok,
     )
