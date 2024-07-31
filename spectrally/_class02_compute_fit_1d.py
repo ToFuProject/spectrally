@@ -515,7 +515,7 @@ def _loop(
                 popt, pcov, infodict, mesg, ier = scpopt.curve_fit(
                     func_sum2,
                     lamb,
-                    data[slii],
+                    data[slii][dparams['iok']],
                     p0=x0,
                     sigma=None,
                     absolute_sigma=False,
