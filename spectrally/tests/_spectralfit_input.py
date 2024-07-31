@@ -123,7 +123,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
 
     sigma = Dlamb/20.
     vccos = Dlamb/10. / lamb0[0]
-    amp = 500 * np.exp((lambm - lamb0[0]*(1+vccos))**2/(2*sigma**2))
+    amp = 100 * np.exp((lambm - lamb0[0]*(1+vccos))**2/(2*sigma**2))
 
     coll.add_data(
         key='data_gauss',
@@ -152,7 +152,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
 
     gam = Dlamb/20.
     vccos = Dlamb/10. / lamb0[0]
-    amp = 500 * (1 + ((lambm - lamb0[0]*(1 + vccos)) / gam)**2)
+    amp = 100 * (1 + ((lambm - lamb0[0]*(1 + vccos)) / gam)**2)
 
     coll.add_data(
         key='data_lorentz',
@@ -183,7 +183,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     gam = Dlamb/20.
     vccos = Dlamb/10. / lamb0[1]
     eta = 0.2
-    amp = 500 / (
+    amp = 100 / (
         eta / (1 + ((lambm - lamb0[0]*(1 + vccos)) / gam)**2)
         + (1-eta) * np.exp(-(lambm - lamb0[0]*(1 + vccos))**2/(2*sigma**2))
     )
@@ -227,7 +227,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     t0 = lamb0[0]
     tup = Dlamb / 30
     tdown = Dlamb / 5
-    amp = 500 / (np.exp(-(lambm-t0)/tdown) - np.exp(-(lambm-t0)/tup))
+    amp = 100 / (np.exp(-(lambm-t0)/tdown) - np.exp(-(lambm-t0)/tup))
 
     coll.add_data(
         key='data_pulse_exp',
@@ -267,7 +267,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     tdown = Dlamb / 5
     indup = (lamb < t0)
     inddown = (lamb >= t0)
-    amp = 500
+    amp = 100
 
     coll.add_data(
         key='data_pulse_gauss',
@@ -308,7 +308,7 @@ def add_data(coll=None, lamb=_LAMB, lamb0=_LAMB0):
     mu = 0.5 * (np.log((Dlamb / 30)**2/(np.exp(sigma**2) - 1)) - sigma**2)
 
     amp = (
-        500 * (lambm - t0)
+        100 * (lambm - t0)
         * np.exp((np.log(lambm - t0) - mu)**2 / (2.*sigma**2))
     )
     data = np.zeros((lamb.size,))
