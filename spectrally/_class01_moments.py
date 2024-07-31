@@ -47,7 +47,7 @@ def main(
     # all other variables
     (
         key_model, ref_nx, ref_nf,
-        key_data,
+        key_data, key_std,
         key_lamb, lamb, ref_lamb,
         details, binning,
         returnas, store, store_key,
