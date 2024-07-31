@@ -448,7 +448,7 @@ def _get_solver_options(
         ddef = dict(
             # solver options
             full_output=True,
-            # nan_policy='raise',
+            # nan_policy='raise',  # not available on MacOS ?
             # common with least_squares
             method='trf',
             xtol=None,
