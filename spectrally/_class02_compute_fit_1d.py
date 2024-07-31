@@ -374,7 +374,10 @@ def _loop(
     nfev = np.full(shape_reduced, np.nan)
     time = np.full(shape_reduced, np.nan)
     sol = np.full(shape_sol, np.nan)
-    std = np.full(shape_sol, np.nan)
+    if solver == 'scipy.curve_fit':
+        std = np.full(shape_sol, np.nan)
+    else:
+        std = None
 
     message = ['' for ii in range(np.prod(shape_reduced))]
     errmsg = ['' for ii in range(np.prod(shape_reduced))]

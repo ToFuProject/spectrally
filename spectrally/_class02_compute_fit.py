@@ -529,21 +529,29 @@ def _store(
     # add data
     # ------------
 
-    # solution
+    # solution names
     ksol = f"{key}_sol"
-    kstd = f"{key}_std"
+
+    # solution arrays
     sol = dout['sol'].ravel() if ravel is True else dout['sol']
-    std = dout['std'].ravel() if ravel is True else dout['std']
+    if dout['std'] is None:
+        kstd = None
+        std = None
+    else:
+        kstd = f"{key}_std"
+        std = dout['std'].ravel() if ravel is True else dout['std']
+
+    # add
     if ksol in coll.ddata.keys():
         if overwrite is True:
             c0 = (
                 coll.ddata[ksol]['ref'] == tuple(ref)
                 and coll.dobj[wsf][key]['key_sol'] == ksol
-                and coll.dobj[wsf][key]['key_std'] == kstd
             )
             if c0 is True:
                 coll._ddata[ksol]['data'] = sol
-                coll._ddata[kstd]['data'] = std
+                if std is not None:
+                    coll._ddata[kstd]['data'] = std
 
             else:
                 msg = (
@@ -569,13 +577,14 @@ def _store(
         )
 
         # std
-        coll.add_data(
-            key=kstd,
-            data=std,
-            ref=tuple(ref),
-            units=coll.ddata[key_data]['units'],
-            dim='fit_std',
-        )
+        if std is not None:
+            coll.add_data(
+                key=kstd,
+                data=std,
+                ref=tuple(ref),
+                units=coll.ddata[key_data]['units'],
+                dim='fit_std',
+            )
 
     # -------------
     # other outputs
