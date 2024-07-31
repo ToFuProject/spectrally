@@ -432,7 +432,7 @@ def _get_solver_options(
             # solver options
             method='trf',
             xtol=None,
-            ftol=1e-12,
+            ftol=1e-10,
             gtol=None,
             tr_solver='exact',
             tr_options={},
@@ -451,7 +451,7 @@ def _get_solver_options(
             # common with least_squares
             method='trf',
             xtol=None,
-            ftol=1e-12,
+            ftol=1e-10,
             gtol=None,
             tr_solver='exact',
             tr_options={},
