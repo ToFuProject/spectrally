@@ -228,7 +228,9 @@ def _extract_coll2(
 
     lk = ['data', 'units', 'dim', 'quant']
 
+    # -------
     # lamb
+
     if dout['key_lamb'] is None:
         coll2.add_data(key_lamb, data=dout['lamb'], ref=kref_lamb)
     else:
@@ -237,7 +239,9 @@ def _extract_coll2(
             **{k0: coll.ddata[dout['key_lamb']][k0] for k0 in lk + ['ref']},
         )
 
+    # ---------------
     # sum + details
+
     if details is True:
 
         # data
@@ -267,11 +271,35 @@ def _extract_coll2(
             **{k0: dout[k0] for k0 in lk}
         )
 
+    # -------------------------
     # all other vectors if any
+
     if keyY is not None:
         coll2.add_data(
             keyY,
             **{k0: coll.ddata[keyY][k0] for k0 in lk + ['ref']},
+        )
+
+    # --------------
+    # add std
+    # --------------
+
+    if dout['data_min'] is not None:
+
+        ksmin = f"{key}_sum_min"
+        coll2.add_data(
+            ksmin,
+            data=dout['data_min'],
+            ref=tuple(ref),
+            **{k0: dout[k0] for k0 in lk[1:]}
+        )
+
+        ksmax = f"{key}_sum_max"
+        coll2.add_data(
+            ksmin,
+            data=dout['data_max'],
+            ref=tuple(ref),
+            **{k0: dout[k0] for k0 in lk[1:]}
         )
 
     # --------------
@@ -284,6 +312,9 @@ def _extract_coll2(
     }
     if details is True:
         dkeys['details'] = lfunc
+    if dout['data_min'] is not None:
+        dkeys['sum_min'] = ksmin
+        dkeys['sum_max'] = ksmax
 
     # --------------
     # prepare data
