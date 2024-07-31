@@ -46,7 +46,7 @@ def main(
     # -------------------
 
     (
-        key_model, key_sol, key_data, key_lamb,
+        key_fit, key_model, key_sol, key_data, key_lamb,
         details, binning, connect,
     ) = _check(
         coll=coll,
@@ -60,9 +60,7 @@ def main(
     # -------------------
 
     dout = coll.interpolate_spectral_model(
-        key_model=key_model,
-        key_data=key_sol,
-        lamb=key_lamb,
+        key_model=key_fit,
         # options
         details=details,
         # others
@@ -212,7 +210,7 @@ def _check(
     )
 
     return (
-        key_model, key_sol, key_data, key_lamb,
+        key, key_model, key_sol, key_data, key_lamb,
         details, binning, connect,
     )
 
@@ -243,7 +241,7 @@ def _extract_coll2(
     # ----------
     # add data
 
-    lk = ['data', 'units', 'dim', 'quant']
+    lk = ['data', 'units', 'dim', 'quant', 'ref']
     coll2.add_data(
         key=key_data,
         **{k0: coll._ddata[key_data][k0] for k0 in lk}
@@ -285,7 +283,7 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
         ax = dax[kax]['handle']
 
         # plot fit
-        ax.plot(
+        ll, = ax.plot(
             coll2.ddata[dkeys['lamb']]['data'],
             coll2.ddata[dkeys['sum']]['data'],
             ls='-',
@@ -314,6 +312,22 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
                     marker='None',
                     lw=1.,
                 )
+
+        # ------------
+        # plot std
+        # -----------
+
+        if dkeys.get('sum_min') is not None:
+            # plot fit
+            ax.fill_between(
+                coll2.ddata[dkeys['lamb']]['data'],
+                coll2.ddata[dkeys['sum_min']]['data'],
+                coll2.ddata[dkeys['sum_max']]['data'],
+                ec='None',
+                lw=0.,
+                fc=ll.get_color(),
+                alpha=0.3,
+            )
 
     # ------------
     # plot diff
@@ -415,6 +429,22 @@ def _plot_2d(
         connect=False,
         inplace=True,
     )
+
+    # -----------------
+    # plot std
+    # -----------------
+
+    # if dkeys.get('sum_min') is not None:
+    #     # plot fit
+    #     ax.fill(
+    #         coll2.ddata[dkeys['lamb']]['data'],
+    #         coll2.ddata[dkeys['sum_min']]['data'],
+    #         coll2.ddata[dkeys['sum_max']]['data'],
+    #         ec='None',
+    #         lw=0.,
+    #         fc=ll.get_color(),
+    #         alpha=0.5,
+    #     )
 
     # --------------
     # plot spectrum

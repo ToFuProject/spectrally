@@ -104,7 +104,7 @@ def main(
     # solver_options
     # ------------
 
-    dsolver_options = _get_solver_options(
+    solver, dsolver_options = _get_solver_options(
         solver=solver,
         dsolver_options=dsolver_options,
         verb_scp=verb_scp,
@@ -414,11 +414,12 @@ def _get_solver_options(
     # available solvers
     # -------------------
 
-    lok = ['scipy.least_squares']
+    lok = ['scipy.least_squares', 'scipy.curve_fit']
     solver = ds._generic_check._check_var(
         solver, 'solver',
         types=str,
-        default='scipy.least_squares',
+        # default='scipy.least_squares',
+        default='scipy.curve_fit',
         allowed=lok,
     )
 
@@ -432,12 +433,31 @@ def _get_solver_options(
             # solver options
             method='trf',
             xtol=None,
-            ftol=1e-12,
+            ftol=1e-10,
             gtol=None,
             tr_solver='exact',
             tr_options={},
             diff_step=None,
             max_nfev=None,
+            loss='linear',
+            verbose=verb_scp,
+        )
+
+    elif solver == 'scipy.curve_fit':
+
+        ddef = dict(
+            # solver options
+            full_output=True,
+            # nan_policy='raise',  # not available on MacOS ?
+            # common with least_squares
+            method='trf',
+            xtol=None,
+            ftol=1e-10,
+            gtol=None,
+            tr_solver='exact',
+            tr_options={},
+            diff_step=None,
+            max_nfev=1000,
             loss='linear',
             verbose=verb_scp,
         )
@@ -467,7 +487,7 @@ def _get_solver_options(
     for k0 in lkout:
         del dsolver_options[k0]
 
-    return dsolver_options
+    return solver, dsolver_options
 
 
 #############################################
@@ -510,9 +530,19 @@ def _store(
     # add data
     # ------------
 
-    # solution
+    # solution names
     ksol = f"{key}_sol"
+
+    # solution arrays
     sol = dout['sol'].ravel() if ravel is True else dout['sol']
+    if dout['std'] is None:
+        kstd = None
+        std = None
+    else:
+        kstd = f"{key}_std"
+        std = dout['std'].ravel() if ravel is True else dout['std']
+
+    # add
     if ksol in coll.ddata.keys():
         if overwrite is True:
             c0 = (
@@ -521,6 +551,8 @@ def _store(
             )
             if c0 is True:
                 coll._ddata[ksol]['data'] = sol
+                if std is not None:
+                    coll._ddata[kstd]['data'] = std
 
             else:
                 msg = (
@@ -536,6 +568,7 @@ def _store(
             raise Exception(msg)
 
     else:
+        # solution
         coll.add_data(
             key=ksol,
             data=sol,
@@ -544,7 +577,19 @@ def _store(
             dim='fit_sol',
         )
 
+        # std
+        if std is not None:
+            coll.add_data(
+                key=kstd,
+                data=std,
+                ref=tuple(ref),
+                units=coll.ddata[key_data]['units'],
+                dim='fit_std',
+            )
+
+    # -------------
     # other outputs
+
     lk = [
         'cost', 'chi2n', 'time', 'status', 'nfev',
         'msg', 'validity', 'errmsg',
@@ -573,6 +618,7 @@ def _store(
 
     wsf = coll._which_fit
     coll._dobj[wsf][key]['key_sol'] = ksol
+    coll._dobj[wsf][key]['key_std'] = kstd
 
     # scale, bounds, x0
     coll._dobj[wsf][key]['dinternal'] = {

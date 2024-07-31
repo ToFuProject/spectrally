@@ -37,7 +37,7 @@ _PATH_INPUT = os.path.join(os.path.dirname(_PATH_HERE), 'tests', 'input')
 # ######################################################
 
 
-def main(data='sxr', chain=None):
+def main(data='sxr', compute=True, chain=None, solver=None):
     """ Tutorial on how to use spectrally
 
     Two examples 'sxr' and 'hxr' are available
@@ -118,25 +118,27 @@ def main(data='sxr', chain=None):
     # compute spectral fit
     # ---------------------
 
-    _compute_spectral_fit(coll=coll, data=data, chain=chain)
+    if compute is True:
 
-    # ---------------------
-    # plot fit
-    # ---------------------
+        _compute_spectral_fit(coll=coll, data=data, chain=chain, solver=solver)
 
-    if data == 'sxr':
-        dax = coll.plot_spectral_fit('sf1')
-    else:
-        dax = coll.plot_spectral_fit('sf_lognorm')
+        # ---------------------
+        # plot fit
+        # ---------------------
 
-    # ---------------------
-    # extract moments
-    # ---------------------
+        if data == 'sxr':
+            dax = coll.plot_spectral_fit('sf1')
+        else:
+            dax = coll.plot_spectral_fit('sf_lognorm')
 
-    if data == 'sxr':
-        dout = coll.get_spectral_model_moments('sf1')
-    else:
-        dout = coll.get_spectral_model_moments('sf_exp')
+        # ---------------------
+        # extract moments
+        # ---------------------
+
+        if data == 'sxr':
+            dout = coll.get_spectral_model_moments('sf1')
+        else:
+            dout = coll.get_spectral_model_moments('sf_exp')
 
     return coll
 
@@ -455,7 +457,7 @@ def _add_spectral_fit(coll=None, data=None):
 # ######################################################
 
 
-def _compute_spectral_fit(coll=None, data=None, chain=None):
+def _compute_spectral_fit(coll=None, data=None, chain=None, solver=None):
 
     # ------------
     # check inputs
@@ -474,8 +476,13 @@ def _compute_spectral_fit(coll=None, data=None, chain=None):
     if data == 'sxr':
 
         for k0 in ['sf0', 'sf1']:
-            coll.compute_spectral_fit(k0, chain=chain, verb=2, strict=True)
-
+            coll.compute_spectral_fit(
+                k0,
+                solver=solver,
+                chain=chain,
+                verb=0,
+                strict=True,
+            )
         # ---------------------
         # compute spectral fit with user-provided scales, bounds and x0
         # ---------------------
@@ -527,6 +534,7 @@ def _compute_spectral_fit(coll=None, data=None, chain=None):
             dbounds_up=dbounds_up,
             dx0=dx0,
             # options
+            solver=solver,
             chain=chain,
             verb=2,
             strict=True,
@@ -539,7 +547,13 @@ def _compute_spectral_fit(coll=None, data=None, chain=None):
     else:
 
         for k0 in coll.dobj['spect_fit'].keys():
-            coll.compute_spectral_fit(k0, chain=chain, verb=2, strict=True)
+            coll.compute_spectral_fit(
+                k0,
+                solver=solver,
+                chain=chain,
+                verb=2,
+                strict=True,
+            )
 
     return
 
