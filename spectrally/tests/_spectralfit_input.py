@@ -1116,11 +1116,21 @@ def compute_fit(coll=None, key_data=None, binning=None):
     # compute fit
     # ---------------
 
-    for k0 in lk:
+    for ii, k0 in enumerate(lk):
+
+        if ii % 2 == 0:
+            solver = 'scipy.least_squares'
+            ftol = 1e-6
+        else:
+            solver = 'scipy.curve_fit'
+            ftol = 1e-3
+
         coll.compute_spectral_fit(
             key=k0,
             strict=True,
             binning=binning,
+            solver=solver,
+            dsolver_options={'ftol': ftol},
             verb=1,
             timing=None,
         )
