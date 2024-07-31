@@ -296,7 +296,7 @@ def _extract_coll2(
 
         ksmax = f"{key}_sum_max"
         coll2.add_data(
-            ksmin,
+            ksmax,
             data=dout['data_max'],
             ref=tuple(ref),
             **{k0: dout[k0] for k0 in lk[1:]}
