@@ -551,7 +551,7 @@ def _loop(
         except Exception as err:
 
             msg = (
-                f"\nError for spectr_fit '{key}' with solver = '{solver}':\n"
+                f"\nError for spect_fit '{key}' with solver = '{solver}':\n"
                 + str(err)
             )
             lerr = [
