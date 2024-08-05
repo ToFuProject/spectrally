@@ -305,6 +305,7 @@ def _get_func_moments(
                 dout[ktype]['integ'] = (
                     a0 * (lamb[-1] - lamb[0])
                     + a1 * (lamb[-1]**2 - lamb[0]**2)/2
+                    + a2 * (lamb[-1]**3 - lamb[0]**3)/3
                 )
 
             # argmax, max
