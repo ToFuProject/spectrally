@@ -435,7 +435,7 @@ def _add_spectral_fit(coll=None, data=None):
 
         for k0 in coll.dobj['spect_model'].keys():
             coll.add_spectral_fit(
-                key=f"sf_{k0.replace('sm_', '')}",
+                key=k0.replace('sm_', 'sf_'),
                 key_model=k0,
                 key_data='current',
                 key_sigma=None,
