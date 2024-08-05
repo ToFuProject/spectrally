@@ -39,11 +39,7 @@ def main(
     # ------------
 
     # key_model vs key_fit
-    key_model, key_data, lamb, returnas = _check(
-        coll=coll,
-        key=key,
-        key_data=key_data,
-        lamb=lamb,
+    returnas = _check(
         returnas=returnas,
     )
 
@@ -53,10 +49,10 @@ def main(
         key_data, key_std,
         key_lamb, lamb, ref_lamb,
         details, binning,
-        returnas, store, store_key,
+        _, store, store_key,
     ) = _interpolate._check(
         coll=coll,
-        key_model=key_model,
+        key_model=key,
         key_data=key_data,
         lamb=lamb,
         # others
@@ -93,6 +89,7 @@ def main(
     # ------------
 
     dind = _check_mz(dmz, dind=dind)
+    axis = coll.ddata[key_data]['ref'].index(ref_nx)
 
     # ------------
     # get func
@@ -104,7 +101,7 @@ def main(
         c2=c2,
         dind=dind,
         param_val=param_val,
-        axis=coll.ddata[key_data]['ref'].index(ref_nx),
+        axis=axis,
     )
 
     # -------------------
@@ -122,12 +119,16 @@ def main(
     # -------------
 
     if returnas == 'dict_varnames':
+
+        ref = tuple([rr for rr in coll.ddata[key_data]['ref'] if rr != ref_nx])
+
         dout = _format(
             coll=coll,
             key_model=key_model,
-            din=din,
+            din=dout,
             dind=dind,
-            ref=[rr for rr in coll.ddata[key_data]['ref'] if rr != ref_nx],
+            axis=axis,
+            ref=ref,
         )
 
     return dout
@@ -140,38 +141,8 @@ def main(
 
 
 def _check(
-    coll=None,
-    key=None,
-    key_data=None,
-    lamb=None,
     returnas=None,
 ):
-
-    # ---------------------
-    # key_model vs key_fit
-    # ---------------------
-
-    wsm = coll._which_model
-    wsf = coll._which_fit
-
-    lokm = list(coll.dobj.get(wsm, {}).keys())
-    lokf = list(coll.dobj.get(wsf, {}).keys())
-
-    key = ds._generic_check._check_var(
-        key, 'key',
-        types=str,
-        allowed=lokm + lokf,
-    )
-
-    if key in lokf:
-        key_fit = key
-        key = coll.dobj[wsf][key_fit]['key_model']
-
-        if key_data is None:
-            key_data = coll.dobj[wsf][key_fit]['key_sol']
-
-        if lamb is None:
-            lamb = coll.dobj[wsf][key_fit]['key_lamb']
 
     # -------------
     # returnas
@@ -184,7 +155,7 @@ def _check(
         allowed=['dict_ftypes', 'dict_varnames'],
     )
 
-    return key, key_data, lamb, returnas
+    return returnas
 
 
 def _check_mz(
@@ -264,33 +235,46 @@ def _get_func_moments(
 
         if c0 is None:
             x_full = x_free
-            xf_std = x_std
+            xf_min = x_full - x_std
+            xf_max = x_full + x_std
+
         else:
+
             if x_free.ndim > 1:
                 shape = list(x_free.shape)
                 shape[axis] = c0.size
                 x_full = np.full(shape, np.nan)
                 if x_std is not None:
-                    xf_std = np.full(shape, np.nan)
+                    xf_min = np.full(shape, np.nan)
+                    xf_max = np.full(shape, np.nan)
 
                 sli = list(shape)
                 sli[axis] = slice(None)
                 sli = np.array(sli)
                 ich = np.array([ii for ii in range(len(shape)) if ii != axis])
                 linds = [range(shape[ii]) for ii in ich]
-                for ind in itt.product(*linds):
+
+                for ii, ind in enumerate(itt.product(*linds)):
                     sli[ich] = ind
                     slii = tuple(sli)
                     x_full[slii] = (
                         c2.dot(x_free[slii]**2) + c1.dot(x_free[slii]) + c0
                     )
+
                     if x_std is not None:
-                        xf_std[slii] = (
-                            c2.dot(x_std[slii]**2) + c1.dot(x_std[slii]) + c0
+                        xf_min[slii] = (
+                            c2.dot((x_free[slii] - x_std[slii])**2)
+                            + c1.dot(x_free[slii] - x_std[slii]) + c0
+                        )
+                        xf_max[slii] = (
+                            c2.dot((x_free[slii] + x_std[slii])**2)
+                            + c1.dot(x_free[slii] + x_std[slii]) + c0
                         )
 
             else:
                 x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
+                xf_min = c2.dot((x_free - x_std)**2) + c1.dot(x_free - x_std) + c0
+                xf_max = c2.dot((x_free + x_std)**2) + c1.dot(x_free + x_std) + c0
 
         sli = [None if ii == axis else slice(None) for ii in range(x_free.ndim)]
         extract = _get_var_extract_func(dind, axis, sli)
@@ -303,7 +287,8 @@ def _get_func_moments(
                 for kvar in v0['var']:
                     dout[ktype][kvar] = extract(ktype, kvar, x_full)
                     if x_std is not None:
-                        dout[ktype][f"{kvar}_std"] = extract(ktype, kvar, x_std)
+                        dout[ktype][f"{kvar}_min"] = extract(ktype, kvar, xf_min)
+                        dout[ktype][f"{kvar}_max"] = extract(ktype, kvar, xf_max)
 
         # ------------------
         # sum all poly
@@ -587,6 +572,7 @@ def _format(
     key_model=None,
     din=None,
     dind=None,
+    axis=None,
     ref=None,
 ):
 
@@ -594,7 +580,9 @@ def _format(
     # prepare
     # ---------------
 
-    lx_all = coll.get_spectral_model_variables(key_model, returnas='all')['all']
+    dout = {}
+    wsm = coll._which_model
+    sli = [slice(None) for ii in range(len(ref)+1)]
 
     # --------------
     # loop
@@ -602,60 +590,27 @@ def _format(
 
     for ktype, vtype in din.items():
 
-        lkfunc =
-        lind =
+        lkfunc = [
+            kfunc for kfunc in coll.dobj[wsm][key_model]['keys']
+            if coll.dobj[wsm][key_model]['dmodel'][kfunc]['type'] == ktype
+        ]
 
-        for kout, vout in vtype.items():
+        for kvar in vtype.keys():
 
-            for ii in range(dout[ktype][kvar].shape[axis]):
-
-                key = f"{ktype}_{kvar}"
-                dout[]
-
-
-    for ktype, v0 in _model_dict._DMODEL.items():
-
-        if dind.get(ktype) is not None:
-
-            for kvar in v0['var']:
+            for ii, kfunc in enumerate(lkfunc):
 
                 key = f"{kfunc}_{kvar}"
+                sli[axis] = ii
 
-                for ii in range(dout[ktype][kvar].shape[axis]):
-                    kfunc =
-                    sli =
-                    key = f"{kfunc}_{kvar}"
-                    assert key in lx_all, key
+                # get units
+                units = _units(coll, kfunc, kvar)
 
-                    # get units
-                    units = _units(coll, kfunc, kvar)
-
-                    # store
-                    dout[key] = {
-                        'data': din[kfunc][kvar][sli],
-                        'ref': ref,
-                        'units': units,
-                    }
-
-                    if is not None:
-
-                        # min
-                        kvar_min = f"{kvar}_min"
-                        key_min = f'{key}_min'
-                        dout[key_min] = {
-                            'data': din[kfunc][kvar_min][sli],
-                            'ref': ref,
-                            'units': units,
-                        }
-
-                        # max
-                        kvar_max = f"{kvar}_min"
-                        key_max = f'{key}_max'
-                        dout[key_max] = {
-                            'data': din[kfunc][kvar_max][sli],
-                            'ref': ref,
-                            'units': units,
-                        }
+                # store
+                dout[key] = {
+                    'data': din[ktype][kvar][tuple(sli)],
+                    'ref': ref,
+                    'units': units,
+                }
 
     return dout
 
