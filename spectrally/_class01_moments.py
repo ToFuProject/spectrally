@@ -30,6 +30,8 @@ def main(
     key_data=None,
     lamb=None,
     dmz=None,
+    # return
+    returnas=None,
 ):
 
     # ------------
@@ -37,11 +39,12 @@ def main(
     # ------------
 
     # key_model vs key_fit
-    key_model, key_data, lamb = _check(
+    key_model, key_data, lamb, returnas = _check(
         coll=coll,
         key=key,
         key_data=key_data,
         lamb=lamb,
+        returnas=returnas,
     )
 
     # all other variables
@@ -104,19 +107,28 @@ def main(
         axis=coll.ddata[key_data]['ref'].index(ref_nx),
     )
 
-    # ------------
-    # compute
-    # ------------
+    # -------------------
+    # extract / compute
+    # -------------------
 
     dout = func(
         x_free=coll.ddata[key_data]['data'],
+        x_std=None if key_std is None else coll.ddata[key_std]['data'],
         lamb=lamb,
-        scale=None,
     )
 
     # -------------
     # format output
     # -------------
+
+    if returnas == 'dict_varnames':
+        dout = _format(
+            coll=coll,
+            key_model=key_model,
+            din=din,
+            dind=dind,
+            ref=[rr for rr in coll.ddata[key_data]['ref'] if rr != ref_nx],
+        )
 
     return dout
 
@@ -127,7 +139,13 @@ def main(
 #############################################
 
 
-def _check(coll=None, key=None, key_data=None, lamb=None):
+def _check(
+    coll=None,
+    key=None,
+    key_data=None,
+    lamb=None,
+    returnas=None,
+):
 
     # ---------------------
     # key_model vs key_fit
@@ -155,7 +173,18 @@ def _check(coll=None, key=None, key_data=None, lamb=None):
         if lamb is None:
             lamb = coll.dobj[wsf][key_fit]['key_lamb']
 
-    return key, key_data, lamb
+    # -------------
+    # returnas
+    # -------------
+
+    returnas = ds._generic_check._check_var(
+        returnas, 'returnas',
+        types=str,
+        default='dict_varnames',
+        allowed=['dict_ftypes', 'dict_varnames'],
+    )
+
+    return key, key_data, lamb, returnas
 
 
 def _check_mz(
@@ -200,15 +229,19 @@ def _get_func_moments(
     # prepare
     # --------------
 
+    # --------------
+    # prepare
+    # --------------
+
     def func(
         x_free=None,
+        x_std=None,
         lamb=None,
         param_val=param_val,
         c0=c0,
         c1=c1,
         c2=c2,
         dind=dind,
-        scale=None,
         axis=axis,
     ):
 
@@ -231,11 +264,15 @@ def _get_func_moments(
 
         if c0 is None:
             x_full = x_free
+            xf_std = x_std
         else:
             if x_free.ndim > 1:
                 shape = list(x_free.shape)
                 shape[axis] = c0.size
                 x_full = np.full(shape, np.nan)
+                if x_std is not None:
+                    xf_std = np.full(shape, np.nan)
+
                 sli = list(shape)
                 sli[axis] = slice(None)
                 sli = np.array(sli)
@@ -247,18 +284,16 @@ def _get_func_moments(
                     x_full[slii] = (
                         c2.dot(x_free[slii]**2) + c1.dot(x_free[slii]) + c0
                     )
+                    if x_std is not None:
+                        xf_std[slii] = (
+                            c2.dot(x_std[slii]**2) + c1.dot(x_std[slii]) + c0
+                        )
 
             else:
                 x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
 
         sli = [None if ii == axis else slice(None) for ii in range(x_free.ndim)]
-        extract = _get_var_extract_func(x_full, dind, axis, sli)
-
-        # -------------------
-        # rescale
-
-        if scale is not None:
-            pass
+        extract = _get_var_extract_func(dind, axis, sli)
 
         # ---------------------
         # extract all variables
@@ -266,7 +301,9 @@ def _get_func_moments(
         for kfunc, v0 in _model_dict._DMODEL.items():
             if dind.get(kfunc) is not None:
                 for kvar in v0['var']:
-                    dout[kfunc][kvar] = extract(kfunc, kvar)
+                    dout[kfunc][kvar] = extract(kfunc, kvar, x_full)
+                    if x_std is not None:
+                        dout[kfunc][f"{kvar}_std"] = extract(kfunc, kvar, x_std)
 
         # ------------------
         # sum all poly
@@ -503,15 +540,16 @@ def _get_func_moments(
 # #####################################################################
 
 
-def _get_var_extract_func(x_full, dind, axis, sli):
-    def func(kfunc, kvar, dind=dind, axis=axis, sli=sli, x_full=x_full):
+def _get_var_extract_func(dind, axis, sli):
+    def func(kfunc, kvar, x_full, dind=dind, axis=axis, sli=sli):
         sli[axis] = dind[kfunc][kvar]['ind']
         return x_full[tuple(sli)]
     return func
 
+
 def _get_line_argmax(vccos, param_val, dind, kfunc, shape, axis):
 
-    # extract lamb0
+    # lamb0
     lamb0 = param_val[dind[kfunc]['lamb0']]
 
     # reshape lamb0
@@ -521,9 +559,10 @@ def _get_line_argmax(vccos, param_val, dind, kfunc, shape, axis):
 
     return lamb0 * (1 + vccos)
 
+
 def _get_Ti(sigma, param_val, dind, kfunc, shape, axis):
 
-    # extract lamb0, mz
+    # lamb0, mz
     lamb0 = param_val[dind[kfunc]['lamb0']]
     mz = param_val[dind[kfunc]['mz']]
 
@@ -535,3 +574,86 @@ def _get_Ti(sigma, param_val, dind, kfunc, shape, axis):
     mz = mz.reshape(reshape)
 
     return (sigma / lamb0)**2 * mz * scpct.c**2 / scpct.e
+
+
+#############################################
+#############################################
+#       format
+#############################################
+
+
+def _format(
+    coll=None,
+    key_model=None,
+    din=None,
+    dind=None,
+    ref=None,
+):
+
+    # ---------------
+    # prepare
+    # ---------------
+
+    lx_all = coll.get_spectral_model_variables(key_model, returnas='all')['all']
+
+    # --------------
+    # loop
+    # --------------
+
+    for kfunc, v0 in _model_dict._DMODEL.items():
+
+        if dind.get(kfunc) is not None:
+
+            for kvar in v0['var']:
+
+                key = f"{kfunc}_{kvar}"
+
+                for in ...:
+                    sli =
+                    key =
+                    assert key in lx_all, key
+
+                    # get units
+                    units = _units(coll, kfunc, kvar)
+
+                    # store
+                    dout[key] = {
+                        'data': din[kfunc][kvar][sli],
+                        'ref': ref,
+                        'units': units,
+                    }
+
+                    if is not None:
+
+                        # min
+                        kvar_min = f"{kvar}_min"
+                        key_min = f'{key}_min'
+                        dout[key_min] = {
+                            'data': din[kfunc][kvar_min][sli],
+                            'ref': ref,
+                            'units': units,
+                        }
+
+                        # max
+                        kvar_max = f"{kvar}_min"
+                        key_max = f'{key}_max'
+                        dout[key_max] = {
+                            'data': din[kfunc][kvar_max][sli],
+                            'ref': ref,
+                            'units': units,
+                        }
+
+    return dout
+
+
+#############################################
+#############################################
+#       units
+#############################################
+
+
+def _units(coll, kfunc, kvar):
+
+
+
+    return
