@@ -11,6 +11,7 @@ import itertools as itt
 
 import numpy as np
 import scipy.constants as scpct
+import astropy.units as asunits
 import datastock as ds
 
 
@@ -125,6 +126,8 @@ def main(
         dout = _format(
             coll=coll,
             key_model=key_model,
+            key_data=key_data,
+            key_lamb=key_lamb,
             din=dout,
             dind=dind,
             axis=axis,
@@ -571,6 +574,8 @@ def _get_Ti(sigma, param_val, dind, ktype, shape, axis):
 def _format(
     coll=None,
     key_model=None,
+    key_data=None,
+    key_lamb=None,
     din=None,
     dind=None,
     axis=None,
@@ -584,6 +589,22 @@ def _format(
     dout = {}
     wsm = coll._which_model
     sli = [slice(None) for ii in range(len(ref)+1)]
+
+    # -------------
+    # units
+    # -------------
+
+    # data
+    try:
+        units_data = asunits.Unit(coll.ddata[key_data]['units'])
+    except Exception as err:
+        units_data = coll.ddata[key_data]['units']
+
+    # lamb
+    try:
+        units_lamb = asunits.Unit(coll.ddata[key_lamb]['units'])
+    except Exception as err:
+        units_lamb = coll.ddata[key_lamb]['units']
 
     # --------------
     # loop
@@ -604,7 +625,11 @@ def _format(
                 sli[axis] = ii
 
                 # get units
-                units = _units(coll, kfunc, kvar)
+                units = _units(
+                    coll, ktype, kvar,
+                    units_data=units_data,
+                    units_lamb=units_lamb,
+                )
 
                 # store
                 dout[key] = {
@@ -622,8 +647,122 @@ def _format(
 #############################################
 
 
-def _units(coll, kfunc, kvar):
+def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
 
+    kvar = kvar.split('_')[0]
+    units = None
 
+    # ------------
+    # trivial
+    # ------------
 
-    return
+    if kvar == 'integ':
+        try:
+            units = units_data * units_lamb
+        except Exception as err:
+            units = f"{units_data} x {units_lamb}"
+
+    elif kvar == 'max':
+        units = units_data
+
+    elif kvar == 'argmax':
+        units = units_lamb
+
+    # ----------------------------------
+    # non-trivial but common to several
+    # ----------------------------------
+
+    elif kvar == 'Ti':
+
+        # assuming mz is provided in kg
+        units = 'eV'
+
+    # ----------------
+    # specific to each
+    # ----------------
+    else:
+
+        if ktype == 'poly':
+
+            units = units_data
+
+        elif ktype == 'exp_lamb':
+
+            if kvar == 'amp':
+                try:
+                    units = units_data * units_lamb
+                except Exception as err:
+                    units = f"{units_data} x {units_lamb}"
+
+            elif kvar == 'rate':
+                units = units_lamb
+
+            elif kvar == 'Te':
+                if units_lamb == 'm':
+                    units = 'eV'
+                else:
+                    units = asunits('eV') * (asunits.Units('m') / units_lamb)
+
+        elif ktype in ['gauss', 'lorentz', 'pvoigt', 'voigt']:
+
+            if kvar == 'amp':
+                units = units_data
+
+            elif kvar == 'sigma':
+                units = units_lamb
+
+            elif kvar == 'gam':
+                units = units_lamb
+
+            elif kvar == 'vccos':
+                units = ''
+
+        elif ktype in ['pulse_exp', 'pulse_gauss']:
+
+            if kvar == 'amp':
+                units = units_data
+
+            elif kvar == 'tau':
+                units = ''
+
+            elif kvar == 't0':
+                units = units_lamb
+
+            elif kvar == 't_up':
+                units = units_lamb
+
+            elif kvar == 't_down':
+                units = units_lamb
+
+        elif ktype == 'lognorm':
+
+            if kvar == 'amp':
+                try:
+                    units = units_data * units_lamb
+                except Exception as err:
+                    units = f"{units_data} x {units_lamb}"
+
+            elif kvar == 'tau':
+                units = ''
+
+            elif kvar == 't0':
+                units = units_lamb
+
+            elif kvar == 'mu':
+                units = 'TBD'
+
+            elif kvar == 'sigma':
+                units = ''
+
+    # --------------
+    # safety check
+    # --------------
+
+    if units is None:
+        msg = f"units not reckognized for {ktype} {kvar}"
+        raise Exception(msg)
+
+    try:
+        return asunits.Unit(units)
+    except Exception as err:
+        return units
