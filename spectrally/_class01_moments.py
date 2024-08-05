@@ -238,8 +238,9 @@ def _get_func_moments(
 
         if c0 is None:
             x_full = x_free
-            xf_min = x_full - x_std
-            xf_max = x_full + x_std
+            if x_std is not None:
+                xf_min = x_full - x_std
+                xf_max = x_full + x_std
 
         else:
 
@@ -276,8 +277,9 @@ def _get_func_moments(
 
             else:
                 x_full = c2.dot(x_free**2) + c1.dot(x_free) + c0
-                xf_min = c2.dot((x_free - x_std)**2) + c1.dot(x_free - x_std) + c0
-                xf_max = c2.dot((x_free + x_std)**2) + c1.dot(x_free + x_std) + c0
+                if x_std is not None:
+                    xf_min = c2.dot((x_free - x_std)**2) + c1.dot(x_free - x_std) + c0
+                    xf_max = c2.dot((x_free + x_std)**2) + c1.dot(x_free + x_std) + c0
 
         sli = [None if ii == axis else slice(None) for ii in range(x_free.ndim)]
         extract = _get_var_extract_func(dind, axis, sli)
