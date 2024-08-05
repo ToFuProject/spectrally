@@ -651,7 +651,8 @@ def _format(
 
 def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
 
-    kvar = kvar.split('_')[0]
+    if kvar.endswith('_min') or kvar.endswith('_max'):
+        kvar = kvar[:-4]
     units = None
 
     # ------------
