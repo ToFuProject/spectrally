@@ -166,21 +166,30 @@ def main(
     # -----------------
 
     if binning is not False:
-        lambd = lamb[1] - lamb[0]
 
         lamb_edges = np.r_[
-            lamb[0] - lambd,
+            lamb[0] - 0.5*(lamb[1] - lamb[0]),
             0.5*(lamb[1:] + lamb[:-1]),
+            # lamb[-1] + 0.5*(lamb[-1] - lamb[-2]),
         ]
 
+        # in case of non-uniform lamb
+        lambd = np.diff(lamb_edges)
+
+        # increments
+        lamb_inc = np.linspace(0, 1, binning+2)[1:-1][None, :] * lambd[:, None]
+
+        # get new lamb
         nlamb = lamb.size
-        lamb_inc = np.linspace(0, 1, binning+2)[1:-1] * lambd
-        lamb = (lamb_edges[:, None] + lamb_inc[None, :]).ravel()
+        lamb = (lamb_edges[:, None] + lamb_inc).ravel()
+
+        # update iok_all
         iok_all = np.repeat(iok_all, binning, axis=axis)
 
         # safety check
         assert lamb.size == coll.ddata[key_lamb]['data'].size * binning
 
+        # update binning to indices
         binning = np.arange(0, nlamb, binning)
 
     # ------------
@@ -322,9 +331,6 @@ def _loop(
 
     # lind
     lind = [range(ss) for ss in shape_reduced]
-
-    # nspect
-    nspect = int(np.prod(shape_reduced))
 
     # timing init
     if timing is True:
