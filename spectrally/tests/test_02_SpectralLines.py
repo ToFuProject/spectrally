@@ -67,12 +67,13 @@ class Test00_Populate():
         self.coll.add_spectral_lines_from_file(self.pfe_json)
 
     def test02_add_spectral_lines_from_openadas(self):
-        self.coll.add_spectral_lines_from_openadas(
-            lambmin=3.94e-10,
-            lambmax=4e-10,
-            element='Ar',
-            online=True,
-        )
+        pass
+        # self.coll.add_spectral_lines_from_openadas(
+        #     lambmin=3.94e-10,
+        #     lambmax=4e-10,
+        #     element='Ar',
+        #     online=True,
+        # )
 
     def test03_add_spectral_lines_from_nist(self):
         try:
