@@ -110,8 +110,6 @@ def main(
 
     _add_spectral_fit(coll=coll, data=data)
 
-    return coll
-
     # ---------------------
     # plot validity
     # ---------------------
@@ -119,7 +117,8 @@ def main(
     if data == 'sxr':
         dax = coll.plot_spectral_fit_input_validity('sf1')
     elif data == 'ebit':
-        dax = coll.plot_spectral_fit_input_validity('sf0')
+        pass
+        # dax = coll.plot_spectral_fit_input_validity('sf0')
     else:
         dax = coll.plot_spectral_fit_input_validity('sf_exp')
 

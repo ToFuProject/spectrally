@@ -164,8 +164,7 @@ def _get_scales_bounds(
     # prepare
     # ------------------
 
-    lambD = lamb[-1] - lamb[0]
-    lambd = lamb[1] - lamb[0]
+    lambD = np.abs(lamb[-1] - lamb[0])
     lambm = np.mean(lamb)
 
     data_max = np.nanmax(data[iok_all])
@@ -183,15 +182,13 @@ def _get_scales_bounds(
     kfunc = 'poly'
     if dind.get(kfunc) is not None:
 
-        a1max = (data_max - data_min) / lambD
-
         # -------
         # a0
 
         kvar = 'a0'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = max(np.abs(data_max), np.abs(data_min))
             bounds0[ival] = -10.
             bounds1[ival] = 10.
@@ -208,7 +205,7 @@ def _get_scales_bounds(
         kvar = 'a1'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = max(np.abs(data_max), np.abs(data_min))
             bounds0[ival] = -10.
             bounds1[ival] = 10.
@@ -225,7 +222,7 @@ def _get_scales_bounds(
         kvar = 'a2'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = max(np.abs(data_max), np.abs(data_min))
             bounds0[ival] = -10.
             bounds1[ival] = 10.
@@ -258,7 +255,7 @@ def _get_scales_bounds(
         kvar = 'rate'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = rate
             bounds0[ival] = 0.
             bounds1[ival] = 10.
@@ -273,7 +270,7 @@ def _get_scales_bounds(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = data_mean * np.exp(rate/lambm) * lambm
             bounds0[ival] = 0.
             bounds1[ival] = 10.
@@ -295,7 +292,7 @@ def _get_scales_bounds(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = data_max - data_min
             bounds0[ival] = 0.
             bounds1[ival] = 10.
@@ -310,7 +307,7 @@ def _get_scales_bounds(
         kvar = 'vccos'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = (lambD/lambm) / _DEF_SCALES_FACTORS['shift']
             bounds0[ival] = -1.
             bounds1[ival] = 1.
@@ -325,7 +322,7 @@ def _get_scales_bounds(
         kvar = 'sigma'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = lambD / _DEF_SCALES_FACTORS['width']
             bounds0[ival] = 1e-3
             bounds1[ival] = 2
@@ -347,7 +344,7 @@ def _get_scales_bounds(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = data_max - data_min
             bounds0[ival] = 0.
             bounds1[ival] = 10.
@@ -362,7 +359,7 @@ def _get_scales_bounds(
         kvar = 'vccos'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = (lambD/lambm) / _DEF_SCALES_FACTORS['shift']
             bounds0[ival] = -1.
             bounds1[ival] = 1.
@@ -377,7 +374,7 @@ def _get_scales_bounds(
         kvar = 'gam'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = lambD / _DEF_SCALES_FACTORS['width']
             bounds0[ival] = 1e-3
             bounds1[ival] = 2
@@ -399,7 +396,7 @@ def _get_scales_bounds(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = data_max - data_min
             bounds0[ival] = 0.
             bounds1[ival] = 10.
@@ -414,7 +411,7 @@ def _get_scales_bounds(
         kvar = 'vccos'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = (lambD/lambm) / _DEF_SCALES_FACTORS['shift']
             bounds0[ival] = -1.
             bounds1[ival] = 1.
@@ -429,7 +426,7 @@ def _get_scales_bounds(
         kvar = 'sigma'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = lambD / _DEF_SCALES_FACTORS['width']
             bounds0[ival] = 1e-3
             bounds1[ival] = 2
@@ -444,7 +441,7 @@ def _get_scales_bounds(
         kvar = 'gam'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = lambD / _DEF_SCALES_FACTORS['width']
             bounds0[ival] = 1e-3
             bounds1[ival] = 2
@@ -466,7 +463,7 @@ def _get_scales_bounds(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = data_max - data_min
             bounds0[ival] = 0.
             bounds1[ival] = 10.
@@ -481,7 +478,7 @@ def _get_scales_bounds(
         kvar = 'vccos'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = (lambD/lambm) / _DEF_SCALES_FACTORS['shift']
             bounds0[ival] = -1.
             bounds1[ival] = 1.
@@ -496,7 +493,7 @@ def _get_scales_bounds(
         kvar = 'sigma'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = lambD / _DEF_SCALES_FACTORS['width']
             bounds0[ival] = 1e-3
             bounds1[ival] = 2
@@ -511,7 +508,7 @@ def _get_scales_bounds(
         kvar = 'gam'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = lambD / _DEF_SCALES_FACTORS['width']
             bounds0[ival] = 1e-3
             bounds1[ival] = 2
@@ -539,7 +536,6 @@ def _get_scales_bounds(
             data_pulse_sign=data_pulse_sign,
             # lamb
             lamb=lamb,
-            lambd=lambd,
             lambm=lambm,
             lambD=lambD,
             # arrays to fill
@@ -565,7 +561,6 @@ def _get_scales_bounds(
             data_pulse_sign=data_pulse_sign,
             # lamb
             lamb=lamb,
-            lambd=lambd,
             lambm=lambm,
             lambD=lambD,
             # arrays to fill
@@ -604,7 +599,7 @@ def _get_scales_bounds(
         kvar = 'sigma'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = sigma
             bounds0[ival] = 0.1
             bounds1[ival] = 5
@@ -619,7 +614,7 @@ def _get_scales_bounds(
         kvar = 'mu'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = mu_abs
             bounds0[ival] = mu_min / mu_abs
             bounds1[ival] = mu_max / mu_abs
@@ -635,7 +630,7 @@ def _get_scales_bounds(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = (data_max - data_min) * np.exp(mu - 0.5*sigma**2)
             if data_pulse_sign > 0:
                 bounds0[ival] = 0.
@@ -655,7 +650,7 @@ def _get_scales_bounds(
         kvar = 'tau'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = 1
             bounds0[ival] = 0
             bounds1[ival] = 1
@@ -697,8 +692,7 @@ def _get_x0(
     # ------------------
 
     lamb0 = lamb[0]
-    lambD = lamb[-1] - lamb[0]
-    lambd = lamb[1] - lamb[0]
+    lambD = np.abs(lamb[-1] - lamb[0])
     lambm = np.mean(lamb)
     if binning is False:
         lamb_amax = lamb[iok][np.argmax(data[iok])]
@@ -731,7 +725,7 @@ def _get_x0(
         kvar = 'a0'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = data_mean / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -746,7 +740,7 @@ def _get_x0(
         kvar = 'a1'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = 0. / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -761,7 +755,7 @@ def _get_x0(
         kvar = 'a2'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = 0. / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -792,7 +786,7 @@ def _get_x0(
         kvar = 'rate'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = rate / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -805,7 +799,7 @@ def _get_x0(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             scales[ival] = data_mean * np.exp(rate/lambm) * lambm / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -825,7 +819,7 @@ def _get_x0(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = (data_max - data_min) / 2 / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -838,7 +832,7 @@ def _get_x0(
         kvar = 'vccos'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['shift'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -851,7 +845,7 @@ def _get_x0(
         kvar = 'sigma'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['width'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -871,7 +865,7 @@ def _get_x0(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = (data_max - data_min) / 2 / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -884,7 +878,7 @@ def _get_x0(
         kvar = 'vccos'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['shift'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -897,7 +891,7 @@ def _get_x0(
         kvar = 'gam'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['width'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -917,7 +911,7 @@ def _get_x0(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = (data_max - data_min) / 2. / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -930,7 +924,7 @@ def _get_x0(
         kvar = 'vccos'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['shift'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -943,7 +937,7 @@ def _get_x0(
         kvar = 'sigma'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['width'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -956,7 +950,7 @@ def _get_x0(
         kvar = 'gam'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['width'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -976,7 +970,7 @@ def _get_x0(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = (data_max - data_min) / 2 / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -989,7 +983,7 @@ def _get_x0(
         kvar = 'vccos'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['shift'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -1002,7 +996,7 @@ def _get_x0(
         kvar = 'sigma'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['width'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -1015,7 +1009,7 @@ def _get_x0(
         kvar = 'gam'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = lambD / _DEF_X0_FACTORS['width'] / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -1041,7 +1035,6 @@ def _get_x0(
             data_pulse_sign=data_pulse_sign,
             # lamb
             lamb0=lamb0,
-            lambd=lambd,
             lambm=lambm,
             lambD=lambD,
             lamb_ext=lamb_ext,
@@ -1067,7 +1060,6 @@ def _get_x0(
             data_pulse_sign=data_pulse_sign,
             # lamb
             lamb0=lamb0,
-            lambd=lambd,
             lambm=lambm,
             lambD=lambD,
             lamb_ext=lamb_ext,
@@ -1093,7 +1085,7 @@ def _get_x0(
         kvar = 'sigma'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = 1
 
             for ii, (din, val) in enumerate(ldins):
@@ -1106,7 +1098,7 @@ def _get_x0(
         kvar = 'mu'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = mu_sign
 
             for ii, (din, val) in enumerate(ldins):
@@ -1120,7 +1112,7 @@ def _get_x0(
         kvar = 'tau'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = (lamb_ext - exp - lamb0) / lambD / scales[ival]
 
             for ii, (din, val) in enumerate(ldins):
@@ -1134,7 +1126,7 @@ def _get_x0(
         kvar = 'amp'
         vind = dind['jac'][kfunc].get(kvar)
         if vind is not None:
-            ival, ivar = vind['val'], vind['var']
+            ival, _ = vind['val'], vind['var']
             x0[ival] = data_pulse_sign
 
             for ii, (din, val) in enumerate(ldins):
@@ -1178,7 +1170,6 @@ def _get_scales_bounds_pulse(
     data_pulse_sign=None,
     # lamb
     lamb=None,
-    lambd=None,
     lambm=None,
     lambD=None,
     # arrays to fill
@@ -1191,7 +1182,7 @@ def _get_scales_bounds_pulse(
     kvar = 'amp'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
-        ival, ivar = vind['val'], vind['var']
+        ival, _ = vind['val'], vind['var']
         scales[ival] = (data_max - data_min)
         if data_pulse_sign > 0.:
             bounds0[ival] = 0
@@ -1210,7 +1201,7 @@ def _get_scales_bounds_pulse(
     kvar = 'tau'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
-        ival, ivar = vind['val'], vind['var']
+        ival, _ = vind['val'], vind['var']
         scales[ival] = 1
         bounds0[ival] = 0
         bounds1[ival] = 1
@@ -1225,7 +1216,7 @@ def _get_scales_bounds_pulse(
     kvar = 't_up'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
-        ival, ivar = vind['val'], vind['var']
+        ival, _ = vind['val'], vind['var']
         scales[ival] = 0.05 * lambD
         bounds0[ival] = 1.e-3
         bounds1[ival] = 20
@@ -1240,7 +1231,7 @@ def _get_scales_bounds_pulse(
     kvar = 't_down'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
-        ival, ivar = vind['val'], vind['var']
+        ival, _ = vind['val'], vind['var']
         scales[ival] = 0.2 * lambD
         bounds0[ival] = 1.e-3
         bounds1[ival] = 20
@@ -1268,7 +1259,6 @@ def _get_x0_pulse(
     data_max=None,
     data_pulse_sign=None,
     # lamb
-    lambd=None,
     lambm=None,
     lambD=None,
     lamb0=None,
@@ -1282,7 +1272,7 @@ def _get_x0_pulse(
     kvar = 'amp'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
-        ival, ivar = vind['val'], vind['var']
+        ival, _ = vind['val'], vind['var']
         x0[ival] = (data_max - data_min) * data_pulse_sign / scales[ival]
 
         for ii, (din, val) in enumerate(ldins):
@@ -1295,7 +1285,7 @@ def _get_x0_pulse(
     kvar = 'tau'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
-        ival, ivar = vind['val'], vind['var']
+        ival, _ = vind['val'], vind['var']
         x0[ival] = (lamb_ext - lamb0) / lambD
 
         for ii, (din, val) in enumerate(ldins):
@@ -1308,7 +1298,7 @@ def _get_x0_pulse(
     kvar = 't_up'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
-        ival, ivar = vind['val'], vind['var']
+        ival, _ = vind['val'], vind['var']
         x0[ival] = 1
 
         for ii, (din, val) in enumerate(ldins):
@@ -1321,7 +1311,7 @@ def _get_x0_pulse(
     kvar = 't_down'
     vind = dind['jac'][kfunc].get(kvar)
     if vind is not None:
-        ival, ivar = vind['val'], vind['var']
+        ival, _ = vind['val'], vind['var']
         x0[ival] = 1
 
         for ii, (din, val) in enumerate(ldins):
