@@ -38,7 +38,7 @@ def _get_func_details(
         c2=c2,
         dind=dind,
         scales=None,
-        iok=None,
+        bin_iok=None,
         # binning
         bin_ind=None,
         bin_dlamb=None,
@@ -53,8 +53,8 @@ def _get_func_details(
         lambm = 0.5*(lamb[-1] + lamb[0])
 
         # iok
-        if iok is not None:
-            lamb = lamb[iok]
+        if bin_iok is not None:
+            lamb = lamb[bin_iok]
 
         # ----------
         # initialize
@@ -318,9 +318,11 @@ def _get_func_sum(
         lamb=None,
         # scales, iok
         scales=None,
-        iok=None,
+        bin_iok=None,
         bin_ind=None,
         bin_dlamb=None,
+        # unused (iok)
+        **kwdargs,
     ):
 
         return np.sum(
@@ -328,7 +330,7 @@ def _get_func_sum(
                 x_free,
                 lamb=lamb,
                 scales=scales,
-                iok=iok,
+                bin_iok=bin_iok,
                 bin_ind=bin_ind,
                 bin_dlamb=bin_dlamb,
             ),
@@ -390,7 +392,7 @@ def _get_func_cost(
             x_free,
             lamb=lamb,
             scales=scales,
-            iok=bin_iok,
+            bin_iok=bin_iok,
             bin_ind=bin_ind,
             bin_dlamb=bin_dlamb,
         ) - data

@@ -446,16 +446,9 @@ def _loop(
 
         dparams['iok'] = iok_all[slii]
         if dbinning is False:
-            if solver == 'scipy.least_squares':
-                dparams['bin_iok'] = iok_all[slii]
-            else:
-                dparams['iok'] = iok_all[slii]
-
+            dparams['bin_iok'] = iok_all[slii]
         else:
-            if solver == 'scipy.least_squares':
-                dparams['bin_iok'] = dbinning['iok'][slii]
-            else:
-                dparams['iok'] = dbinning['iok'][slii]
+            dparams['bin_iok'] = dbinning['iok'][slii]
 
         # -----------
         # try solving
