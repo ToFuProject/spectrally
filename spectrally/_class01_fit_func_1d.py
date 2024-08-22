@@ -39,8 +39,10 @@ def _get_func_details(
         dind=dind,
         scales=None,
         iok=None,
+        bin_iok=None,
         # binning
-        binning=None,
+        bin_ind=None,
+        bin_dlamb=None,
     ):
 
         # ---------------------
@@ -52,8 +54,8 @@ def _get_func_details(
         lambm = 0.5*(lamb[-1] + lamb[0])
 
         # iok
-        if iok is not None:
-            lamb = lamb[iok]
+        if bin_iok is not None and bin_ind is False:
+            lamb = lamb[bin_iok]
 
         # ----------
         # initialize
@@ -261,11 +263,11 @@ def _get_func_details(
 
             ind = dind['func'][kfunc]['ind']
             for ii, i0 in enumerate(ind):
-                iok = lamb > (lamb00 + lambD * tau[ii])
+                ioki = lamb > (lamb00 + lambD * tau[ii])
 
-                dlamb = lamb[iok] - (lamb00 + lambD * tau[ii])
+                dlamb = lamb[ioki] - (lamb00 + lambD * tau[ii])
 
-                val[i0, iok] = (
+                val[i0, ioki] = (
                     (amp[ii] / dlamb)
                     * np.exp(-(np.log(dlamb) - mu[ii])**2 / (2.*sigma[ii]**2))
                 )
@@ -273,8 +275,11 @@ def _get_func_details(
         # -------
         # binning
 
-        if binning is not False:
-            val = np.add.reduceat(val, binning, axis=1)
+        if bin_ind is not False:
+
+            val = np.add.reduceat(val * bin_dlamb[None, :], bin_ind, axis=1)
+            if iok is not None:
+                val = val[:, iok]
 
         return val
 
@@ -317,7 +322,11 @@ def _get_func_sum(
         # scales, iok
         scales=None,
         iok=None,
-        binning=None,
+        bin_iok=None,
+        bin_ind=None,
+        bin_dlamb=None,
+        # unused (data)
+        **kwdargs,
     ):
 
         return np.sum(
@@ -326,7 +335,9 @@ def _get_func_sum(
                 lamb=lamb,
                 scales=scales,
                 iok=iok,
-                binning=binning,
+                bin_iok=bin_iok,
+                bin_ind=bin_ind,
+                bin_dlamb=bin_dlamb,
             ),
             axis=0,
         )
@@ -370,7 +381,10 @@ def _get_func_cost(
         # scales, iok
         scales=None,
         iok=None,
-        binning=None,
+        # binning
+        bin_ind=None,
+        bin_iok=None,
+        bin_dlamb=None,
         # data
         data=None,
         # sum
@@ -384,7 +398,9 @@ def _get_func_cost(
             lamb=lamb,
             scales=scales,
             iok=iok,
-            binning=binning,
+            bin_iok=bin_iok,
+            bin_ind=bin_ind,
+            bin_dlamb=bin_dlamb,
         ) - data
 
     return func
@@ -421,9 +437,11 @@ def _get_func_jacob(
         # scales, iok
         scales=None,
         iok=None,
+        bin_iok=None,
         # binning
-        binning=None,
-        # unused
+        bin_ind=None,
+        bin_dlamb=None,
+        # unused (data)
         **kwdargs,
     ):
 
@@ -436,8 +454,8 @@ def _get_func_jacob(
         lambm = 0.5*(lamb[-1] + lamb[0])
 
         # iok
-        if iok is not None:
-            lamb = lamb[iok]
+        if bin_iok is not None and bin_ind is False:
+            lamb = lamb[bin_iok]
 
         # ----------
         # initialize
@@ -865,21 +883,21 @@ def _get_func_jacob(
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
                 for ii, i0 in enumerate(ival):
-                    iok = lamb[:, 0] > (lamb00 + lambD * tau[ivar[ii]])
-                    dlamb = lamb[iok, 0] - (lamb00 + lambD * tau[ivar[ii]])
+                    ioki = lamb[:, 0] > (lamb00 + lambD * tau[ivar[ii]])
+                    dlamb = lamb[ioki, 0] - (lamb00 + lambD * tau[ivar[ii]])
 
                     log_mu = np.log(dlamb) - mu[ivar[ii]]
                     exp = np.exp(-(log_mu)**2 / (2.*sigma[ivar[ii]]**2))
 
-                    val[iok, i0] = (scales[i0] / dlamb) * exp
+                    val[ioki, i0] = (scales[i0] / dlamb) * exp
 
             # tau
             vind = dind['jac'][kfunc].get('tau')
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
                 for ii, i0 in enumerate(ival):
-                    iok = lamb[:, 0] > (lamb00 + lambD * tau[ivar[ii]])
-                    dlamb = lamb[iok, 0] - (lamb00 + lambD * tau[ivar[ii]])
+                    ioki = lamb[:, 0] > (lamb00 + lambD * tau[ivar[ii]])
+                    dlamb = lamb[ioki, 0] - (lamb00 + lambD * tau[ivar[ii]])
 
                     log_mu = np.log(dlamb) - mu[ivar[ii]]
                     exp = np.exp(-(log_mu)**2 / (2.*sigma[ivar[ii]]**2))
@@ -890,7 +908,7 @@ def _get_func_jacob(
                         exp * dtau_logmu * (-2*log_mu / (2.*sigma[ivar[ii]]**2))
                     )
 
-                    val[iok, i0] = amp[ivar[ii]] * (
+                    val[ioki, i0] = amp[ivar[ii]] * (
                         dtau_inv_dlamb * exp
                         + (1/dlamb) * dtau_exp
                     )
@@ -900,13 +918,13 @@ def _get_func_jacob(
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
                 for ii, i0 in enumerate(ival):
-                    iok = lamb[:, 0] > (lamb00 + lambD * tau[ivar[ii]])
-                    dlamb = lamb[iok, 0] - (lamb00 + lambD * tau[ivar[ii]])
+                    ioki = lamb[:, 0] > (lamb00 + lambD * tau[ivar[ii]])
+                    dlamb = lamb[ioki, 0] - (lamb00 + lambD * tau[ivar[ii]])
 
                     log_mu = np.log(dlamb) - mu[ivar[ii]]
                     exp = np.exp(-(log_mu)**2 / (2.*sigma[ivar[ii]]**2))
 
-                    val[iok, i0] = (
+                    val[ioki, i0] = (
                         (amp[ivar[ii]] / dlamb) * exp * scales[i0]
                         * (log_mu**2/sigma[ivar[ii]]**3)
                     )
@@ -916,13 +934,13 @@ def _get_func_jacob(
             if vind is not None:
                 ival, ivar = vind['val'], vind['var']
                 for ii, i0 in enumerate(ival):
-                    iok = lamb[:, 0] > (lamb00 + lambD * tau[ivar[ii]])
-                    dlamb = lamb[iok, 0] - (lamb00 + lambD * tau[ivar[ii]])
+                    ioki = lamb[:, 0] > (lamb00 + lambD * tau[ivar[ii]])
+                    dlamb = lamb[ioki, 0] - (lamb00 + lambD * tau[ivar[ii]])
 
                     log_mu = np.log(dlamb) - mu[ivar[ii]]
                     exp = np.exp(-(log_mu)**2 / (2.*sigma[ivar[ii]]**2))
 
-                    val[iok, i0] = 0.1 * (
+                    val[ioki, i0] = 0.1 * (
                         (amp[ivar[ii]] / dlamb) * exp * scales[i0]
                         * (-1/(2.*sigma[ivar[ii]]**2)) * (-2*log_mu)
                     )
@@ -935,8 +953,10 @@ def _get_func_jacob(
         # -------
         # binning
 
-        if binning is not False:
-            val = np.add.reduceat(val, binning, axis=0)
+        if bin_ind is not False:
+            val = np.add.reduceat(val * bin_dlamb[:, None], bin_ind, axis=0)
+            if iok is not None:
+                val = val[iok, :]
 
         return val
 

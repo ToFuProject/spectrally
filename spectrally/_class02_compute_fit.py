@@ -67,15 +67,12 @@ def main(
         key_data, key_lamb,
         ref_data, ref_lamb,
         lamb, data, axis,
-        binning,
         chain,
         store, overwrite,
         strict, verb, verb_scp, timing,
     ) = _check(
         coll=coll,
         key=key,
-        # binning
-        binning=binning,
         # options
         chain=chain,
         dscales=dscales,
@@ -196,7 +193,6 @@ def main(
             # flags
             axis=axis,
             ravel=ravel,
-            binning=binning,
             # dout
             dout=dout,
             # verb
@@ -217,8 +213,6 @@ def main(
 def _check(
     coll=None,
     key=None,
-    # binning
-    binning=None,
     # options
     chain=None,
     dscales=None,
@@ -287,24 +281,6 @@ def _check(
             f"\t- key_model: `{key_model}`\n"
             f"\t- voigt functions: {lvoigt}\n"
             "Consider using another spectral model with pvoigt instead"
-        )
-        raise Exception(msg)
-
-    # --------------
-    # binning
-    # --------------
-
-    binning = ds._generic_check._check_var(
-        binning, 'binning',
-        types=(bool, int),
-        default=False,
-    )
-
-    # safety check
-    if (binning is not False) and binning <= 0:
-        msg = (
-            "Arg 'binning' must be a > 0 int\n"
-            f"Provided: {binning}"
         )
         raise Exception(msg)
 
@@ -391,7 +367,6 @@ def _check(
         key_data, key_lamb,
         ref_data, ref_lamb,
         lamb, data, axis,
-        binning,
         chain,
         store, overwrite,
         strict, verb, verb_scp, timing,
@@ -507,7 +482,6 @@ def _store(
     # flags
     axis=None,
     ravel=None,
-    binning=None,
     # dout
     dout=None,
     # verb
@@ -626,7 +600,10 @@ def _store(
         'bounds0': dout['bounds0'],
         'bounds1': dout['bounds1'],
         'x0': dout['x0'],
-        'binning': binning,
+        'binning': (
+            False if dout['dbinning'] is False
+            else dout['dbinning']['binning']
+        ),
     }
 
     # solver output

@@ -99,6 +99,17 @@ def main(
     wsm = coll._which_model
     dmodel = coll.dobj[wsm][key_model]['dmodel']
 
+    # -----------------
+    # optionnal binning
+    # -----------------
+
+    dbinning = coll.get_spectral_fit_binning_dict(
+        binning=binning,
+        lamb=lamb,
+        iok=iok_all,
+        axis=axis,
+    )
+
     # ------------
     # get scale, bounds
     # ------------
@@ -132,11 +143,14 @@ def main(
         nxfree=len(lk_xfree),
         lamb=lamb,
         data=data,
-        iok_all=iok_all,
+        iok=iok_all,
+        axis=axis,
         dind=dind,
         dscales=dscales,
         dbounds_low=dbounds_low,
         dbounds_up=dbounds_up,
+        # binning
+        dbinning=dbinning,
     )
 
     # ------------
@@ -161,37 +175,6 @@ def main(
         func=['sum', 'cost', 'jac'],
     )
 
-    # -----------------
-    # optionnal binning
-    # -----------------
-
-    if binning is not False:
-
-        lamb_edges = np.r_[
-            lamb[0] - 0.5*(lamb[1] - lamb[0]),
-            0.5*(lamb[1:] + lamb[:-1]),
-            # lamb[-1] + 0.5*(lamb[-1] - lamb[-2]),
-        ]
-
-        # in case of non-uniform lamb
-        lambd = np.diff(lamb_edges)
-
-        # increments
-        lamb_inc = np.linspace(0, 1, binning+2)[1:-1][None, :] * lambd[:, None]
-
-        # get new lamb
-        nlamb = lamb.size
-        lamb = (lamb_edges[:, None] + lamb_inc).ravel()
-
-        # update iok_all
-        iok_all = np.repeat(iok_all, binning, axis=axis)
-
-        # safety check
-        assert lamb.size == coll.ddata[key_lamb]['data'].size * binning
-
-        # update binning to indices
-        binning = np.arange(0, nlamb, binning)
-
     # ------------
     # Main loop
     # ------------
@@ -214,7 +197,7 @@ def main(
         dx0=dx0,
         # options
         chain=chain,
-        binning=binning,
+        dbinning=dbinning,
         # func
         func_sum=dfunc.get('sum'),
         func_cost=dfunc.get('cost'),
@@ -298,7 +281,7 @@ def _loop(
     dx0=None,
     # options
     chain=None,
-    binning=None,
+    dbinning=None,
     # func
     func_sum=None,
     func_cost=None,
@@ -404,10 +387,11 @@ def _loop(
     dparams = {
         'scales': scales,
         'iok': None,
-        'binning': binning,
+        'bin_ind': False if dbinning is False else dbinning['ind'],
+        'bin_dlamb': None if dbinning is False else dbinning['dlamb'],
     }
     if solver == 'scipy.least_squares':
-        dparams['lamb'] = lamb
+        dparams['lamb'] = lamb if dbinning is False else dbinning['lamb']
         dparams['data'] = None
     else:
         pass
@@ -443,10 +427,11 @@ def _loop(
                 lamb=lamb,
                 data=data[slii],
                 iok=iok_all[slii],
+                axis=axis,
                 dind=dind,
                 dx0=dx0,
                 scales=scales,
-                binning=binning,
+                dbinning=dbinning,
             )
 
         # ------
@@ -460,6 +445,10 @@ def _loop(
         # parameters
 
         dparams['iok'] = iok_all[slii]
+        if dbinning is False:
+            dparams['bin_iok'] = iok_all[slii]
+        else:
+            dparams['bin_iok'] = dbinning['iok'][slii]
 
         # -----------
         # try solving
@@ -520,8 +509,8 @@ def _loop(
 
                 popt, pcov, infodict, mesg, ier = scpopt.curve_fit(
                     func_sum2,
-                    lamb,
-                    data[slii][dparams['iok']],
+                    lamb if dbinning is False else dbinning['lamb'],
+                    data[slii][iok_all[slii]],
                     p0=x0,
                     sigma=None,
                     absolute_sigma=False,
@@ -628,6 +617,8 @@ def _loop(
         'bounds0': bounds0,
         'bounds1': bounds1,
         'x0': x0,
+        # binning:
+        'dbinning': dbinning,
         # solver
         'solver': solver,
         'dsolver_options': dsolver_options,
