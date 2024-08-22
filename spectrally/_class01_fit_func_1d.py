@@ -55,6 +55,8 @@ def _get_func_details(
         # iok
         if bin_iok is not None:
             lamb = lamb[bin_iok]
+            if bin_ind is not False:
+                bin_dlamb = bin_dlamb[bin_iok]
 
         # ----------
         # initialize
@@ -449,6 +451,8 @@ def _get_func_jacob(
         # iok
         if bin_iok is not None:
             lamb = lamb[bin_iok]
+            if bin_ind is not False:
+                bin_dlamb = bin_dlamb[bin_iok]
 
         # ----------
         # initialize
