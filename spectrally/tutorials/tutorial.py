@@ -42,6 +42,7 @@ def main(
     compute=True,
     chain=None,
     solver=None,
+    binning=None,
 ):
     """ Tutorial on how to use spectrally
 
@@ -133,6 +134,7 @@ def main(
             data=data,
             chain=chain,
             solver=solver,
+            binning=binning,
         )
 
         # ---------------------
@@ -578,7 +580,13 @@ def _add_spectral_fit(coll=None, data=None):
 # ######################################################
 
 
-def _compute_spectral_fit(coll=None, data=None, chain=None, solver=None):
+def _compute_spectral_fit(
+    coll=None,
+    data=None,
+    chain=None,
+    solver=None,
+    binning=None,
+):
 
     # ------------
     # check inputs
@@ -674,6 +682,7 @@ def _compute_spectral_fit(coll=None, data=None, chain=None, solver=None):
                 solver=solver,
                 dsolver_options={'nfev': 1000},
                 chain=chain,
+                binning=binning,
                 verb=2,
                 strict=True,
             )
