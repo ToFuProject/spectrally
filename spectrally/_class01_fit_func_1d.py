@@ -40,7 +40,8 @@ def _get_func_details(
         scales=None,
         iok=None,
         # binning
-        binning=None,
+        bin_ind=None,
+        bin_dlamb=None,
     ):
 
         # ---------------------
@@ -273,8 +274,9 @@ def _get_func_details(
         # -------
         # binning
 
-        if binning is not False:
-            val = np.add.reduceat(val, binning, axis=1)
+        if bin_ind is not False:
+
+            val = np.add.reduceat(val * bin_dlamb[None, :], bin_ind, axis=1)
 
         return val
 
@@ -317,7 +319,8 @@ def _get_func_sum(
         # scales, iok
         scales=None,
         iok=None,
-        binning=None,
+        bin_ind=None,
+        bin_dlamb=None,
     ):
 
         return np.sum(
@@ -326,7 +329,8 @@ def _get_func_sum(
                 lamb=lamb,
                 scales=scales,
                 iok=iok,
-                binning=binning,
+                bin_ind=bin_ind,
+                bin_dlamb=bin_dlamb,
             ),
             axis=0,
         )
@@ -370,7 +374,9 @@ def _get_func_cost(
         # scales, iok
         scales=None,
         iok=None,
-        binning=None,
+        bin_ind=None,
+        bin_iok=None,
+        bin_dlamb=None,
         # data
         data=None,
         # sum
@@ -383,8 +389,9 @@ def _get_func_cost(
             x_free,
             lamb=lamb,
             scales=scales,
-            iok=iok,
-            binning=binning,
+            iok=bin_iok,
+            bin_ind=bin_ind,
+            bin_dlamb=bin_dlamb,
         ) - data
 
     return func
@@ -420,9 +427,10 @@ def _get_func_jacob(
         dind=dind,
         # scales, iok
         scales=None,
-        iok=None,
+        bin_iok=None,
         # binning
-        binning=None,
+        bin_ind=None,
+        bin_dlamb=None,
         # unused
         **kwdargs,
     ):
@@ -436,8 +444,8 @@ def _get_func_jacob(
         lambm = 0.5*(lamb[-1] + lamb[0])
 
         # iok
-        if iok is not None:
-            lamb = lamb[iok]
+        if bin_iok is not None:
+            lamb = lamb[bin_iok]
 
         # ----------
         # initialize
@@ -935,8 +943,9 @@ def _get_func_jacob(
         # -------
         # binning
 
-        if binning is not False:
-            val = np.add.reduceat(val, binning, axis=0)
+        if bin_ind is not False:
+
+            val = np.add.reduceat(val * bin_dlamb[:, None], bin_ind, axis=0)
 
         return val
 
