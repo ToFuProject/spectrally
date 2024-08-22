@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 # spectrally-specific
 from ._setup_teardown import setup_module0, teardown_module0
-from .._class01_SpectralModel import SpectralModel as Collection
+from .._class02_SpectralFit import SpectralFit as Collection
 # from .._saveload import load
 from .._class01_show import get_available_spectral_model_functions
 from .._class01_display_models import display_spectral_model_function
