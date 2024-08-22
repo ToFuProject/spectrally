@@ -140,9 +140,9 @@ def _get_xx(xx, ftype):
     # set if None
     # -------------
 
-    lbck = ['linear', 'exp_lamb']
+    lbck = ['poly', 'exp_lamb']
     llines = ['gauss', 'lorentz', 'pvoigt', 'voigt']
-    lpulse = ['pulse1', 'pulse2', 'lognorm']
+    lpulse = ['pulse_exp', 'pulse_gauss', 'lognorm']
 
     if xx is None:
         if ftype in lbck + llines:
@@ -201,12 +201,13 @@ def _get_dpar_xfree(ftype, xx):
     # xfree
     # ---------------
 
-    if ftype == 'linear':
+    if ftype == 'poly':
 
-        a1 = -1/Dx
-        a0 = 2 - a1 * x0
+        a0 = 1
+        a1 = -0.2
+        a2 = -1
 
-        xfree = np.r_[a0, a1]
+        xfree = np.r_[a0, a1, a2]
 
     elif ftype == 'exp_lamb':
 
@@ -252,7 +253,7 @@ def _get_dpar_xfree(ftype, xx):
 
         xfree = np.r_[amp, vccos, sigma, gam]
 
-    elif ftype == 'pulse1':
+    elif ftype == 'pulse_exp':
 
         amp = 1
         t0 = 0.3
@@ -261,7 +262,7 @@ def _get_dpar_xfree(ftype, xx):
 
         xfree = np.r_[amp, t0, t_up, t_down]
 
-    elif ftype == 'pulse2':
+    elif ftype == 'pulse_gauss':
 
         amp = 1
         t0 = 0.3

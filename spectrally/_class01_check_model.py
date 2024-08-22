@@ -101,11 +101,11 @@ def _dmodel_err(key, dmodel):
             pstr = ", ".join([f"'{tpar[0]}': {tpar[1]}" for tpar in lpar])
             stri = f"\t- 'f{ii}': " + "{" + f"'type': '{k0}', {pstr}" + "}"
 
-        if k0 == 'linear':
+        if k0 == 'poly':
             lstr.append("\t# background-oriented")
         elif k0 == 'gauss':
             lstr.append("\t# spectral lines-oriented")
-        elif k0 == 'pulse1':
+        elif k0 == 'pulse_exp':
             lstr.append("\t# pulse-oriented")
         lstr.append(stri)
 
@@ -183,7 +183,7 @@ def _check_dmodel(
         # check key
 
         if isinstance(k0, int):
-            if typ in ['linear', 'exp']:
+            if typ in ['poly', 'exp']:
                 k1 = f'bck{ibck}'
                 ibck += 1
             else:

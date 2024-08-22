@@ -6,6 +6,7 @@ Created on Thu Feb 15 17:53:54 2024
 """
 
 
+import copy
 import itertools as itt
 
 
@@ -148,6 +149,7 @@ def _check(
     # Format
     # ------------
 
+    dconstraints = copy.deepcopy(dconstraints)
     for k0, v0 in dconstraints.items():
         for k1, v1 in v0.items():
             if k1 != 'ref':

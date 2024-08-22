@@ -93,40 +93,43 @@ def main(
     # spectral models
     # --------------
 
+    # spectral constrainst
+    dconstraints = {
+        'gbck': {
+            'ref': 'bck_a0',
+            'bck_a1': [0, 0, 0],
+            'bck_a2': [0, 0, 0],
+        },
+    }
+
     # single exponential pulse
     coll.add_spectral_model(
         key='sm_exp',
         dmodel={
-            'bck': 'linear',
-            'pulse': 'pulse1',
+            'bck': 'poly',
+            'pulse': 'pulse_exp',
         },
-        dconstraints={
-            'gbck': {'ref': 'bck_a0', 'bck_a1': [0, 0, 0]},
-        },
+        dconstraints=dconstraints,
     )
 
     # single gaussian pulse
     coll.add_spectral_model(
         key='sm_gauss',
         dmodel={
-            'bck': 'linear',
-            'pulse': 'pulse2',
+            'bck': 'poly',
+            'pulse': 'pulse_gauss',
         },
-        dconstraints={
-            'gbck': {'ref': 'bck_a0', 'bck_a1': [0, 0, 0]},
-        },
+        dconstraints=dconstraints,
     )
 
     # single lognorm pulse
     coll.add_spectral_model(
         key='sm_lognorm',
         dmodel={
-            'bck': 'linear',
+            'bck': 'poly',
             'pulse': 'lognorm',
         },
-        dconstraints={
-            'gbck': {'ref': 'bck_a0', 'bck_a1': [0, 0, 0]},
-        },
+        dconstraints=dconstraints,
     )
 
     # --------------

@@ -3,6 +3,7 @@
 
 
 import itertools as itt
+import functools
 import datetime as dtm
 
 
@@ -98,6 +99,17 @@ def main(
     wsm = coll._which_model
     dmodel = coll.dobj[wsm][key_model]['dmodel']
 
+    # -----------------
+    # optionnal binning
+    # -----------------
+
+    dbinning = coll.get_spectral_fit_binning_dict(
+        binning=binning,
+        lamb=lamb,
+        iok=iok_all,
+        axis=axis,
+    )
+
     # ------------
     # get scale, bounds
     # ------------
@@ -131,11 +143,14 @@ def main(
         nxfree=len(lk_xfree),
         lamb=lamb,
         data=data,
-        iok_all=iok_all,
+        iok=iok_all,
+        axis=axis,
         dind=dind,
         dscales=dscales,
         dbounds_low=dbounds_low,
         dbounds_up=dbounds_up,
+        # binning
+        dbinning=dbinning,
     )
 
     # ------------
@@ -157,30 +172,8 @@ def main(
     # func_cost, func_jac
     dfunc = coll.get_spectral_fit_func(
         key=key_model,
-        func=['cost', 'jac'],
+        func=['sum', 'cost', 'jac'],
     )
-
-    # -----------------
-    # optionnal binning
-    # -----------------
-
-    if binning is not False:
-        lambd = lamb[1] - lamb[0]
-
-        lamb_edges = np.r_[
-            lamb[0] - lambd,
-            0.5*(lamb[1:] + lamb[:-1]),
-        ]
-
-        nlamb = lamb.size
-        lamb_inc = np.linspace(0, 1, binning+2)[1:-1] * lambd
-        lamb = (lamb_edges[:, None] + lamb_inc[None, :]).ravel()
-        iok_all = np.repeat(iok_all, binning, axis=axis)
-
-        # safety check
-        assert lamb.size == coll.ddata[key_lamb]['data'].size * binning
-
-        binning = np.arange(0, nlamb, binning)
 
     # ------------
     # Main loop
@@ -204,9 +197,10 @@ def main(
         dx0=dx0,
         # options
         chain=chain,
-        binning=binning,
+        dbinning=dbinning,
         # func
-        func_cost=dfunc['cost'],
+        func_sum=dfunc.get('sum'),
+        func_cost=dfunc.get('cost'),
         func_jac=dfunc['jac'],
         # solver options
         solver=solver,
@@ -287,8 +281,9 @@ def _loop(
     dx0=None,
     # options
     chain=None,
-    binning=None,
+    dbinning=None,
     # func
+    func_sum=None,
     func_cost=None,
     func_jac=None,
     # solver options
@@ -319,9 +314,6 @@ def _loop(
 
     # lind
     lind = [range(ss) for ss in shape_reduced]
-
-    # nspect
-    nspect = int(np.prod(shape_reduced))
 
     # timing init
     if timing is True:
@@ -371,6 +363,10 @@ def _loop(
     nfev = np.full(shape_reduced, np.nan)
     time = np.full(shape_reduced, np.nan)
     sol = np.full(shape_sol, np.nan)
+    if solver == 'scipy.curve_fit':
+        std = np.full(shape_sol, np.nan)
+    else:
+        std = None
 
     message = ['' for ii in range(np.prod(shape_reduced))]
     errmsg = ['' for ii in range(np.prod(shape_reduced))]
@@ -383,6 +379,23 @@ def _loop(
         for ii, ss in enumerate(data.shape)
     ])
     ind_ind = np.array([ii for ii in range(data.ndim) if ii != axis])
+
+    # -----------------
+    # initialize parameter dict
+    # -----------------
+
+    dparams = {
+        'scales': scales,
+        'iok': None,
+        'bin_ind': False if dbinning is False else dbinning['ind'],
+        'bin_dlamb': None if dbinning is False else dbinning['dlamb'],
+    }
+    if solver == 'scipy.least_squares':
+        dparams['lamb'] = lamb if dbinning is False else dbinning['lamb']
+        dparams['data'] = None
+    else:
+        pass
+
 
     # -----------------
     # main loop
@@ -414,10 +427,11 @@ def _loop(
                 lamb=lamb,
                 data=data[slii],
                 iok=iok_all[slii],
+                axis=axis,
                 dind=dind,
                 dx0=dx0,
                 scales=scales,
-                binning=binning,
+                dbinning=dbinning,
             )
 
         # ------
@@ -428,60 +442,116 @@ def _loop(
             print(msg)
 
         # -----------
+        # parameters
+
+        dparams['iok'] = iok_all[slii]
+        if dbinning is False:
+            dparams['bin_iok'] = iok_all[slii]
+        else:
+            dparams['bin_iok'] = dbinning['iok'][slii]
+
+        # -----------
         # try solving
 
         try:
             dti = None
             t0i = dtm.datetime.now()     # DB
 
-            # optimization
-            res = scpopt.least_squares(
-                func_cost,
-                x0,
-                jac=func_jac,
-                bounds=(bounds0, bounds1),
-                x_scale='jac',
-                f_scale=1.0,
-                jac_sparsity=None,
-                args=(),
-                kwargs={
-                    'data': data[slii],
-                    'scales': scales,
-                    'lamb': lamb,
-                    # 'const': const[ii, :],
-                    'iok': iok_all[slii],
-                    'binning': binning,
-                },
-                **dsolver_options,
-            )
-            dti = (dtm.datetime.now() - t0i).total_seconds()
+            if solver == 'scipy.least_squares':
 
-            if chain is True:
-                x0 = res.x
+                # update data
+                dparams['data'] = data[slii]
 
-            # time
-            time[ind] = round(dti, ndigits=6)
+                # optimization
+                res = scpopt.least_squares(
+                    func_cost,
+                    x0,
+                    jac=func_jac,
+                    bounds=(bounds0, bounds1),
+                    x_scale='jac',
+                    f_scale=1.0,
+                    jac_sparsity=None,
+                    args=(),
+                    kwargs=dparams,
+                    **dsolver_options,
+                )
+                dti = (dtm.datetime.now() - t0i).total_seconds()
 
-            # other outputs
-            status[ind] = res.status
-            cost[ind] = res.cost
-            nfev[ind] = res.nfev
+                # time
+                time[ind] = round(dti, ndigits=6)
 
-            chi2n[ind] = np.sqrt(cost[ind] * 2) / iok_all[slii].sum()
+                # x0 if chain
+                if chain is True:
+                    x0 = res.x
 
-            sol[slii] = res.x * scales
-            # sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]
+                # other outputs
+                status[ind] = res.status
+                cost[ind] = res.cost
+                nfev[ind] = res.nfev
 
-            # message
-            message[ii] = res.message
-            errmsg[ii] = ''
+                chi2n[ind] = np.sqrt(cost[ind] * 2) / iok_all[slii].sum()
+
+                # store scaled solution
+                sol[slii] = res.x * scales
+                # sol_x[ii, ~indx] = const[ii, :] / scales[ii, ~indx]
+
+                # message
+                message[ii] = res.message
+                errmsg[ii] = ''
+
+            elif solver == 'scipy.curve_fit':
+
+                def func_sum2(xdata, *xfree, dparams=dparams):
+                    return func_sum(np.r_[xfree], lamb=xdata, **dparams)
+
+                def func_jac2(xdata, *xfree, dparams=dparams):
+                    return func_jac(np.r_[xfree], lamb=xdata, **dparams)
+
+                popt, pcov, infodict, mesg, ier = scpopt.curve_fit(
+                    func_sum2,
+                    lamb if dbinning is False else dbinning['lamb'],
+                    data[slii][iok_all[slii]],
+                    p0=x0,
+                    sigma=None,
+                    absolute_sigma=False,
+                    check_finite=True,    # to be updated
+                    bounds=(bounds0, bounds1),
+                    jac=func_jac2,
+                    **dsolver_options,
+                )
+                dti = (dtm.datetime.now() - t0i).total_seconds()
+
+                # time
+                time[ind] = round(dti, ndigits=6)
+
+                # x0 if chain
+                if chain is True:
+                    x0 = popt
+
+                # other outputs
+                status[ind] = ier
+                cost[ind] = np.sum(infodict['fvec']**2)
+                nfev[ind] = infodict['nfev']
+
+                chi2n[ind] = np.sqrt(cost[ind]) / iok_all[slii].sum()
+
+                # store scaled solution
+                sol[slii] = popt * scales
+                std[slii] = np.sqrt(np.diag(pcov)) * scales
+
+                # message
+                message[ii] = mesg
+                errmsg[ii] = ''
 
         # ---------------
         # manage failures
 
         except Exception as err:
 
-            msg = str(err)
+            msg = (
+                f"\nError for spect_fit '{key}' with solver = '{solver}':\n"
+                + str(err)
+            )
             lerr = [
                 'is infeasible',
                 'Each lower bound must be strictly less than',
@@ -535,6 +605,7 @@ def _loop(
     dout = {
         'validity': validity,
         'sol': sol,
+        'std': std,
         'msg': np.reshape(message, shape_reduced),
         'nfev': nfev,
         'cost': cost,
@@ -546,6 +617,8 @@ def _loop(
         'bounds0': bounds0,
         'bounds1': bounds1,
         'x0': x0,
+        # binning:
+        'dbinning': dbinning,
         # solver
         'solver': solver,
         'dsolver_options': dsolver_options,

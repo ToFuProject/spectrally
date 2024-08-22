@@ -161,9 +161,9 @@ def _check(
                 'key_bs': key_bs,
                 'key_bs_vect': key_bs_vect,
                 'key_sol': None,
+                'key_std': None,
                 'dparams': dparams,
                 'dvalid': dvalid,
-                'sol': None,
             },
         },
     }
@@ -247,6 +247,7 @@ def _check_keys(
         key_lamb, 'key_lamb',
         types=str,
         allowed=lok,
+        extra_msg="Should be a 1d vector, strictly monotonous",
     )
 
     # axis_lamb

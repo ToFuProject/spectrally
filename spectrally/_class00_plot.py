@@ -267,7 +267,7 @@ def plot_axvlines(
     # if ne_scale is None:
         # ne_scale = 'log'
     # if Te_scale is None:
-        # Te_scale = 'linear'
+        # Te_scale = 'poly'
 
     # return
 

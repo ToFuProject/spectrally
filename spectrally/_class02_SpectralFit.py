@@ -7,6 +7,7 @@ import copy
 
 from ._class01_SpectralModel import SpectralModel as Previous
 from . import _class02_check_fit as _check_fit
+from . import _class02_binning as _binning
 from . import _class01_fit_func as _fit_func
 from . import _class02_compute_fit as _compute_fit
 from . import _class02_plot_valid as _plot_valid
@@ -91,6 +92,34 @@ class SpectralFit(Previous):
         )
 
         return
+
+    # -------------------
+    # spectral fit binning
+    # -------------------
+
+    def get_spectral_fit_binning_dict(
+        self,
+        binning=None,
+        lamb=None,
+        iok=None,
+        axis=None,
+    ):
+        """
+
+
+        Returns
+        -------
+        dout: dict
+            dict containing all useful parameters for binning
+
+        """
+        return _binning.main(
+            coll=self,
+            binning=binning,
+            lamb=lamb,
+            iok=iok,
+            axis=axis,
+        )
 
     # -------------------
     # compute spectral fit

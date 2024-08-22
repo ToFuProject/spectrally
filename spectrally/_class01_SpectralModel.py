@@ -61,7 +61,7 @@ class SpectralModel(Previous):
                 'key': {'ref': k0, k1: [c0, c1], k2: [c0, c1]}
 
         Available function types for dmodel are:
-            - 'linear': typically a linear background
+            - 'poly': typically a polynomial background
             - 'exp': typically an exponential background
             - 'gauss': typically a doppler-broadened line
             - 'lorentz': ypically a natural-broadened line
@@ -69,7 +69,7 @@ class SpectralModel(Previous):
 
         dconstraints holds a dict of constraints groups.
         Each group is a dict with a 'ref' variable
-        Other variables (keys) are compued as linear functions of 'ref'
+        Other variables (keys) are compued as poly functions of 'ref'
 
         Parameters
         ----------
@@ -202,6 +202,7 @@ class SpectralModel(Previous):
         key=None,
         key_data=None,
         lamb=None,
+        returnas=None,
     ):
         """
 
@@ -221,6 +222,10 @@ class SpectralModel(Previous):
             key to the data to be used as input for the model's free variables
         lamb:str or 1d np.ndarray, optional
             wavelenth vector to be used for computing limited integrals
+        returnas: str
+            Flag indicating whether to return dout as:
+                - 'dict_arrays': nested dict of {'ktype': {'kvar': array}}
+                - 'dict_varnames': dict of {'kfunc_var': values}
 
         Returns
         -------
@@ -234,6 +239,7 @@ class SpectralModel(Previous):
             key=key,
             key_data=key_data,
             lamb=lamb,
+            returnas=returnas,
         )
 
         return dout
