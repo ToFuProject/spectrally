@@ -247,6 +247,7 @@ def _check_keys(
         key_lamb, 'key_lamb',
         types=str,
         allowed=lok,
+        extra_msg="Should be a 1d vector, strictly monotonous",
     )
 
     # axis_lamb

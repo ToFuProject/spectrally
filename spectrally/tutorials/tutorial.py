@@ -37,7 +37,12 @@ _PATH_INPUT = os.path.join(os.path.dirname(_PATH_HERE), 'tests', 'input')
 # ######################################################
 
 
-def main(data='sxr', compute=True, chain=None, solver=None):
+def main(
+    data='ebit',
+    compute=True,
+    chain=None,
+    solver=None,
+):
     """ Tutorial on how to use spectrally
 
     Two examples 'sxr' and 'hxr' are available
@@ -85,7 +90,7 @@ def main(data='sxr', compute=True, chain=None, solver=None):
     # display a figure showing details of each spectral model function
     # -----------------
 
-    if data == 'sxr':
+    if data in ['sxr', 'ebit']:
         _ = sp.display_spectral_model_function('gauss')
 
     elif data == 'hxr':
@@ -111,6 +116,9 @@ def main(data='sxr', compute=True, chain=None, solver=None):
 
     if data == 'sxr':
         dax = coll.plot_spectral_fit_input_validity('sf1')
+    elif data == 'ebit':
+        pass
+        # dax = coll.plot_spectral_fit_input_validity('sf0')
     else:
         dax = coll.plot_spectral_fit_input_validity('sf_exp')
 
@@ -120,7 +128,12 @@ def main(data='sxr', compute=True, chain=None, solver=None):
 
     if compute is True:
 
-        _compute_spectral_fit(coll=coll, data=data, chain=chain, solver=solver)
+        _compute_spectral_fit(
+            coll=coll,
+            data=data,
+            chain=chain,
+            solver=solver,
+        )
 
         # ---------------------
         # plot fit
@@ -128,6 +141,8 @@ def main(data='sxr', compute=True, chain=None, solver=None):
 
         if data == 'sxr':
             dax = coll.plot_spectral_fit('sf1')
+        elif data == 'ebit':
+            dax = coll.plot_spectral_fit('sf0')
         else:
             dax = coll.plot_spectral_fit('sf_lognorm')
 
@@ -137,6 +152,8 @@ def main(data='sxr', compute=True, chain=None, solver=None):
 
         if data == 'sxr':
             dout = coll.get_spectral_model_moments('sf1')
+        elif data == 'ebit':
+            dout = coll.get_spectral_model_moments('sf0')
         else:
             dout = coll.get_spectral_model_moments('sf_exp')
 
@@ -234,7 +251,7 @@ def _add_data(coll=None, data=None):
     # HXR
     # ------------
 
-    else:
+    elif data == 'hxr':
 
         # --------------
         # load file
@@ -277,6 +294,63 @@ def _add_data(coll=None, data=None):
             ref=('nsamp', 'npulse'),
             units='A',
         )
+
+    # ------------
+    # EBIT
+    # ------------
+
+    elif data == 'ebit':
+
+        # --------------
+        # load file
+
+        # pfe = path/file.ext
+        pfe = os.path.join(_PATH_INPUT, 'EBIT_spectrally_test.npz')
+
+        # load
+        dout = dict(np.load(pfe, allow_pickle=True))['arr_0'].tolist()
+
+        # -------------
+        # ref
+
+        coll.add_ref('nv', size=dout['Vs'].size)
+        coll.add_ref('nlamb', size=dout['lambs'].size)
+
+        # -------------
+        # data
+
+        # voltages
+        coll.add_data(
+            key='voltages',
+            data=dout['Vs'],
+            ref='nv',
+            units='kV',
+        )
+
+        # wavelength
+        coll.add_data(
+            key='lamb',
+            data=dout['lambs'],
+            ref='nlamb',
+            units='m',
+        )
+
+        # data
+        coll.add_data(
+            key='spectra',
+            data=dout['data'],
+            ref=('nv', 'nlamb'),
+            units='counts',
+        )
+
+    # ------------
+    # Error
+    # ------------
+
+    else:
+
+        msg = "Unknown data for tutorial"
+        raise Exception(msg)
 
     return
 
@@ -333,7 +407,7 @@ def _add_spectral_model(coll=None, data=None):
     # HXR
     # ------------
 
-    else:
+    elif data == 'hxr':
 
         # constraints for all models: the poly back has a slope of 0
         dconstraints = {
@@ -372,6 +446,34 @@ def _add_spectral_model(coll=None, data=None):
                 'p0': {'type': 'lognorm'},
             },
             dconstraints=dconstraints,
+        )
+
+    elif data == 'ebit':
+
+        # argon mass
+        mz = scpct.m_u * 39.9
+
+        # first mode : bck with 0 slope + 2 gauss with same width
+        coll.add_spectral_model(
+            key='sm0',
+            dmodel={
+                'bck': 'poly',
+                'l0': {'type': 'gauss', 'lamb0': 2.719e-10, 'mz': mz},
+                'l1': {'type': 'gauss', 'lamb0': 2.726e-10, 'mz': mz},
+                'l2': {'type': 'gauss', 'lamb0': 2.735e-10, 'mz': mz},
+            },
+            dconstraints={
+                'g0': {
+                    'ref': 'bck_a0',
+                    'bck_a1': [0, 0, 0],
+                    'bck_a2': [0, 0, 0],
+                },
+                'g1': {
+                    'ref': 'l0_sigma',
+                    'l1_sigma': [0, 1, 0],
+                    'l2_sigma': [0, 1, 0],
+                },
+            },
         )
 
     return
@@ -431,7 +533,7 @@ def _add_spectral_fit(coll=None, data=None):
     # HXR
     # ------------
 
-    else:
+    elif data == 'hxr':
 
         for k0 in coll.dobj['spect_model'].keys():
             coll.add_spectral_fit(
@@ -447,6 +549,25 @@ def _add_spectral_fit(coll=None, data=None):
                 },
             )
 
+    # ------------
+    # EBIT
+    # ------------
+
+    elif data == 'ebit':
+
+        for k0 in coll.dobj['spect_model'].keys():
+            coll.add_spectral_fit(
+                key='sf0',
+                key_model=k0,
+                key_data='spectra',
+                key_sigma=None,
+                key_lamb='lamb',
+                # params
+                dvalid={
+                    'nsigma': 2,
+                    'fraction': 0.11,
+                },
+            )
 
     return
 
@@ -479,8 +600,9 @@ def _compute_spectral_fit(coll=None, data=None, chain=None, solver=None):
             coll.compute_spectral_fit(
                 k0,
                 solver=solver,
+                dsolver_options={'nfev': 1000},
                 chain=chain,
-                verb=0,
+                verb=2,
                 strict=True,
             )
         # ---------------------
@@ -550,6 +672,7 @@ def _compute_spectral_fit(coll=None, data=None, chain=None, solver=None):
             coll.compute_spectral_fit(
                 k0,
                 solver=solver,
+                dsolver_options={'nfev': 1000},
                 chain=chain,
                 verb=2,
                 strict=True,
