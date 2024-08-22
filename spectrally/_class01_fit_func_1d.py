@@ -374,6 +374,7 @@ def _get_func_cost(
         # scales, iok
         scales=None,
         iok=None,
+        # binning
         bin_ind=None,
         bin_iok=None,
         bin_dlamb=None,

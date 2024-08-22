@@ -446,9 +446,16 @@ def _loop(
 
         dparams['iok'] = iok_all[slii]
         if dbinning is False:
-            dparams['bin_iok'] = iok_all[slii]
+            if solver == 'scipy.least_squares':
+                dparams['bin_iok'] = iok_all[slii]
+            else:
+                dparams['iok'] = iok_all[slii]
+
         else:
-            dparams['bin_iok'] = dbinning['iok'][slii]
+            if solver == 'scipy.least_squares':
+                dparams['bin_iok'] = dbinning['iok'][slii]
+            else:
+                dparams['iok'] = dbinning['iok'][slii]
 
         # -----------
         # try solving
@@ -509,7 +516,7 @@ def _loop(
 
                 popt, pcov, infodict, mesg, ier = scpopt.curve_fit(
                     func_sum2,
-                    lamb,
+                    lamb if dbinning is False else dbinning['lamb'],
                     data[slii][iok_all[slii]],
                     p0=x0,
                     sigma=None,
