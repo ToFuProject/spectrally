@@ -49,7 +49,7 @@ def main(
         key_model, ref_nx, ref_nf,
         key_data, key_std,
         key_lamb, lamb, ref_lamb,
-        details, binning,
+        binning, details,
         _, store, store_key,
     ) = _interpolate._check(
         coll=coll,
