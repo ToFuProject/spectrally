@@ -41,7 +41,7 @@ def main(
         key_model, ref_nx, ref_nf,
         key_data, key_std,
         key_lamb, lamb, ref_lamb,
-        details, binning,
+        binning, details,
         returnas, store, store_key,
     ) = _check(
         coll=coll,
@@ -49,12 +49,23 @@ def main(
         key_data=key_data,
         lamb=lamb,
         # others
-        details=details,
         binning=binning,
+        details=details,
         # others
         returnas=returnas,
         store=store,
         store_key=store_key,
+    )
+
+    # -----------------
+    # optionnal binning
+    # -----------------
+
+    dbinning = coll.get_spectral_fit_binning_dict(
+        binning=binning,
+        lamb=lamb,
+        iok=None,
+        axis=None,
     )
 
     # ----------------
@@ -168,6 +179,13 @@ def main(
     # loop to compute data_out
     # -------------------------
 
+    if dbinning is False:
+        bin_ind = False
+        bin_dlamb = None
+    else:
+        bin_ind = dbinning['ind']
+        bin_dlamb = dbinning['dlamb']
+
     for ind in itt.product(*lind):
 
         # update slices
@@ -178,8 +196,9 @@ def main(
         # call func
         data_out[tuple(sli_out)] = func(
             x_free=data_in[tuple(sli_in)],
-            lamb=lamb,
-            binning=binning,
+            lamb=lamb if dbinning is False else dbinning['lamb'],
+            bin_ind=bin_ind,
+            bin_dlamb=bin_dlamb,
         )
 
     # -----------------------------
@@ -215,8 +234,9 @@ def main(
                 # call func
                 datai = func(
                     x_free=datain,
-                    lamb=lamb,
-                    binning=binning,
+                    lamb=lamb if dbinning is False else dbinning['lamb'],
+                    bin_ind=bin_ind,
+                    bin_dlamb=bin_dlamb,
                 )
 
                 # update min, max
@@ -281,8 +301,8 @@ def _check(
     key_data=None,
     lamb=None,
     # others
-    details=None,
     binning=None,
+    details=None,
     # others
     returnas=None,
     store=None,
@@ -293,11 +313,12 @@ def _check(
     # key_model, key_data
     # ---------------------
 
-    key_model, key_data, key_std, lamb = _check_keys(
+    key_model, key_data, key_std, lamb, binning = _check_keys(
         coll=coll,
         key=key_model,
         key_data=key_data,
         lamb=lamb,
+        binning=binning,
     )
 
     # derive ref_model
@@ -335,24 +356,6 @@ def _check(
 
     else:
         _err_lamb(lamb)
-
-    # --------------
-    # binning
-    # --------------
-
-    binning = ds._generic_check._check_var(
-        binning, 'binning',
-        types=(bool, int),
-        default=False,
-    )
-
-    # safety check
-    if (binning is not False) and binning <= 0:
-        msg = (
-            "Arg 'binning' must be a > 0 int\n"
-            f"Provided: {binning}"
-        )
-        raise Exception(msg)
 
     # -----------------
     # details
@@ -406,12 +409,12 @@ def _check(
         key_model, ref_nx, ref_nf,
         key_data, key_std,
         key_lamb, lamb, ref_lamb,
-        details, binning,
+        binning, details,
         returnas, store, store_key,
     )
 
 
-def _check_keys(coll=None, key=None, key_data=None, lamb=None):
+def _check_keys(coll=None, key=None, key_data=None, lamb=None, binning=None):
 
     # ---------------------
     # key_model vs key_fit
@@ -445,6 +448,8 @@ def _check_keys(coll=None, key=None, key_data=None, lamb=None):
         if lamb is None:
             lamb = coll.dobj[wsf][key_fit]['key_lamb']
 
+        binning = coll.dobj[wsf][key_fit]['dinternal']['binning']
+
     else:
         key_model = key
 
@@ -468,7 +473,7 @@ def _check_keys(coll=None, key=None, key_data=None, lamb=None):
         allowed=lok,
     )
 
-    return key_model, key_data, key_std, lamb
+    return key_model, key_data, key_std, lamb, binning
 
 
 def _err_lamb(lamb):
