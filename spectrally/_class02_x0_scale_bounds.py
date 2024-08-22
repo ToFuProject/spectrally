@@ -145,11 +145,14 @@ def _get_scales_bounds(
     nxfree=None,
     lamb=None,
     data=None,
-    iok_all=None,
+    iok=None,
+    axis=None,
     dind=None,
     dscales=None,
     dbounds_low=None,
     dbounds_up=None,
+    # binning
+    dbinning=None,
 ):
 
     # ------------------
@@ -164,14 +167,21 @@ def _get_scales_bounds(
     # prepare
     # ------------------
 
-    lambD = np.abs(lamb[-1] - lamb[0])
-    lambm = np.mean(lamb)
-
-    data_max = np.nanmax(data[iok_all])
-    data_min = np.nanmin(data[iok_all])
-    data_mean = np.nanmean(data[iok_all])
-    data_median = np.nanmedian(data[iok_all])
-    data_pulse_sign = np.sign(data_mean - data_median)
+    (
+        lamb0, lambD, lambm,
+        lamb_amax, lamb_amin,
+        lamb_ext,
+        data_max, data_min,
+        data_mean, data_median,
+        data_pulse_sign,
+    ) = _prepare(
+        lamb=lamb,
+        data=data,
+        iok=iok,
+        axis=axis,
+        # binning
+        dbinning=dbinning,
+    )
 
     ldins = [(dscales, scales), (dbounds_low, bounds0), (dbounds_up, bounds1)]
 
@@ -675,10 +685,12 @@ def _get_x0(
     lamb=None,
     data=None,
     iok=None,
+    axis=None,
     dind=None,
     dx0=None,
     scales=None,
-    binning=None,
+    # binning
+    dbinning=None,
 ):
 
     # ------------------
@@ -691,22 +703,21 @@ def _get_x0(
     # prepare
     # ------------------
 
-    lamb0 = lamb[0]
-    lambD = np.abs(lamb[-1] - lamb[0])
-    lambm = np.mean(lamb)
-    if binning is False:
-        lamb_amax = lamb[iok][np.argmax(data[iok])]
-        lamb_amin = lamb[iok][np.argmin(data[iok])]
-    else:
-        raise NotImplementedError()
-
-    data_max = np.nanmax(data[iok])
-    data_min = np.nanmin(data[iok])
-    data_mean = np.nanmean(data[iok])
-    data_median = np.median(data[iok])
-    data_pulse_sign = np.sign(data_mean - data_median)
-
-    lamb_ext = lamb_amax if data_pulse_sign > 0 else lamb_amin
+    (
+        lamb0, lambD, lambm,
+        lamb_amax, lamb_amin,
+        lamb_ext,
+        data_max, data_min,
+        data_mean, data_median,
+        data_pulse_sign,
+    ) = _prepare(
+        lamb=lamb,
+        data=data,
+        iok=iok,
+        axis=axis,
+        # binning
+        dbinning=dbinning,
+    )
 
     ldins = [(dx0, x0)]
 
@@ -1136,6 +1147,105 @@ def _get_x0(
                 )
 
     return x0
+
+
+# #####################################################################
+# #####################################################################
+#                     Utilities
+# #####################################################################
+
+
+def _prepare(
+    lamb=None,
+    data=None,
+    iok=None,
+    axis=None,
+    # binning
+    dbinning=None,
+):
+
+    # ---------------
+    # lamb scales
+    # ----------------
+
+    lamb0 = lamb[0]
+    lambD = np.abs(lamb[-1] - lamb[0])
+    lambm = np.mean(lamb)
+
+    # ------------------------
+    # indices of min max data
+    # ------------------------
+
+    idatamax = np.nanargmax(data[iok])
+    idatamin = np.nanargmin(data[iok])
+
+    # -------------------------
+    # shapes adjustment
+    # -------------------------
+
+    if dbinning is not False:
+        bin_dlamb = dbinning['dlamb'][dbinning['ind']]
+
+    # time dependence adjustments
+    if lamb.shape != iok.shape:
+        lambn = np.full(iok.shape, np.nan)
+        sli = [0 if ii == axis else slice(None) for ii in range(iok.ndim)]
+        for ii, ll in enumerate(lamb):
+            sli[axis] = ii
+            lambn[tuple(sli)] = ll
+        lamb = lambn
+
+        if dbinning is not False:
+            bin_dlambn = np.full(iok.shape, np.nan)
+            sli = [0 if ii == axis else slice(None) for ii in range(iok.ndim)]
+            for ii, ll in enumerate(bin_dlamb):
+                sli[axis] = ii
+                bin_dlambn[tuple(sli)] = ll
+            bin_dlamb = bin_dlambn
+
+    # --------------
+    # lamb min max
+    # --------------
+
+    lamb_amax = lamb[iok][idatamax]
+    lamb_amin = lamb[iok][idatamin]
+
+    # --------------
+    # data min max
+    # --------------
+
+    if dbinning is False:
+
+        data_max = data[iok][idatamax]
+        data_min = data[iok][idatamin]
+
+        data_mean = np.nanmean(data[iok])
+        data_median = np.median(data[iok])
+
+    else:
+
+        nbins = dbinning['binning']
+        data_max = data[iok][idatamax] / (bin_dlamb[iok][idatamax] * nbins)
+        data_min = data[iok][idatamin] / (bin_dlamb[iok][idatamin] * nbins)
+
+        data_mean = np.nanmean(data[iok]) / (bin_dlamb[iok][idatamin] * nbins)
+        data_median = np.median(data[iok]) / (bin_dlamb[iok][idatamin] * nbins)
+
+    # -------------------
+    # sign and extrema
+    # -------------------
+
+    data_pulse_sign = np.sign(data_mean - data_median)
+    lamb_ext = lamb_amax if data_pulse_sign > 0 else lamb_amin
+
+    return (
+        lamb0, lambD, lambm,
+        lamb_amax, lamb_amin,
+        lamb_ext,
+        data_max, data_min,
+        data_mean, data_median,
+        data_pulse_sign,
+    )
 
 
 # #######################
