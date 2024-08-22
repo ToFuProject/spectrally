@@ -132,6 +132,7 @@ def main(
             dind=dind,
             axis=axis,
             ref=ref,
+            binning=binning,
         )
 
     return dout
@@ -582,6 +583,7 @@ def _format(
     dind=None,
     axis=None,
     ref=None,
+    binning=None,
 ):
 
     # ---------------
@@ -631,6 +633,7 @@ def _format(
                     coll, ktype, kvar,
                     units_data=units_data,
                     units_lamb=units_lamb,
+                    binning=binning,
                 )
 
                 # store
@@ -649,7 +652,7 @@ def _format(
 #############################################
 
 
-def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
+def _units(coll, ktype, kvar, units_data=None, units_lamb=None, binning=None):
 
     if kvar.endswith('_min') or kvar.endswith('_max'):
         kvar = kvar[:-4]
@@ -660,13 +663,16 @@ def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
     # ------------
 
     if kvar == 'integ':
-        try:
-            units = units_data * units_lamb
-        except Exception as err:
-            units = f"{units_data} x {units_lamb}"
+        if binning is False:
+            units = _try_units_mult(units_data, units_lamb)
+        else:
+            units = units_data
 
     elif kvar == 'max':
-        units = units_data
+        if binning is False:
+            units = units_data
+        else:
+            units = _try_units_divide(units_data, units_lamb)
 
     elif kvar == 'argmax':
         units = units_lamb
@@ -686,16 +692,18 @@ def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
     else:
 
         if ktype == 'poly':
-
-            units = units_data
+            if binning is False:
+                units = units_data
+            else:
+                units = _try_units_divide(units_data, units_lamb)
 
         elif ktype == 'exp_lamb':
 
             if kvar == 'amp':
-                try:
-                    units = units_data * units_lamb
-                except Exception as err:
-                    units = f"{units_data} x {units_lamb}"
+                if binning is False:
+                    units = _try_units_mult(units_data, units_lamb)
+                else:
+                    units = units_data
 
             elif kvar == 'rate':
                 units = units_lamb
@@ -709,7 +717,10 @@ def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
         elif ktype in ['gauss', 'lorentz', 'pvoigt', 'voigt']:
 
             if kvar == 'amp':
-                units = units_data
+                if binning is False:
+                    units = units_data
+                else:
+                    units = _try_units_divide(units_data, units_lamb)
 
             elif kvar == 'sigma':
                 units = units_lamb
@@ -723,7 +734,10 @@ def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
         elif ktype in ['pulse_exp', 'pulse_gauss']:
 
             if kvar == 'amp':
-                units = units_data
+                if binning is False:
+                    units = units_data
+                else:
+                    units = _try_units_divide(units_data, units_lamb)
 
             elif kvar == 'tau':
                 units = ''
@@ -740,10 +754,10 @@ def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
         elif ktype == 'lognorm':
 
             if kvar == 'amp':
-                try:
-                    units = units_data * units_lamb
-                except Exception as err:
-                    units = f"{units_data} x {units_lamb}"
+                if binning is False:
+                    units = _try_units_mult(units_data, units_lamb)
+                else:
+                    units = units_data
 
             elif kvar == 'tau':
                 units = ''
@@ -769,3 +783,25 @@ def _units(coll, ktype, kvar, units_data=None, units_lamb=None):
         return asunits.Unit(units)
     except Exception as err:
         return units
+
+
+# ###########################
+# ###########################
+#      try units
+# ###########################
+
+
+def _try_units_mult(u0, u1):
+    try:
+        units = u0 * u1
+    except Exception as err:
+        units = f"{u0} x {u1}"
+    return units
+
+
+def _try_units_divide(u0, u1):
+    try:
+        units = u0 / u1
+    except Exception as err:
+        units = f"{u0} / {u1}"
+    return units
