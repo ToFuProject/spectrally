@@ -13,6 +13,7 @@ from bsplines2d import BSplines2D as Previous
 from . import _class00_check_ion as _check_ion
 from . import _class00_check_lines as _check_lines
 from . import _class00_compute as _compute
+from . import _class00_lines_labels as _labels
 from . import _class00_plot as _plot
 
 
@@ -332,6 +333,50 @@ class SpectralLines(Previous):
         if returnas is dict:
             out = {k0: out[ii] for ii, k0 in enumerate(key)}
         return out
+
+    # ---------------
+    # get labels
+    # ---------------
+
+    def get_spectral_lines_labels(self, keys=None, labels=None):
+        """ Return a dict of {key: label}
+
+        Typically used to customize spectral lines labelling
+
+        If keys is a key to a spectral model or spectral fit, the spectral
+        lines are actually the names of all model functions that can be peaked,
+        which includes the following:
+                - gauss
+                - lorentz
+                - pvoigt
+                - pulse_exp
+                - pulse_gauss
+
+        Parameters
+        ----------
+        keys:     str / list of str
+            Can be either:
+                - key of list of keys of valid spectral lines
+                - key of a valid spectral model
+                - key of a valid spectral fit
+
+        labels:   str / dict
+            Can be either:
+                - str: a valid spectral line parameter
+                    e.g.: 'symbol', 'ion', ...
+                - dict: a custom dict of {key: label}
+
+        Returns
+        -------
+        dlabels:  dict
+            dict of {key: label}
+
+        """
+        return _labels.main(
+            coll=self,
+            keys=keys,
+            labels=labels,
+        )
 
     # -----------------
     # PEC interpolation
