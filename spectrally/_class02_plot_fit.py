@@ -9,6 +9,7 @@ Created on Sat Mar  9 16:09:08 2024
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+import matplotlib.colors as mcolors
 import datastock as ds
 
 
@@ -31,11 +32,15 @@ def main(
     dprop=None,
     vmin=None,
     vmax=None,
+    # lines labels
+    lines_labels=True,
+    lines_labels_color='k',
     # figure
     dax=None,
     fs=None,
     dmargin=None,
     tit=None,
+    # interactivity
     connect=None,
     dinc=None,
     show_commands=None,
@@ -47,11 +52,18 @@ def main(
 
     (
         key_fit, key_model, key_sol, key_data, key_lamb,
-        details, binning, connect,
+        details, binning,
+        lines_labels, lines_labels_color,
+        connect,
     ) = _check(
         coll=coll,
         key=key,
+        # options
         details=details,
+        # plotting
+        lines_labels=lines_labels,
+        lines_labels_color=lines_labels_color,
+        # interactivity
         connect=connect,
     )
 
@@ -108,19 +120,24 @@ def main(
             dout=dout,
             dkeys=dkeys,
             dax=dax,
-            details=details
+            details=details,
+            lines_labels=lines_labels,
         )
 
     elif ndim == 2:
         dax, dgroup = _plot_2d(
             coll=coll,
             key_model=key_model,
+            key_fit=key_fit,
             coll2=coll2,
             dout=dout,
             keyY=keyY,
             dkeys=dkeys,
             dax=dax,
             details=details,
+            # lines labels
+            lines_labels=lines_labels,
+            lines_labels_color=lines_labels_color,
         )
 
     # -------------------
@@ -162,6 +179,10 @@ def _check(
     key=None,
     # options
     details=None,
+    # lines labels
+    lines_labels=None,
+    lines_labels_color=None,
+    # interactivity
     connect=None,
 ):
 
@@ -200,6 +221,47 @@ def _check(
     )
 
     # -------------
+    # lines_labels
+    # -------------
+
+    if lines_labels is True:
+        lines_labels = None
+
+    if lines_labels is not False:
+        lines_labels = coll.get_spectral_lines_labels(
+            keys=key_model,
+            labels=lines_labels,
+        )
+
+    # -------------
+    # lines_labels_color
+    # -------------
+
+    if lines_labels is False:
+        lines_labels_color = None
+
+    else:
+
+        if lines_labels_color is None:
+            lines_labels_color = 'sum'
+
+        if lines_labels_color in ['sum', 'details']:
+            pass
+
+        elif mcolors.is_color_like(lines_labels_color):
+            pass
+
+        else:
+            msg = (
+                "Arg 'lines_labels_color' must be either:\n"
+                "\t- 'sum': labels color is the common color of sum curve\n"
+                "\t- 'details': labels color is the color of each func\n"
+                "\t- color-like: labels color is set to the provided color\n"
+                f"Provided:\n{lines_labels_color}"
+            )
+            raise Exception(msg)
+
+    # -------------
     # connect
     # -------------
 
@@ -211,7 +273,9 @@ def _check(
 
     return (
         key, key_model, key_sol, key_data, key_lamb,
-        details, binning, connect,
+        details, binning,
+        lines_labels, lines_labels_color,
+        connect,
     )
 
 
@@ -360,12 +424,16 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
 def _plot_2d(
     coll=None,
     key_model=None,
+    key_fit=None,
     coll2=None,
     dout=None,
     dkeys=None,
     keyY=None,
     dax=None,
     details=None,
+    # lines labels
+    lines_labels=None,
+    lines_labels_color=None,
 ):
 
     # --------------
@@ -450,6 +518,7 @@ def _plot_2d(
     # plot spectrum
     # --------------
 
+    dcolor = None
     if details is True:
 
         reflamb = coll2.ddata[dkeys['lamb']]['ref'][0]
@@ -469,6 +538,7 @@ def _plot_2d(
 
             for jj in range(nmax):
 
+                # plot
                 ll, = ax.plot(
                     lamb,
                     nan,
@@ -477,6 +547,11 @@ def _plot_2d(
                     lw=1.,
                 )
 
+                # extract color
+                if lines_labels_color == 'details':
+                    dcolor[ff][jj] = ll.get_color()
+
+                # add mobile
                 xydata = 'ydata'
                 km = f'{lfunc[ii]}_{jj}'
 
@@ -491,7 +566,192 @@ def _plot_2d(
                     ind=jj,
                 )
 
+    # ----------------
+    # add lines_labels
+    # ----------------
+
+    if lines_labels is not False:
+        _add_labels(
+            # resources
+            coll=coll,
+            coll2=coll2,
+            key_fit=key_fit,
+            dkeys=dkeys,
+            axis=axis,
+            nmax=nmax,
+            dcolor=dcolor,
+            # parameters
+            kax='spectrum',
+            lines_labels=lines_labels,
+            lines_labels_color=lines_labels_color,
+        )
+
     return coll2, dgroup0
+
+
+# ###############################################################
+# ###############################################################
+#               labels
+# ###############################################################
+
+
+def _add_labels(
+    # resources
+    coll=None,
+    coll2=None,
+    key_fit=None,
+    dkeys=None,
+    axis=None,
+    nmax=None,
+    dcolor=None,
+    # parameters
+    kax=None,
+    lines_labels=None,
+    lines_labels_color=None,
+):
+
+    # ----------------
+    # get kax
+
+    ax = coll2.dax[kax]['handle']
+
+    # -------------
+    # prepare data
+
+    # extract moments
+    dmom = coll.get_spectral_model_moments(key_fit)
+
+    # prepare
+    data = coll2.ddata[dkeys['sum']]['data']
+    refs = list(coll2.ddata[dkeys['sum']]['ref'])
+
+    # lamb
+    lamb = coll2.ddata[dkeys['lamb']]['data']
+    sh_lamb = [lamb.size if ii == axis else 1 for ii in range(data.ndim)]
+    sh_argmax = [1 if ii == axis else ss for ii, ss in enumerate(data.shape)]
+    lambf = lamb.reshape(sh_lamb)
+
+    # custom ref for lines
+    rpxy = 'peaks_n2'
+    refs[axis] = rpxy
+    refm = tuple([rr for ii, rr in enumerate(refs) if ii != axis])
+    # add ref
+    coll2.add_ref(rpxy, size=2)
+
+    # vmax
+    vmax = coll2.dax[kax]['handle'].get_ylim()[1]
+    vmaxf = np.full(sh_argmax, vmax)
+
+    # loop on functions / spectral lines
+    nan2 = np.r_[np.nan, np.nan]
+    for k0, v0 in lines_labels.items():
+
+        # argmax
+        argmax = dmom[f'{k0}_argmax']['data']
+        argmaxf = argmax.reshape(sh_argmax)
+
+        # get ind
+        ind = np.abs(argmaxf - lambf).argmin(axis=axis, keepdims=True)
+
+        # dmax
+        dmaxf = np.take_along_axis(data, ind, axis=axis)
+
+        peaks_x = np.concatenate((argmaxf, argmaxf), axis=axis)
+        peaks_y = np.concatenate((dmaxf, vmaxf), axis=axis)
+
+        # ---------------
+        # add data
+
+        # add argmax (for text)
+        key_argmax = f'peaks_argmax_{k0}'
+        coll2.add_data(
+            key=key_argmax,
+            data=argmax,
+            units=coll2.ddata[dkeys['lamb']]['units'],
+            ref=refm,
+        )
+
+        # add peaks_x
+        keyx = f'peaks_x_{k0}'
+        coll2.add_data(
+            key=keyx,
+            data=peaks_x,
+            units=coll2.ddata[dkeys['lamb']]['units'],
+            ref=tuple(refs),
+        )
+
+        keyy = f'peaks_y_{k0}'
+        coll2.add_data(
+            key=keyy,
+            data=peaks_y,
+            units=coll2.ddata[dkeys['sum']]['units'],
+            ref=tuple(refs),
+        )
+
+        # ------------------
+        # add vertical lines
+
+        for jj in range(nmax):
+
+            # set color
+            if lines_labels_color == 'sum':
+                color = dcolor[jj]
+            elif lines_labels_color == 'details':
+                color = dcolor[k0][jj]
+            else:
+                color = lines_labels_color
+
+            # plot
+            ll, = ax.plot(
+                nan2,
+                nan2,
+                ls='--',
+                marker='None',
+                lw=1.,
+                c=color,
+            )
+
+            # add mobile
+            km = f'peaks_dashed_{k0}_{jj}'
+            coll2.add_mobile(
+                key=km,
+                handle=ll,
+                refs=(refm, refm),
+                data=(keyx, keyy),
+                dtype=['xdata', 'ydata'],
+                group_vis='Y',  # 'X' <-> 'Y'
+                axes=kax,
+                ind=jj,
+            )
+
+            # ---------------------
+            # add labels above axes
+
+            # ll = ax.text(
+            #     np.nan,
+            #     1,
+            #     v0,
+            #     color=color,
+            #     rotation=45,
+            #     horizontalalignment='left',
+            #     verticalalignment='bottom',
+            #     transform=trans,
+            # )
+
+            # # add mobile
+            # km = f'peaks_text_{k0}_{jj}'
+            # coll2.add_mobile(
+            #     key=km,
+            #     handle=ll,
+            #     refs=(refm,),
+            #     data=(key_argmax,),
+            #     dtype=['xdata'],
+            #     group_vis='Y',  # 'X' <-> 'Y'
+            #     axes=kax,
+            #     ind=jj,
+            # )
+
+    return
 
 
 # ###############################################################
