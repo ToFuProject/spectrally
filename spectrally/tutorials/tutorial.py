@@ -159,7 +159,7 @@ def main(
         else:
             dout = coll.get_spectral_model_moments('sf_exp')
 
-    return coll
+    return coll, dax, dout
 
 
 # ######################################################
