@@ -338,7 +338,12 @@ class SpectralLines(Previous):
     # get labels
     # ---------------
 
-    def get_spectral_lines_labels(self, keys=None, labels=None):
+    def get_spectral_lines_labels(
+        self,
+        keys=None,
+        labels=None,
+        colors=None,
+    ):
         """ Return a dict of {key: label}
 
         Typically used to customize spectral lines labelling
@@ -376,6 +381,7 @@ class SpectralLines(Previous):
             coll=self,
             keys=keys,
             labels=labels,
+            colors=colors,
         )
 
     # -----------------
