@@ -345,6 +345,30 @@ def _add_data(coll=None, data=None):
             units='counts',
         )
 
+        # --------------
+        # add spectral lines
+
+        coll.add_spectral_line(
+            key='l0',
+            ion='Ar16+',
+            lamb0=2.719e-10,
+            source='user',
+        )
+
+        coll.add_spectral_line(
+            key='l1',
+            ion='Ar15+',
+            lamb0=2.726e-10,
+            source='user',
+        )
+
+        coll.add_spectral_line(
+            key='l2',
+            ion='Ar16+',
+            lamb0=2.735e-10,
+            source='user',
+        )
+
     # ------------
     # Error
     # ------------
@@ -460,9 +484,9 @@ def _add_spectral_model(coll=None, data=None):
             key='sm0',
             dmodel={
                 'bck': 'poly',
-                'l0': {'type': 'gauss', 'lamb0': 2.719e-10, 'mz': mz},
-                'l1': {'type': 'gauss', 'lamb0': 2.726e-10, 'mz': mz},
-                'l2': {'type': 'gauss', 'lamb0': 2.735e-10, 'mz': mz},
+                'l0': {'type': 'gauss'},
+                'l1': {'type': 'gauss'},
+                'l2': {'type': 'gauss'},
             },
             dconstraints={
                 'g0': {
