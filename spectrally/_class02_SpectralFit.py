@@ -217,12 +217,23 @@ class SpectralFit(Previous):
         dprop=None,
         vmin=None,
         vmax=None,
+        # lines labels
+        lines_labels=True,
+        lines_labels_color=None,
+        lines_labels_rotation=None,
+        lines_labels_horizontalalignment=None,
         # figure
         dax=None,
         fs=None,
         dmargin=None,
         tit=None,
+        # interactivity
+        nmax=None,
+        connect=None,
+        dinc=None,
+        show_commands=None,
     ):
+
         """ Plot a spectral model using specified data
 
         lamb can be:
@@ -241,9 +252,19 @@ class SpectralFit(Previous):
             dprop=dprop,
             vmin=vmin,
             vmax=vmax,
+            # lines labels
+            lines_labels=lines_labels,
+            lines_labels_color=lines_labels_color,
+            lines_labels_rotation=lines_labels_rotation,
+            lines_labels_horizontalalignment=lines_labels_horizontalalignment,
             # figure
             dax=dax,
             fs=fs,
             dmargin=dmargin,
             tit=tit,
+            # interactivity
+            nmax=nmax,
+            connect=connect,
+            dinc=dinc,
+            show_commands=show_commands,
         )
