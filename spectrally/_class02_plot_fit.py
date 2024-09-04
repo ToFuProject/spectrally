@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import matplotlib.colors as mcolors
+import matplotlib.transforms as mtransforms
 import datastock as ds
 
 
@@ -35,6 +36,7 @@ def main(
     # lines labels
     lines_labels=True,
     lines_labels_color='k',
+    lines_labels_rotation=None,
     # figure
     dax=None,
     fs=None,
@@ -53,7 +55,7 @@ def main(
     (
         key_fit, key_model, key_sol, key_data, key_lamb,
         details, binning,
-        lines_labels, lines_labels_color,
+        lines_labels, lines_labels_color, lines_labels_rotation,
         connect,
     ) = _check(
         coll=coll,
@@ -63,6 +65,7 @@ def main(
         # plotting
         lines_labels=lines_labels,
         lines_labels_color=lines_labels_color,
+        lines_labels_rotation=lines_labels_rotation,
         # interactivity
         connect=connect,
     )
@@ -138,6 +141,7 @@ def main(
             # lines labels
             lines_labels=lines_labels,
             lines_labels_color=lines_labels_color,
+            lines_labels_rotation=lines_labels_rotation,
         )
 
     # -------------------
@@ -182,6 +186,7 @@ def _check(
     # lines labels
     lines_labels=None,
     lines_labels_color=None,
+    lines_labels_rotation=None,
     # interactivity
     connect=None,
 ):
@@ -261,6 +266,16 @@ def _check(
             )
             raise Exception(msg)
 
+    # ---------------------
+    # lines_labels_rotation
+    # ---------------------
+
+    lines_labels_rotation = float(ds._generic_check._check_var(
+        lines_labels_rotation, 'lines_labels_rotation',
+        types=(float, int),
+        default=45,
+    ))
+
     # -------------
     # connect
     # -------------
@@ -274,7 +289,7 @@ def _check(
     return (
         key, key_model, key_sol, key_data, key_lamb,
         details, binning,
-        lines_labels, lines_labels_color,
+        lines_labels, lines_labels_color, lines_labels_rotation,
         connect,
     )
 
@@ -434,6 +449,7 @@ def _plot_2d(
     # lines labels
     lines_labels=None,
     lines_labels_color=None,
+    lines_labels_rotation=None,
 ):
 
     # --------------
@@ -582,8 +598,11 @@ def _plot_2d(
             dcolor=dcolor,
             # parameters
             kax='spectrum',
+            kax_labels='labels',
+            dax=dax,
             lines_labels=lines_labels,
             lines_labels_color=lines_labels_color,
+            lines_labels_rotation=lines_labels_rotation,
         )
 
     return coll2, dgroup0
@@ -606,13 +625,18 @@ def _add_labels(
     dcolor=None,
     # parameters
     kax=None,
+    kax_labels=None,
+    dax=None,
     lines_labels=None,
     lines_labels_color=None,
+    lines_labels_rotation=None,
 ):
 
-    # ----------------
-    # get kax
+    # -----------------------
+    # add ax_labels to coll2
 
+    coll2.add_axes(key=kax_labels, harmonize=False, **dax[kax_labels])
+    ax_labels = coll2.dax[kax_labels]['handle']
     ax = coll2.dax[kax]['handle']
 
     # -------------
@@ -641,6 +665,12 @@ def _add_labels(
     # vmax
     vmax = coll2.dax[kax]['handle'].get_ylim()[1]
     vmaxf = np.full(sh_argmax, vmax)
+
+    # blended transform
+    trans = mtransforms.blended_transform_factory(
+        ax_labels.transData,
+        ax_labels.transAxes,
+    )
 
     # loop on functions / spectral lines
     nan2 = np.r_[np.nan, np.nan]
@@ -677,7 +707,7 @@ def _add_labels(
             key=keyx,
             data=peaks_x,
             units=coll2.ddata[dkeys['lamb']]['units'],
-            ref=tuple(refs),
+            ref=refs,
         )
 
         keyy = f'peaks_y_{k0}'
@@ -685,7 +715,7 @@ def _add_labels(
             key=keyy,
             data=peaks_y,
             units=coll2.ddata[dkeys['sum']]['units'],
-            ref=tuple(refs),
+            ref=refs,
         )
 
         # ------------------
@@ -727,29 +757,30 @@ def _add_labels(
             # ---------------------
             # add labels above axes
 
-            # ll = ax.text(
-            #     np.nan,
-            #     1,
-            #     v0,
-            #     color=color,
-            #     rotation=45,
-            #     horizontalalignment='left',
-            #     verticalalignment='bottom',
-            #     transform=trans,
-            # )
+            ll = ax_labels.text(
+                0,
+                0.,
+                v0,
+                size=12,
+                color=color,
+                rotation=lines_labels_rotation,
+                horizontalalignment='left',
+                verticalalignment='bottom',
+                transform=trans,
+            )
 
-            # # add mobile
-            # km = f'peaks_text_{k0}_{jj}'
-            # coll2.add_mobile(
-            #     key=km,
-            #     handle=ll,
-            #     refs=(refm,),
-            #     data=(key_argmax,),
-            #     dtype=['xdata'],
-            #     group_vis='Y',  # 'X' <-> 'Y'
-            #     axes=kax,
-            #     ind=jj,
-            # )
+            # add mobile
+            km = f'peaks_text_{k0}_{jj}'
+            coll2.add_mobile(
+                key=km,
+                handle=ll,
+                refs=(refm,),
+                data=(key_argmax,),
+                dtype=['x'],
+                group_vis='Y',  # 'X' <-> 'Y'
+                axes=kax_labels,
+                ind=jj,
+            )
 
     return
 
@@ -857,9 +888,9 @@ def _get_dax_2d(
 
     if dmargin is None:
         dmargin = {
-            'left': 0.05, 'right': 0.98,
-            'bottom': 0.08, 'top': 0.90,
-            'wspace': 0.30, 'hspace': 0.20,
+            'left': 0.03, 'right': 0.99,
+            'bottom': 0.06, 'top': 0.90,
+            'wspace': 0.30, 'hspace': 0.30,
         }
 
     # ---------------
@@ -875,7 +906,7 @@ def _get_dax_2d(
 
     dax = {}
     fig = plt.figure(figsize=fs)
-    gs = gridspec.GridSpec(4, 14, **dmargin)
+    gs = gridspec.GridSpec(8, 14, **dmargin)
 
     # ------------
     # add axes
@@ -913,14 +944,30 @@ def _get_dax_2d(
     # ----------
     # spectrum
 
-    ax = fig.add_subplot(gs[:2, 8:], sharex=ax0)
+    ax = fig.add_subplot(gs[1:-2, 8:], sharex=ax0)
     ax.set_ylabel(data_lab, size=12, fontweight='bold')
     dax['spectrum'] = {'handle': ax, 'type': 'horizontal'}
 
-    ax = fig.add_subplot(gs[2, 8:], sharex=ax0)
+    # ----------
+    # spectrum error
+
+    ax = fig.add_subplot(gs[-2:, 8:], sharex=ax0)
     ax.set_xlabel(lamb_lab, size=12, fontweight='bold')
     ax.set_ylabel('error', size=12, fontweight='bold')
     dax['error'] = {'handle': ax, 'type': 'horizontal'}
+
+    # ----------
+    # spectrum labels
+
+    pos_1d = dax['spectrum']['handle'].get_position()
+    pos_2d = ax0.get_position()
+    y0 = pos_1d.y0 + pos_1d.height
+    height = pos_2d.y1 - y0
+
+    ax = fig.add_axes([pos_1d.x0, y0, pos_1d.width, height], sharex=ax0)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    dax['labels'] = {'handle': ax, 'type': 'text'}
 
     return dax
 
