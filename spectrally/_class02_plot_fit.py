@@ -9,7 +9,6 @@ Created on Sat Mar  9 16:09:08 2024
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-import matplotlib.colors as mcolors
 import matplotlib.transforms as mtransforms
 import datastock as ds
 
@@ -35,14 +34,16 @@ def main(
     vmax=None,
     # lines labels
     lines_labels=True,
-    lines_labels_color='k',
+    lines_labels_color=None,
     lines_labels_rotation=None,
+    lines_labels_horizontalalignment=None,
     # figure
     dax=None,
     fs=None,
     dmargin=None,
     tit=None,
     # interactivity
+    nmax=None,
     connect=None,
     dinc=None,
     show_commands=None,
@@ -55,7 +56,8 @@ def main(
     (
         key_fit, key_model, key_sol, key_data, key_lamb,
         details, binning,
-        lines_labels, lines_labels_color, lines_labels_rotation,
+        lines_labels, dlabels, lines_labels_rotation,
+        lines_labels_horizontalalignment,
         connect,
     ) = _check(
         coll=coll,
@@ -66,7 +68,9 @@ def main(
         lines_labels=lines_labels,
         lines_labels_color=lines_labels_color,
         lines_labels_rotation=lines_labels_rotation,
+        lines_labels_horizontalalignment=lines_labels_horizontalalignment,
         # interactivity
+        nmax=nmax,
         connect=connect,
     )
 
@@ -124,7 +128,12 @@ def main(
             dkeys=dkeys,
             dax=dax,
             details=details,
+            # lines labels
+            dlabels=dlabels,
             lines_labels=lines_labels,
+            lines_labels_color=lines_labels_color,
+            lines_labels_rotation=lines_labels_rotation,
+            lines_labels_horizontalalignment=lines_labels_horizontalalignment,
         )
 
     elif ndim == 2:
@@ -139,9 +148,11 @@ def main(
             dax=dax,
             details=details,
             # lines labels
+            dlabels=dlabels,
             lines_labels=lines_labels,
             lines_labels_color=lines_labels_color,
             lines_labels_rotation=lines_labels_rotation,
+            lines_labels_horizontalalignment=lines_labels_horizontalalignment,
         )
 
     # -------------------
@@ -187,7 +198,9 @@ def _check(
     lines_labels=None,
     lines_labels_color=None,
     lines_labels_rotation=None,
+    lines_labels_horizontalalignment=None,
     # interactivity
+    nmax=None,
     connect=None,
 ):
 
@@ -229,42 +242,16 @@ def _check(
     # lines_labels
     # -------------
 
-    if lines_labels is True:
-        lines_labels = None
-
-    if lines_labels is not False:
-        lines_labels = coll.get_spectral_lines_labels(
-            keys=key_model,
-            labels=lines_labels,
-        )
-
-    # -------------
-    # lines_labels_color
-    # -------------
-
-    if lines_labels is False:
-        lines_labels_color = None
-
+    if lines_labels in [False, True]:
+        labs = None
     else:
+        labs = lines_labels
 
-        if lines_labels_color is None:
-            lines_labels_color = 'sum'
-
-        if lines_labels_color in ['sum', 'details']:
-            pass
-
-        elif mcolors.is_color_like(lines_labels_color):
-            pass
-
-        else:
-            msg = (
-                "Arg 'lines_labels_color' must be either:\n"
-                "\t- 'sum': labels color is the common color of sum curve\n"
-                "\t- 'details': labels color is the color of each func\n"
-                "\t- color-like: labels color is set to the provided color\n"
-                f"Provided:\n{lines_labels_color}"
-            )
-            raise Exception(msg)
+    dlabels = coll.get_spectral_lines_labels(
+        keys=key_model,
+        labels=labs,
+        colors=lines_labels_color,
+    )
 
     # ---------------------
     # lines_labels_rotation
@@ -275,6 +262,17 @@ def _check(
         types=(float, int),
         default=45,
     ))
+
+    # ---------------------
+    # lines_labels_horizontalalignment
+    # ---------------------
+
+    lines_labels_horizontalalignment = ds._generic_check._check_var(
+        lines_labels_horizontalalignment, 'lines_labels_horizontalalignment',
+        types=str,
+        default='left',
+        allowed=['left', 'center', 'right'],
+    )
 
     # -------------
     # connect
@@ -289,7 +287,8 @@ def _check(
     return (
         key, key_model, key_sol, key_data, key_lamb,
         details, binning,
-        lines_labels, lines_labels_color, lines_labels_rotation,
+        lines_labels, dlabels, lines_labels_rotation,
+        lines_labels_horizontalalignment,
         connect,
     )
 
@@ -350,7 +349,19 @@ def _extract_coll2(
 # ###############################################################
 
 
-def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
+def _plot_1d(
+    coll2=None,
+    dout=None,
+    dkeys=None,
+    dax=None,
+    details=None,
+    # lines labels
+    dlabels=None,
+    lines_labels=None,
+    lines_labels_color=None,
+    lines_labels_rotation=None,
+    lines_labels_horizontalalignment=None,
+):
 
     # ------------
     # plot spectrum
@@ -427,6 +438,13 @@ def _plot_1d(coll2=None, dout=None, dkeys=None, dax=None, details=None):
             color='k',
         )
 
+    # ----------------
+    # add lines_labels
+    # ----------------
+
+    if lines_labels is not False:
+        raise NotImplementedError()
+
     return dax
 
 
@@ -447,9 +465,11 @@ def _plot_2d(
     dax=None,
     details=None,
     # lines labels
+    dlabels=None,
     lines_labels=None,
     lines_labels_color=None,
     lines_labels_rotation=None,
+    lines_labels_horizontalalignment=None,
 ):
 
     # --------------
@@ -515,36 +535,45 @@ def _plot_2d(
     )
 
     # -----------------
-    # plot std
+    # adjust colors
     # -----------------
 
-    # if dkeys.get('sum_min') is not None:
-    #     # plot fit
-    #     ax.fill(
-    #         coll2.ddata[dkeys['lamb']]['data'],
-    #         coll2.ddata[dkeys['sum_min']]['data'],
-    #         coll2.ddata[dkeys['sum_max']]['data'],
-    #         ec='None',
-    #         lw=0.,
-    #         fc=ll.get_color(),
-    #         alpha=0.5,
-    #     )
+    nmax = dgroup0['X']['nmax']
+    if lines_labels_color == 'sum':
+        for k0, v0 in dlabels.items():
+            dlabels[k0]['color'] = [v0['color'] for ii in range(nmax)]
+
+    elif lines_labels_color == 'details':
+        ccycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        ii = 0
+        for k0, v0 in dlabels.items():
+            dlabels[k0]['color'] = [0 for jj in range(nmax)]
+            for jj in range(nmax):
+                dlabels[k0]['color'][jj] = ccycle[ii%(len(ccycle))]
+                ii += 1
+    else:
+        for k0, v0 in dlabels.items():
+            dlabels[k0]['color'] = [v0['color'] for ii in range(nmax)]
+
+    # ----------------------------------
+    # needed bot for details and labels
+    # ----------------------------------
+
+    reflamb = coll2.ddata[dkeys['lamb']]['ref'][0]
+    refs = coll2.ddata[dkeys['sum']]['ref']
+    axis = refs.index(reflamb)
 
     # --------------
     # plot spectrum
     # --------------
 
-    dcolor = None
+    lls = ['-', '--', '-.', ':']
     if details is True:
 
-        reflamb = coll2.ddata[dkeys['lamb']]['ref'][0]
         lamb = coll2.ddata[dkeys['lamb']]['data']
-        nmax = dgroup0['X']['nmax']
         wsm = coll._which_model
         lfunc = coll.dobj[wsm][key_model]['keys']
 
-        refs = coll2.ddata[dkeys['sum']]['ref']
-        axis = refs.index(reflamb)
         refs = (refs[axis - 1],)
         nan = np.full(lamb.shape, np.nan)
 
@@ -554,18 +583,20 @@ def _plot_2d(
 
             for jj in range(nmax):
 
+                if ff in dlabels.keys():
+                    color = dlabels[ff]['color'][jj]
+                else:
+                    color = None   # bck
+
                 # plot
                 ll, = ax.plot(
                     lamb,
                     nan,
-                    ls='-',
+                    ls=lls[jj%len(lls)],
                     marker='None',
                     lw=1.,
+                    color=color,
                 )
-
-                # extract color
-                if lines_labels_color == 'details':
-                    dcolor[ff][jj] = ll.get_color()
 
                 # add mobile
                 xydata = 'ydata'
@@ -587,6 +618,7 @@ def _plot_2d(
     # ----------------
 
     if lines_labels is not False:
+
         _add_labels(
             # resources
             coll=coll,
@@ -595,14 +627,15 @@ def _plot_2d(
             dkeys=dkeys,
             axis=axis,
             nmax=nmax,
-            dcolor=dcolor,
+            lls=lls,
             # parameters
             kax='spectrum',
             kax_labels='labels',
             dax=dax,
-            lines_labels=lines_labels,
+            dlabels=dlabels,
             lines_labels_color=lines_labels_color,
             lines_labels_rotation=lines_labels_rotation,
+            lines_labels_horizontalalignment=lines_labels_horizontalalignment,
         )
 
     return coll2, dgroup0
@@ -622,14 +655,15 @@ def _add_labels(
     dkeys=None,
     axis=None,
     nmax=None,
-    dcolor=None,
+    lls=None,
     # parameters
     kax=None,
     kax_labels=None,
     dax=None,
-    lines_labels=None,
+    dlabels=None,
     lines_labels_color=None,
     lines_labels_rotation=None,
+    lines_labels_horizontalalignment=None,
 ):
 
     # -----------------------
@@ -674,7 +708,7 @@ def _add_labels(
 
     # loop on functions / spectral lines
     nan2 = np.r_[np.nan, np.nan]
-    for k0, v0 in lines_labels.items():
+    for k0, v0 in dlabels.items():
 
         # argmax
         argmax = dmom[f'{k0}_argmax']['data']
@@ -724,18 +758,13 @@ def _add_labels(
         for jj in range(nmax):
 
             # set color
-            if lines_labels_color == 'sum':
-                color = dcolor[jj]
-            elif lines_labels_color == 'details':
-                color = dcolor[k0][jj]
-            else:
-                color = lines_labels_color
+            color = v0['color'][jj]
 
             # plot
             ll, = ax.plot(
                 nan2,
                 nan2,
-                ls='--',
+                ls=lls[jj%len(lls)],
                 marker='None',
                 lw=1.,
                 c=color,
@@ -758,13 +787,13 @@ def _add_labels(
             # add labels above axes
 
             ll = ax_labels.text(
-                0,
                 0.,
-                v0,
+                0.05,
+                v0['label'],
                 size=12,
-                color=color,
+                color=ll.get_color(),
                 rotation=lines_labels_rotation,
-                horizontalalignment='left',
+                horizontalalignment=lines_labels_horizontalalignment,
                 verticalalignment='bottom',
                 transform=trans,
             )
