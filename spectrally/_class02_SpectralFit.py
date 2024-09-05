@@ -185,6 +185,7 @@ class SpectralFit(Previous):
         vmin=None,
         vmax=None,
         cmap=None,
+        plot_text=None,
         # figure
         dax=None,
         fs=None,
@@ -213,6 +214,8 @@ class SpectralFit(Previous):
         vmax : float, optional
             DESCRIPTION. The default is None.
         cmap : str, optional
+            DESCRIPTION. The default is None.
+        plot_text : bool, optional
             DESCRIPTION. The default is None.
         dax : dict, optional
             DESCRIPTION. The default is None.
@@ -246,6 +249,7 @@ class SpectralFit(Previous):
             vmin=vmin,
             vmax=vmax,
             cmap=cmap,
+            plot_text=plot_text,
             # figure
             dax=dax,
             fs=fs,

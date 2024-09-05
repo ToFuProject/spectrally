@@ -69,6 +69,7 @@ def plot(
     vmin=None,
     vmax=None,
     cmap=None,
+    plot_text=None,
     # figure
     dax=None,
     fs=None,
@@ -94,6 +95,7 @@ def plot(
         dprop=dprop,
         vmin=vmin,
         vmax=vmax,
+        plot_text=plot_text,
         # figure
         tit=tit,
     )
@@ -139,6 +141,7 @@ def plot(
             dprop=dprop,
             dvminmax=None,
             cmap=cmap,
+            plot_text=plot_text,
             # figure
             dax=dax,
             fs=fs,
@@ -200,6 +203,7 @@ def _check(
     dprop=None,
     vmin=None,
     vmax=None,
+    plot_text=None,
     # figure
     tit=None,
 ):
@@ -302,6 +306,16 @@ def _check(
         types=(int, float),
         default=vmax_def,
     ))
+
+    # -----------------
+    # plot_text
+    # -----------------
+
+    plot_text = ds._generic_check._check_var(
+        plot_text, 'plot_text',
+        types=bool,
+        default=False,
+    )
 
     # -----------------
     # figure
@@ -498,6 +512,7 @@ def _plot_2d(
     dprop=None,
     dvminmax=None,
     cmap=None,
+    plot_text=None,
     # figure
     dax=None,
     fs=None,
@@ -548,6 +563,10 @@ def _plot_2d(
     # plot as array
     # -----------------
 
+    lax = ['data_img', 'data_vert', 'spectrum']
+    if plot_text is True:
+        lax += ['text_Y']
+
     collax, dgroup = collax.plot_as_array(
         key=key_data,
         keyX=key_lamb,
@@ -555,10 +574,7 @@ def _plot_2d(
         aspect='auto',
         dvminmax=dvminmax,
         cmap=cmap,
-        dax={
-            k0: v0 for k0, v0 in dax.items()
-            if k0 in ['data_img', 'data_vert', 'spectrum']
-        },
+        dax={k0: v0 for k0, v0 in dax.items() if k0 in lax},
         inplace=True,
         connect=False,
     )
@@ -871,6 +887,12 @@ def _get_dax_2d(
             verticalalignment='center',
         )
     dax['valid_1d'] = {'handle': ax, 'type': 'horizontal'}
+
+    # text - refY
+    n0 = (2*nh[0] + nh[1] + nh[2])
+    ax = fig.add_subplot(gs[3:, n0:(n0+2*nh[1])])
+    ax.axis('off')
+    dax['text_Y'] = {'handle': ax, 'type': 'textY'}
 
     # -----------------
     # adjust visibility
