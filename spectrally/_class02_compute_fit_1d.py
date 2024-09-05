@@ -248,9 +248,9 @@ def get_iok_all(
     ]
 
     # iok_all
-    iok_all = (iok == lind_valid[0])
+    iok_all = (iok == int(lind_valid[0]))
     for k0 in lind_valid[1:]:
-        iok_all = np.logical_or(iok_all, (iok == k0))
+        iok_all = np.logical_or(iok_all, (iok == int(k0)))
 
     iok_reduced = np.any(iok_all, axis=axis)
 

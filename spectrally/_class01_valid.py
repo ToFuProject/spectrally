@@ -15,15 +15,15 @@ import datastock as ds
 
 
 _DINDOK = {
-    0: 'ok',
-    -1: 'mask',
-    -2: 'out of domain',
-    -3: 'neg, inf or NaN',
-    -4: 'S/N valid, excl. (fract.)',
-    -5: 'S/N non-valid, incl. (fract.)',
-    -6: 'S/N non-valid, excl. (fract.)',
-    -7: 'S/N valid, excl. (bs)',
-    -8: 'S/N non-valid, incl. (bs)',
+    '0': 'ok',
+    '-1': 'mask',
+    '-2': 'out of domain',
+    '-3': 'neg, inf or NaN',
+    '-4': 'S/N valid, excl. (fract.)',
+    '-5': 'S/N non-valid, incl. (fract.)',
+    '-6': 'S/N non-valid, excl. (fract.)',
+    '-7': 'S/N valid, excl. (bs)',
+    '-8': 'S/N non-valid, incl. (bs)',
 }
 
 
@@ -155,12 +155,12 @@ def mask_domain(
     # -----------------
 
     if key_bs_vect is None:
-        lindok = sorted([
-            k0 for k0, v0 in _DINDOK.items()
-            if '(bs)' not in v0
-        ])[::-1]
+        lkm = [k0 for k0, v0 in _DINDOK.items() if '(bs)' not in v0]
     else:
-        lindok = sorted(_DINDOK.keys())[::-1]
+        lkm = list(_DINDOK.keys())
+
+    inds = np.argsort([int(ss) for ss in lkm])[::-1]
+    lindok = [lkm[ii] for ii in inds]
 
     dvalid.update({
         'domain': domain,

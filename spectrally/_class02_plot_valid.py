@@ -26,26 +26,27 @@ import datastock as ds
 _MK = '.'
 _MS = 6
 _DPROP = {
-    0:  {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -1: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -2: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -3: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -4: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -5: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -6: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -7: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -8: {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '0':  {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-1': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-2': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-3': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-4': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-5': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-6': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-7': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-8': {'ls': 'None', 'marker': _MK, 'ms': _MS},
 }
 
 
 def set_dprop():
     lk = sorted(_DPROP.keys())
-    vmin = np.min(lk)
-    vmax = np.max(lk)
+    lk_int = np.array(lk, dtype=int)
+    vmin = np.min(lk_int)
+    vmax = np.max(lk_int)
     norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
     cm = plt.cm.Set1
     for k0 in _DPROP.keys():
-        _DPROP[k0]['color'] = cm(norm(k0))
+        _DPROP[k0]['color'] = cm(norm(int(k0)))
 
     return cm, vmin, vmax
 
@@ -282,7 +283,7 @@ def _check(
         msg = "Arg dprop must be a dict"
         raise Exception(msg)
 
-    lk = sorted(coll.dobj[wsf][key]['dvalid']['meaning'].keys())
+    lk = coll.dobj[wsf][key]['dvalid']['meaning'].keys()
     for k0 in lk:
 
         if dprop.get(k0) is None:
@@ -383,7 +384,7 @@ def _plot_1d(
         # validity
         for k0, v0 in dvalid['meaning'].items():
 
-            ind = (iok == k0)
+            ind = (iok == int(k0))
             ax.plot(
                 lamb[ind],
                 data[ind],
@@ -874,7 +875,7 @@ def _get_dax_2d(
     for k0, v0 in dmeaning.items():
         ax.text(
             1.02,
-            k0,
+            int(k0),
             v0,
             color=_DPROP[k0]['color'],
             transform=trans,
