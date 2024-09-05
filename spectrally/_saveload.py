@@ -27,7 +27,7 @@ def load(
     # use datastock.load()
 
     if cls is None:
-        from ._class01_SpectralFit import SpectralFit as cls
+        from ._class02_SpectralFit import SpectralFit as cls
 
     coll = ds.load(
         pfe=pfe,
