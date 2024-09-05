@@ -26,26 +26,27 @@ import datastock as ds
 _MK = '.'
 _MS = 6
 _DPROP = {
-    0:  {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -1: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -2: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -3: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -4: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -5: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -6: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -7: {'ls': 'None', 'marker': _MK, 'ms': _MS},
-    -8: {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '0':  {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-1': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-2': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-3': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-4': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-5': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-6': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-7': {'ls': 'None', 'marker': _MK, 'ms': _MS},
+    '-8': {'ls': 'None', 'marker': _MK, 'ms': _MS},
 }
 
 
 def set_dprop():
     lk = sorted(_DPROP.keys())
-    vmin = np.min(lk)
-    vmax = np.max(lk)
+    lk_int = np.array(lk, dtype=int)
+    vmin = np.min(lk_int)
+    vmax = np.max(lk_int)
     norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
     cm = plt.cm.Set1
     for k0 in _DPROP.keys():
-        _DPROP[k0]['color'] = cm(norm(k0))
+        _DPROP[k0]['color'] = cm(norm(int(k0)))
 
     return cm, vmin, vmax
 
@@ -68,6 +69,7 @@ def plot(
     vmin=None,
     vmax=None,
     cmap=None,
+    plot_text=None,
     # figure
     dax=None,
     fs=None,
@@ -83,7 +85,7 @@ def plot(
     # check
     # -----------------
 
-    key, keyY, keyZ, dprop, vmin, vmax, tit = _check(
+    key, keyY, keyZ, refY, refZ, dprop, vmin, vmax, tit = _check(
         coll=coll,
         key=key,
         # keyY
@@ -93,6 +95,7 @@ def plot(
         dprop=dprop,
         vmin=vmin,
         vmax=vmax,
+        plot_text=plot_text,
         # figure
         tit=tit,
     )
@@ -130,6 +133,7 @@ def plot(
             key=key,
             # keyY
             keyY=keyY,
+            refY=refY,
             # bsplines
             key_bs=key_bs,
             key_bs_vect=key_bs_vect,
@@ -137,6 +141,7 @@ def plot(
             dprop=dprop,
             dvminmax=None,
             cmap=cmap,
+            plot_text=plot_text,
             # figure
             dax=dax,
             fs=fs,
@@ -198,6 +203,7 @@ def _check(
     dprop=None,
     vmin=None,
     vmax=None,
+    plot_text=None,
     # figure
     tit=None,
 ):
@@ -216,60 +222,49 @@ def _check(
     key_lamb = coll.dobj[wsf][key]['key_lamb']
     ref_lamb = coll.ddata[key_lamb]['ref'][0]
 
+    refs = coll.ddata[key_data]['ref']
+
     # -----------------
     # keyY
     # -----------------
 
     ndim = coll.ddata[coll.dobj[wsf][key]['key_data']]['data'].ndim
     key_bs_vect = coll.dobj[wsf][key]['key_bs_vect']
-    if ndim > 1 and key_bs_vect is None:
-        if dref_vectorY is None:
-            dref_vectorY = {}
-        if dref_vectorY.get('key0') is None:
-            dref_vectorY['key0'] = keyY
 
-        if ndim == 2 and dref_vectorY.get('ref') is None:
-            ref = [
-                rr for rr in coll.ddata[key_data]['ref']
-                if rr != ref_lamb
-            ][0]
-            dref_vectorY['ref'] = ref
-
-        keyY = coll.get_ref_vector(**dref_vectorY)[3]
-        if keyY is None:
-            msg = f"No ref vector for ref '{ref}'"
-            raise Exception(msg)
-
-    elif ndim > 1:
-        keyY = key_bs_vect
-    else:
+    keyZ = None
+    refZ = None
+    if ndim == 1:
         keyY = None
+        refY = None
 
-    # -----------------
-    # keyZ
-    # -----------------
+    elif ndim == 2:
+        refY = refs[1-refs.index(ref_lamb)]
 
-    if ndim > 2:
-        if dref_vectorZ is None:
-            dref_vectorZ = {}
-        if dref_vectorZ.get('key0') is None:
-            dref_vectorZ['key0'] = keyZ
+        if key_bs_vect is None:
 
-        if dref_vectorZ.get('ref') is None:
-            refY = coll.ddata[keyY]['ref'][0]
-            ref = [
-                rr for rr in coll.ddata[key_data]['ref']
-                if rr not in [ref_lamb, refY]
-            ][0]
-            dref_vectorZ['ref'] = ref
+            if dref_vectorY is None:
+                dref_vectorY = {}
+            if dref_vectorY.get('key0') is None:
+                dref_vectorY['key0'] = keyY
 
-        keyZ = coll.get_ref_vector(**dref_vectorZ)[3]
-        if keyZ is None:
-            msg = f"No ref vector for ref '{ref}'"
-            raise Exception(msg)
+            if ndim == 2 and dref_vectorY.get('ref') is None:
+                ref = [
+                    rr for rr in coll.ddata[key_data]['ref']
+                    if rr != ref_lamb
+                ][0]
+                dref_vectorY['ref'] = ref
+
+            keyY = coll.get_ref_vector(**dref_vectorY)[3]
+
+            Ydatadiff = np.diff(coll.ddata[keyY]['data'])
+            if not np.allclose(Ydatadiff, Ydatadiff[0], rtol=1e-6, atol=0):
+                keyY = None
+
+        else:
+            keyY = key_bs_vect
 
     else:
-        keyZ = None
+        raise NotImplementedError()
 
     # -----------------
     # dprop
@@ -282,7 +277,7 @@ def _check(
         msg = "Arg dprop must be a dict"
         raise Exception(msg)
 
-    lk = sorted(coll.dobj[wsf][key]['dvalid']['meaning'].keys())
+    lk = coll.dobj[wsf][key]['dvalid']['meaning'].keys()
     for k0 in lk:
 
         if dprop.get(k0) is None:
@@ -313,6 +308,16 @@ def _check(
     ))
 
     # -----------------
+    # plot_text
+    # -----------------
+
+    plot_text = ds._generic_check._check_var(
+        plot_text, 'plot_text',
+        types=bool,
+        default=False,
+    )
+
+    # -----------------
     # figure
     # -----------------
 
@@ -323,7 +328,7 @@ def _check(
         default=tit_def,
     )
 
-    return key, keyY, keyZ, dprop, vmin, vmax, tit
+    return key, keyY, keyZ, refY, refZ, dprop, vmin, vmax, tit
 
 
 #############################################
@@ -383,7 +388,7 @@ def _plot_1d(
         # validity
         for k0, v0 in dvalid['meaning'].items():
 
-            ind = (iok == k0)
+            ind = (iok == int(k0))
             ax.plot(
                 lamb[ind],
                 data[ind],
@@ -499,6 +504,7 @@ def _plot_2d(
     key=None,
     # keyY
     keyY=None,
+    refY=None,
     # bsplines
     key_bs=None,
     key_bs_vect=None,
@@ -506,6 +512,7 @@ def _plot_2d(
     dprop=None,
     dvminmax=None,
     cmap=None,
+    plot_text=None,
     # figure
     dax=None,
     fs=None,
@@ -519,13 +526,8 @@ def _plot_2d(
     wsf = coll._which_fit
     key_data = coll.dobj[wsf][key]['key_data']
     key_lamb = coll.dobj[wsf][key]['key_lamb']
-    lamb = coll.ddata[key_lamb]['data']
-    yy = coll.ddata[keyY]['data']
-    data = coll.ddata[coll.dobj[wsf][key]['key_data']]['data']
 
     dvalid = coll.dobj[wsf][key]['dvalid']
-    iok = coll.ddata[dvalid['iok']]['data']
-    frac = dvalid['frac'][0]
 
     # -----------------
     # prepare figure
@@ -561,6 +563,10 @@ def _plot_2d(
     # plot as array
     # -----------------
 
+    lax = ['data_img', 'data_vert', 'spectrum']
+    if plot_text is True:
+        lax += ['text_Y']
+
     collax, dgroup = collax.plot_as_array(
         key=key_data,
         keyX=key_lamb,
@@ -568,26 +574,19 @@ def _plot_2d(
         aspect='auto',
         dvminmax=dvminmax,
         cmap=cmap,
-        dax={
-            k0: v0 for k0, v0 in dax.items()
-            if k0 in ['data_img', 'data_vert', 'spectrum']
-        },
+        dax={k0: v0 for k0, v0 in dax.items() if k0 in lax},
         inplace=True,
         connect=False,
     )
 
-    # dgroup = {
-        # 'X': {
-            # 'ref': [dkeys['X']['ref']],
-            # 'data': ['index'],
-            # 'nmax': nmax,
-        # },
-        # 'Y': {
-            # 'ref': [dkeys['Y']['ref']],
-            # 'data': ['index'],
-            # 'nmax': nmax,
-        # },
-    # }
+    # ---------------------
+    # adjust keyY if needed
+    # ---------------------
+
+    if keyY is None:
+        kmob = f"{key_data}_h00"
+        keyY = collax.dobj['mobile'][kmob]['data'][0]
+        refY = collax.ddata[keyY]['ref']
 
     # -----------------
     # plot valid
@@ -656,7 +655,7 @@ def _plot_2d(
         for ii in range(dgroup['Y']['nmax']):
 
             lh = ax.axhline(
-                collax.ddata[keyY]['data'][0],
+                0,
                 c=dcol[ii],
                 lw=1.,
                 ls='-',
@@ -667,7 +666,7 @@ def _plot_2d(
             collax.add_mobile(
                 key=kh,
                 handle=lh,
-                refs=collax.ddata[keyY]['ref'],
+                refs=refY, # collax.ddata[keyY]['ref'],
                 data=(keyY,),
                 dtype='ydata',
                 axes=kax,
@@ -696,7 +695,7 @@ def _plot_2d(
         collax.add_axes(
             handle=ax,
             key=kax,
-            refy=[collax.ddata[keyY]['ref'][0]],
+            refy=[refY[0]],
             datay=[keyY],
             harmonize=True,
         )
@@ -737,8 +736,10 @@ def _prepare(
     # list keys
     # ----------
 
-    keys = [key_data, key_lamb, keyY, key_iok, key_frac]
+    keys = [key_data, key_lamb, key_iok, key_frac]
 
+    if keyY is not None:
+        keys.append(keyY)
     if ndim == 3:
         keys.append(keyZ)
 
@@ -798,7 +799,11 @@ def _get_dax_2d(
     key_data = coll.dobj[wsf][key]['key_data']
     xlab = f"{key_lamb} ({coll.ddata[key_lamb]['units']})"
     dlab = f"{key_data} ({coll.ddata[key_data]['units']})"
-    ylab = f"{keyY} ({coll.ddata[keyY]['units']})"
+    if keyY is None:
+        yunits = ''
+    else:
+        yunits = coll.ddata[keyY]['units']
+    ylab = f"{keyY} ({yunits})"
 
     # ---------------
     # figure
@@ -874,7 +879,7 @@ def _get_dax_2d(
     for k0, v0 in dmeaning.items():
         ax.text(
             1.02,
-            k0,
+            int(k0),
             v0,
             color=_DPROP[k0]['color'],
             transform=trans,
@@ -882,6 +887,12 @@ def _get_dax_2d(
             verticalalignment='center',
         )
     dax['valid_1d'] = {'handle': ax, 'type': 'horizontal'}
+
+    # text - refY
+    n0 = (2*nh[0] + nh[1] + nh[2])
+    ax = fig.add_subplot(gs[3:, n0:(n0+2*nh[1])])
+    ax.axis('off')
+    dax['text_Y'] = {'handle': ax, 'type': 'textY'}
 
     # -----------------
     # adjust visibility

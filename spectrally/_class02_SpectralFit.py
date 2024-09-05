@@ -178,29 +178,87 @@ class SpectralFit(Previous):
     def plot_spectral_fit_input_validity(
         self,
         key=None,
+        keyY=None,
+        dref_vectorY=None,
         # options
         dprop=None,
         vmin=None,
         vmax=None,
+        cmap=None,
+        plot_text=None,
         # figure
         dax=None,
         fs=None,
         dmargin=None,
         tit=None,
+        # interactivity
+        connect=True,
+        dinc=None,
+        show_commands=None,
     ):
+        """ Plot the validity map if input data
+
+
+        Parameters
+        ----------
+        key : str, optional
+            DESCRIPTION. The default is None.
+        keyY : str, optional
+            DESCRIPTION. The default is None.
+        dref_vectorY : dict, optional
+            DESCRIPTION. The default is None.
+        dprop : TYPE, optional
+            DESCRIPTION. The default is None.
+        vmin : float, optional
+            DESCRIPTION. The default is None.
+        vmax : float, optional
+            DESCRIPTION. The default is None.
+        cmap : str, optional
+            DESCRIPTION. The default is None.
+        plot_text : bool, optional
+            DESCRIPTION. The default is None.
+        dax : dict, optional
+            DESCRIPTION. The default is None.
+        fs : tuple, optional
+            DESCRIPTION. The default is None.
+        dmargin : dict, optional
+            DESCRIPTION. The default is None.
+        tit : str, optional
+            DESCRIPTION. The default is None.
+        connect : bool, optional
+            DESCRIPTION. The default is True.
+        dinc : dict, optional
+            DESCRIPTION. The default is None.
+        show_commands : bool, optional
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        dax:    Collection
+            collection of axes
+
+        """
 
         return _plot_valid.plot(
             coll=self,
             key=key,
+            keyY=keyY,
+            dref_vectorY=dref_vectorY,
             # options
             dprop=dprop,
             vmin=vmin,
             vmax=vmax,
+            cmap=cmap,
+            plot_text=plot_text,
             # figure
             dax=dax,
             fs=fs,
             dmargin=dmargin,
             tit=tit,
+            # interactivity
+            connect=connect,
+            dinc=dinc,
+            show_commands=show_commands,
         )
 
     # ----------------------------
@@ -217,12 +275,23 @@ class SpectralFit(Previous):
         dprop=None,
         vmin=None,
         vmax=None,
+        # lines labels
+        lines_labels=True,
+        lines_labels_color=None,
+        lines_labels_rotation=None,
+        lines_labels_horizontalalignment=None,
         # figure
         dax=None,
         fs=None,
         dmargin=None,
         tit=None,
+        # interactivity
+        nmax=None,
+        connect=None,
+        dinc=None,
+        show_commands=None,
     ):
+
         """ Plot a spectral model using specified data
 
         lamb can be:
@@ -241,9 +310,19 @@ class SpectralFit(Previous):
             dprop=dprop,
             vmin=vmin,
             vmax=vmax,
+            # lines labels
+            lines_labels=lines_labels,
+            lines_labels_color=lines_labels_color,
+            lines_labels_rotation=lines_labels_rotation,
+            lines_labels_horizontalalignment=lines_labels_horizontalalignment,
             # figure
             dax=dax,
             fs=fs,
             dmargin=dmargin,
             tit=tit,
+            # interactivity
+            nmax=nmax,
+            connect=connect,
+            dinc=dinc,
+            show_commands=show_commands,
         )
