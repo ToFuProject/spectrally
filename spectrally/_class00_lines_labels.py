@@ -119,13 +119,16 @@ def _check(
 
     # which
     wsl = coll._which_lines
-    wsm = coll._which_model
-    wsf = coll._which_fit
-
-    # lok
     lok_lines = list(coll.dobj.get(wsl, {}).keys())
-    lok_model = list(coll.dobj.get(wsm, {}).keys())
-    lok_fit = list(coll.dobj.get(wsf, {}).keys())
+
+    if hasattr(coll, '_which_model'):
+        wsm = coll._which_model
+        wsf = coll._which_fit
+        lok_model = list(coll.dobj.get(wsm, {}).keys())
+        lok_fit = list(coll.dobj.get(wsf, {}).keys())
+    else:
+        lok_model = []
+        lok_fit = []
 
     # --------
     # deal with by case
