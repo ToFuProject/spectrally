@@ -9,6 +9,7 @@ import os
 
 
 # Standard
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -145,12 +146,39 @@ class Test01_Manipulate():
         self.pfe_json = os.path.join(_PATH_INPUT, 'spectrallines.json')
         self.coll.add_spectral_lines_from_file(self.pfe_json)
 
+        # add spectral data
+        t = np.linspace(0, 1, 31)
+        lamb = np.linspace(3.94e-10, 4e-10, 100)
+        emis1d = np.random.random((lamb.size,))
+        emis2d =np.random.random((t.size, lamb.size))
+        self.coll.add_data('lamb', lamb, ref='nlamb')
+        self.coll.add_data('t', t, ref='nt')
+        self.coll.add_data('emis1d', data=emis1d, ref='nlamb')
+        self.coll.add_data('emis2d', data=emis2d, ref=('nt', 'nlamb'))
+
     # ------------------------
     #   Plotting
     # ------------------------
 
     def test00_plot_spectral_lines(self):
         self.coll.plot_spectral_lines()
+        plt.close('all')
+
+    def test01_plot_spectral_data(self):
+        key_lines = ['l00', 'l01']
+        self.coll.plot_spectral_data(
+            'emis1d',
+            key_lamb='lamb',
+            key_lines=key_lines,
+        )
+        plt.close('all')
+
+        self.coll.plot_spectral_data(
+            'emis2d',
+            key_lamb='lamb',
+            keyY='t',
+            key_lines=key_lines,
+        )
         plt.close('all')
 
     # ------------------------

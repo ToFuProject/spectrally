@@ -15,6 +15,7 @@ from . import _class00_check_lines as _check_lines
 from . import _class00_compute as _compute
 from . import _class00_lines_labels as _labels
 from . import _class00_plot as _plot
+from . import _class00_plot_spectral_data as _plot_spectral_data
 
 
 __all__ = ['SpectralLines']
@@ -382,6 +383,65 @@ class SpectralLines(Previous):
             keys=keys,
             labels=labels,
             colors=colors,
+        )
+
+    # ---------------
+    # plot spctral data
+    # ---------------
+
+    def plot_spectral_data(
+        self,
+        key_data=None,
+        key_lamb=None,
+        keyY=None,
+        key_lines=None,
+        # plotting
+        dprop=None,
+        dvminmax=None,
+        # lines labels
+        lines_labels=True,
+        lines_labels_color=None,
+        lines_labels_rotation=None,
+        lines_labels_horizontalalignment=None,
+        # figure
+        dax=None,
+        fs=None,
+        dmargin=None,
+        tit=None,
+        # interactivity
+        nmax=None,
+        connect=None,
+        dinc=None,
+        show_commands=None,
+    ):
+        """ Plot a 1d or 2d array overlaid with spectral lines labelling
+
+        """
+
+        return _plot_spectral_data.main(
+            coll=self,
+            key_data=key_data,
+            key_lamb=key_lamb,
+            keyY=keyY,
+            key_lines=key_lines,
+            # plotting
+            dprop=dprop,
+            dvminmax=dvminmax,
+            # lines labels
+            lines_labels=lines_labels,
+            lines_labels_color=lines_labels_color,
+            lines_labels_rotation=lines_labels_rotation,
+            lines_labels_horizontalalignment=lines_labels_horizontalalignment,
+            # figure
+            dax=dax,
+            fs=fs,
+            dmargin=dmargin,
+            tit=tit,
+            # interactivity
+            nmax=nmax,
+            connect=connect,
+            dinc=dinc,
+            show_commands=show_commands,
         )
 
     # -----------------
