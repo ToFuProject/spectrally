@@ -96,6 +96,7 @@ def main(
             key_data=key_data,
             key_lamb=key_lamb,
             dax=dax,
+            dvminmax=dvminmax,
             # lines labels
             dlabels=dlabels,
             lines_labels=lines_labels,
@@ -261,11 +262,11 @@ def _check(
 
 
 def _plot_1d(
-    coll2=None,
-    dout=None,
-    dkeys=None,
+    coll=None,
+    key_data=None,
+    key_lamb=None,
     dax=None,
-    details=None,
+    dvminmax=None,
     # lines labels
     dlabels=None,
     lines_labels=None,
@@ -285,64 +286,8 @@ def _plot_1d(
 
         # plot fit
         ll, = ax.plot(
-            coll2.ddata[dkeys['lamb']]['data'],
-            coll2.ddata[dkeys['sum']]['data'],
-            ls='-',
-            marker='None',
-            lw=1.,
-            color='k',
-        )
-
-        # plot data
-        ax.plot(
-            coll2.ddata[dkeys['lamb']]['data'],
-            coll2.ddata[dkeys['data']]['data'],
-            ls='None',
-            marker='.',
-            lw=1.,
-            color='k',
-        )
-
-        # details
-        if details is True:
-            for ff in dkeys['details']:
-                ax.plot(
-                    coll2.ddata[dkeys['lamb']]['data'],
-                    coll2.ddata[ff]['data'],
-                    ls='-',
-                    marker='None',
-                    lw=1.,
-                )
-
-        # ------------
-        # plot std
-        # -----------
-
-        if dkeys.get('sum_min') is not None:
-            # plot fit
-            ax.fill_between(
-                coll2.ddata[dkeys['lamb']]['data'],
-                coll2.ddata[dkeys['sum_min']]['data'],
-                coll2.ddata[dkeys['sum_max']]['data'],
-                ec='None',
-                lw=0.,
-                fc=ll.get_color(),
-                alpha=0.3,
-            )
-
-    # ------------
-    # plot diff
-    # -----------
-
-    axtype = 'diff'
-    lax = [kax for kax, vax in dax.items() if axtype in vax['type']]
-    for kax in lax:
-        ax = dax[kax]['handle']
-
-        # plot fit
-        ax.plot(
-            coll2.ddata[dkeys['lamb']]['data'],
-            coll2.ddata[dkeys['data']]['data'] - coll2.ddata[dkeys['sum']]['data'],
+            coll.ddata[key_lamb]['data'],
+            coll.ddata[key_data]['data'],
             ls='-',
             marker='None',
             lw=1.,
@@ -354,7 +299,17 @@ def _plot_1d(
     # ----------------
 
     if lines_labels is not False:
-        raise NotImplementedError()
+
+        _add_labels(
+            # resources
+            coll=coll,
+            # parameters
+            ax_spectrum=dax['spectrum']['handle'],
+            ax_labels=dax['labels']['handle'],
+            dlabels=dlabels,
+            lines_labels_rotation=lines_labels_rotation,
+            lines_labels_horizontalalignment=lines_labels_horizontalalignment,
+        )
 
     return dax
 
@@ -389,20 +344,12 @@ def _plot_2d(
         key=key_data,
         keyX=key_lamb,
         keyY=keyY,
-        dax={k0: v0 for k0, v0 in dax.items() if k0 in lax},
+        dax=dax, # {k0: v0 for k0, v0 in dax.items() if k0 in lax},
         aspect='auto',
         dvminmax=dvminmax,
         connect=False,
         inplace=False,
     )
-
-    # ----------------------------------
-    # needed bot for details and labels
-    # ----------------------------------
-
-    reflamb = coll2.ddata[key_lamb]['ref'][0]
-    refs = coll2.ddata[key_data]['ref']
-    axis = refs.index(reflamb)
 
     # ----------------
     # add lines_labels
@@ -413,14 +360,10 @@ def _plot_2d(
         _add_labels(
             # resources
             coll=coll,
-            coll2=coll2,
-            axis=axis,
             # parameters
-            kax='spectrum',
-            kax_labels='labels',
-            dax=dax,
+            ax_spectrum=coll2.dax['spectrum']['handle'],
+            ax_labels=coll2.dax['labels']['handle'],
             dlabels=dlabels,
-            lines_labels_color=lines_labels_color,
             lines_labels_rotation=lines_labels_rotation,
             lines_labels_horizontalalignment=lines_labels_horizontalalignment,
         )
@@ -437,24 +380,13 @@ def _plot_2d(
 def _add_labels(
     # resources
     coll=None,
-    coll2=None,
-    axis=None,
     # parameters
-    kax=None,
-    kax_labels=None,
-    dax=None,
+    ax_spectrum=None,
+    ax_labels=None,
     dlabels=None,
-    lines_labels_color=None,
     lines_labels_rotation=None,
     lines_labels_horizontalalignment=None,
 ):
-
-    # -----------------------
-    # add ax_labels to coll2
-
-    coll2.add_axes(key=kax_labels, harmonize=False, **dax[kax_labels])
-    ax_labels = coll2.dax[kax_labels]['handle']
-    ax = coll2.dax[kax]['handle']
 
     # -------------
     # prepare data
@@ -476,7 +408,7 @@ def _add_labels(
         # add vertical lines
 
         # plot
-        ll = ax.axvline(
+        ll = ax_spectrum.axvline(
             lamb0,
             ls='--',
             marker='None',
@@ -523,6 +455,9 @@ def _get_dax(
 
     if ndim == 1:
         return _get_dax_1d(
+            coll=coll,
+            key_data=key_data,
+            key_lamb=key_lamb,
             fs=fs,
             dmargin=dmargin,
             tit=tit,
@@ -532,7 +467,6 @@ def _get_dax(
         return _get_dax_2d(
             coll=coll,
             key_data=key_data,
-            key_fit=key_fit,
             key_lamb=key_lamb,
             # options
             fs=fs,
@@ -542,6 +476,9 @@ def _get_dax(
 
 
 def _get_dax_1d(
+    coll=None,
+    key_data=None,
+    key_lamb=None,
     fs=None,
     dmargin=None,
     tit=None,
@@ -558,8 +495,15 @@ def _get_dax_1d(
         dmargin = {
             'left': 0.10, 'right': 0.90,
             'bottom': 0.1, 'top': 0.90,
-            'wspace': 0.1, 'hspace': 0.1,
+            'wspace': 0.1, 'hspace': 0.,
         }
+
+    # ---------------
+    # prepare labels
+    # ---------------
+
+    data_lab = f"{key_data} ({coll.ddata[key_data]['units']})"
+    lamb_lab = f"{key_lamb} ({coll.ddata[key_lamb]['units']})"
 
     # ---------------
     # prepare figure
@@ -567,20 +511,26 @@ def _get_dax_1d(
 
     dax = {}
     fig = plt.figure(figsize=fs)
-    gs = gridspec.GridSpec(3, 1, **dmargin)
+    gs = gridspec.GridSpec(5, 1, **dmargin)
 
     # ------------
     # add axes
     # ------------
 
     # spectrum
-    ax = fig.add_subplot(gs[:2, 0])
-    # ax.set_xlabel()
-    # ax.set_ylabel()
-    dax['1d'] = {'handle': ax, 'type': 'spectrum'}
+    ax = fig.add_subplot(gs[1:, 0])
+    ax.set_xlabel(lamb_lab, size=12, fontweight='bold')
+    ax.set_ylabel(data_lab, size=12, fontweight='bold')
+    dax['spectrum'] = {'handle': ax, 'type': 'spectrum'}
+    ax0 = ax
 
-    ax = fig.add_subplot(gs[2, 0])
-    dax['diff'] = {'handle': ax, 'type': 'diff'}
+    # ----------
+    # spectrum labels
+
+    ax = fig.add_subplot(gs[0, 0], sharex=ax0)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    dax['labels'] = {'handle': ax, 'type': 'text'}
 
     return dax
 
@@ -588,7 +538,6 @@ def _get_dax_1d(
 def _get_dax_2d(
     coll=None,
     key_data=None,
-    key_fit=None,
     key_lamb=None,
     # options
     fs=None,
@@ -611,7 +560,7 @@ def _get_dax_2d(
         }
 
     # ---------------
-    # prepare figure
+    # prepare labels
     # ---------------
 
     data_lab = f"{key_data} ({coll.ddata[key_data]['units']})"
