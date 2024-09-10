@@ -45,6 +45,7 @@ def _check(
     # data and noise
     key_data=None,
     key_sigma=None,
+    absolute_sigma=None,
     # wavelength and phi
     key_lamb=None,
     key_bs_vect=None,
@@ -68,6 +69,7 @@ def _check(
         key_lamb,
         key_bs_vect,
         key_bs,
+        absolute_sigma,
         # derived
         ref,
         ref0,
@@ -162,6 +164,7 @@ def _check(
                 'key_bs_vect': key_bs_vect,
                 'key_sol': None,
                 'key_cov': None,
+                'absolute_sigma': absolute_sigma,
                 'dparams': dparams,
                 'dvalid': dvalid,
             },
@@ -189,6 +192,7 @@ def _check_keys(
     key_lamb=None,
     key_bs_vect=None,
     key_bs=None,
+    absolute_sigma=None,
     # unused
     **kwdargs,
 ):
@@ -253,6 +257,51 @@ def _check_keys(
     # axis_lamb
     ref_lamb = coll.ddata[key_lamb]['ref'][0]
     axis_lamb = ref.index(ref_lamb)
+
+    # -------------
+    # key_sigma
+    # -------------
+
+    # key_sigma
+    if key_sigma is None or isinstance(key_sigma, str):
+
+        lok_data = [
+            k0 for k0, v0 in coll.ddata.items()
+            if v0['ref'] == ref
+            or v0['ref'] == ref_lamb
+        ]
+
+        lok = list(coll.ddata.keys())
+        key_sigma = ds._generic_check._check_var(
+            key_sigma, 'key_sigma',
+            types=str,
+            allowed=lok_data + ['poisson'],
+            default='poisson',
+        )
+
+        asig_def = True
+
+    else:
+        if not isinstance(key_sigma, (int, float)):
+            msg = (
+                "Arg key_sigma must either be:\n"
+                "\t- str: a key to a array with same shape as data or lamb\n"
+                "\t- 'poisson': poisson statictics\n"
+                "\t- float: constant unique sigma for all\n"
+            )
+            raise Exception(msg)
+
+        asig_def = False
+
+    # -------------
+    # absolute_sigma
+    # -------------
+
+    absolute_sigma = ds._generic_check._check_var(
+        absolute_sigma, 'absolute_sigma',
+        types=bool,
+        default=asig_def,
+    )
 
     # -------------
     # key_bs
@@ -328,6 +377,7 @@ def _check_keys(
         key_lamb,
         key_bs_vect,
         key_bs,
+        absolute_sigma,
         # derived
         ref,
         ref0,
