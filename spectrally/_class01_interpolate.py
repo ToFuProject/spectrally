@@ -111,7 +111,7 @@ def main(
     # coraviance
 
     if key_cov is not None:
-        cov_in = coll.ddata[key_cov]['data']
+        cov = coll.ddata[key_cov]['data']
         nx = coll.dref[ref_nx]['size']
 
     if timing is True:
@@ -264,7 +264,7 @@ def main(
             sli_in=sli_in,
             sli_out=sli_out,
             # uncertainty input
-            cov=cov_in,
+            cov=cov,
             # binning
             dbinning=dbinning,
             bin_ind=bin_ind,
@@ -411,8 +411,8 @@ def _check(
     uncertainty_method = ds._generic_check._check_var(
         uncertainty_method, 'uncertainty_method',
         types=str,
-        default='old',
-        allowed=['new', 'old'],
+        default='min/max',
+        allowed=['standard', 'min/max'],
     )
 
     # -----------------
@@ -604,7 +604,7 @@ def _uncertainty_propagation(
 
     # ref: https://en.wikipedia.org/wiki/Propagation_of_uncertainty
 
-    if method == 'new':
+    if method == 'standard':
 
         # ------------------------
         # get jacobian at solution
@@ -618,6 +618,7 @@ def _uncertainty_propagation(
         # ------------------------
         # loop on all spectra
 
+        scales = np.ones((nx,), dtype=float)
         for ind in itt.product(*lind):
 
             # update slices
@@ -634,10 +635,12 @@ def _uncertainty_propagation(
                 lamb=lamb if dbinning is False else dbinning['lamb'],
                 bin_ind=bin_ind,
                 bin_dlamb=bin_dlamb,
+                scales=scales,
             )
 
             # derive std of sum
-            std_sum = np.sqrt((jac.T).dot(cov[tuple(sli_cov)].dot(jac)))
+            cov_sum = np.sqrt((jac).dot(cov[tuple(sli_cov)].dot(jac.T)))
+            std_sum = np.sqrt(np.diag(cov_sum))
 
             # ------------------------
             # derive min, max
@@ -655,9 +658,6 @@ def _uncertainty_propagation(
         # prepare
         inc = np.r_[-1, 0, 1]
         lind_std = [inc for ii in range(nx)]
-
-        # std_in
-        sli_in
 
         # -------------------
         # loop on spectra

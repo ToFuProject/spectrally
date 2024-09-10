@@ -271,6 +271,8 @@ class SpectralFit(Previous):
         keyY=None,
         # options
         details=None,
+        # uncertainty propagation
+        uncertainty_method=None,
         # plotting
         dprop=None,
         vmin=None,
@@ -308,6 +310,8 @@ class SpectralFit(Previous):
             keyY=keyY,
             # options
             details=details,
+            # uncertainty propagation
+            uncertainty_method=uncertainty_method,
             # plotting
             dprop=dprop,
             vmin=vmin,
