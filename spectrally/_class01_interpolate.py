@@ -411,7 +411,7 @@ def _check(
     uncertainty_method = ds._generic_check._check_var(
         uncertainty_method, 'uncertainty_method',
         types=str,
-        default='min/max',
+        default='standard',
         allowed=['standard', 'min/max'],
     )
 
