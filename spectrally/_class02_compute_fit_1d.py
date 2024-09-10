@@ -3,7 +3,6 @@
 
 
 import itertools as itt
-import functools
 import datetime as dtm
 
 
@@ -40,6 +39,7 @@ def main(
     # lamb, data, axis
     lamb=None,
     data=None,
+    sigma=None,
     axis=None,
     ravel=None,
     # binning
@@ -53,6 +53,7 @@ def main(
     # solver options
     solver=None,
     dsolver_options=None,
+    absolute_sigma=None,
     # options
     strict=None,
     verb=None,
@@ -211,6 +212,7 @@ def main(
         # solver options
         solver=solver,
         dsolver_options=dsolver_options,
+        absolute_sigma=absolute_sigma,
         # options
         lk_xfree=lk_xfree,
         strict=strict,
@@ -298,6 +300,7 @@ def _loop(
     # solver options
     solver=None,
     dsolver_options=None,
+    absolute_sigma=None,
     # options
     lk_xfree=None,
     strict=None,
@@ -533,7 +536,7 @@ def _loop(
                     data[slii][iok_all[slii]],
                     p0=x0,
                     sigma=None,
-                    absolute_sigma=False,
+                    absolute_sigma=absolute_sigma,
                     check_finite=True,    # to be updated
                     bounds=(bounds0, bounds1),
                     jac=func_jac2,

@@ -66,8 +66,10 @@ def main(
         key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
+        key_sigma,
         ref_cov, shape_cov,
-        lamb, data, axis,
+        lamb, data, sigma, axis,
+        absolute_sigma,
         chain,
         store, overwrite,
         strict, verb, verb_scp, timing,
@@ -145,6 +147,7 @@ def main(
         # lamb, data, axis
         lamb=lamb,
         data=data,
+        sigma=sigma,
         axis=axis,
         ravel=ravel,
         # binning
@@ -158,6 +161,7 @@ def main(
         # solver options
         solver=solver,
         dsolver_options=dsolver_options,
+        absolute_sigma=absolute_sigma,
         # options
         strict=strict,
         verb=verb,
@@ -265,6 +269,8 @@ def _check(
     key_model = coll.dobj[wsf][key]['key_model']
     key_data = coll.dobj[wsf][key]['key_data']
     key_lamb = coll.dobj[wsf][key]['key_lamb']
+    key_sigma = coll.dobj[wsf][key]['key_sigma']
+    absolute_sigma = coll.dobj[wsf][key]['absolute_sigma']
     lamb = coll.ddata[key_lamb]['data']
     data = coll.ddata[key_data]['data']
     ref_data = coll.ddata[key_data]['ref']
@@ -311,6 +317,19 @@ def _check(
             "Consider using another spectral model with pvoigt instead"
         )
         raise Exception(msg)
+
+    # ---------------
+    # sigma
+    # ---------------
+
+    if key_sigma == 'poisson':
+        sigma = None
+
+    elif isinstance(key_sigma, (int, float)):
+        sigma = None
+
+    else:
+        sigma = None
 
     # --------------
     # chain
@@ -394,8 +413,10 @@ def _check(
         key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
+        key_sigma,
         ref_cov, shape_cov,
-        lamb, data, axis,
+        lamb, data, sigma, axis,
+        absolute_sigma,
         chain,
         store, overwrite,
         strict, verb, verb_scp, timing,
