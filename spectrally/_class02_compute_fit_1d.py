@@ -434,7 +434,8 @@ def _loop(
         slii = tuple(sli_sol)
 
         # covariance
-        sli_cov[ind_cov] = ind
+        if cov is not None:
+            sli_cov[ind_cov] = ind
 
         # ---------------
         # x0
