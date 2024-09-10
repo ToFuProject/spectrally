@@ -31,6 +31,8 @@ def main(
     keyY=None,
     # options
     details=None,
+    # uncertainty propagation
+    uncertainty_method=None,
     # plotting
     dprop=None,
     vmin=None,
@@ -95,6 +97,8 @@ def main(
         key_model=key_fit,
         # options
         details=details,
+        # uncertainty propagation
+        uncertainty_method=uncertainty_method,
         # others
         returnas=dict,
         # timing
@@ -456,7 +460,7 @@ def _plot_1d(
                 )
 
         # ------------
-        # plot std
+        # plot uncertainty
         # -----------
 
         if dkeys.get('sum_min') is not None:
@@ -585,6 +589,12 @@ def _plot_2d(
         connect=False,
         inplace=True,
     )
+
+    # --------------
+    # plot uncertainty
+    # --------------
+
+
 
     # -----------------
     # adjust colors
