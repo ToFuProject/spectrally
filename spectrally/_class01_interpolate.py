@@ -6,6 +6,7 @@ Created on Tue Jun 18 09:33:27 2024
 """
 
 
+import datetime as dtm
 import itertools as itt
 
 
@@ -27,10 +28,14 @@ def main(
     # options
     details=None,
     binning=None,
+    # uncertainty propagation
+    uncertainty_method=None,
     # others
     returnas=None,
     store=None,
     store_key=None,
+    # timing
+    timing=None,
 ):
 
     # -----------------
@@ -39,10 +44,12 @@ def main(
 
     (
         key_model, ref_nx, ref_nf,
-        key_data, key_std,
+        key_data, key_cov,
         key_lamb, lamb, ref_lamb,
         binning, details,
+        uncertainty_method,
         returnas, store, store_key,
+        timing,
     ) = _check(
         coll=coll,
         key_model=key_model,
@@ -51,11 +58,19 @@ def main(
         # others
         binning=binning,
         details=details,
+        # uncertainty propagation
+        uncertainty_method=uncertainty_method,
         # others
         returnas=returnas,
         store=store,
         store_key=store_key,
+        # timing
+        timing=timing,
     )
+
+    if timing is True:
+        fname = 'interpolate_spectral_model()'
+        t0 = dtm.datetime.now()  # DB
 
     # -----------------
     # optionnal binning
@@ -67,6 +82,10 @@ def main(
         iok=None,
         axis=None,
     )
+
+    if timing is True:
+        t1 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: binning dict {(t1-t0).total_seconds()} s')
 
     # ----------------
     # prepare
@@ -89,11 +108,15 @@ def main(
         iref_nx_out = iref_nx
 
     # ----------
-    # std_in
+    # coraviance
 
-    if key_std is not None:
-        std_in = coll.ddata[key_std]['data']
+    if key_cov is not None:
+        cov_in = coll.ddata[key_cov]['data']
         nx = coll.dref[ref_nx]['size']
+
+    if timing is True:
+        t2 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: prepare data {(t2-t1).total_seconds()} s')
 
     # -----------------------
     # prepare loop on indices
@@ -126,6 +149,10 @@ def main(
     # data_out
     data_out = np.full(tuple(shape_out), np.nan)
 
+    if timing is True:
+        t3 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: initialize {(t3-t2).total_seconds()} s')
+
     # ----------------
     # get func
     # ----------------
@@ -141,6 +168,10 @@ def main(
             key=key_model,
             func='sum',
         )['sum']
+
+    if timing is True:
+        t4 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: get func {(t4-t3).total_seconds()} s')
 
     # --------------
     # prepare slices
@@ -175,6 +206,10 @@ def main(
     else:
         ind0 = None
 
+    if timing is True:
+        t5 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: prepare slices {(t5-t4).total_seconds()} s')
+
     # -------------------------
     # loop to compute data_out
     # -------------------------
@@ -201,52 +236,50 @@ def main(
             bin_dlamb=bin_dlamb,
         )
 
+    if timing is True:
+        t6 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: data_out {(t6-t5).total_seconds()} s')
+
     # -----------------------------
-    # loop on std to get error bar
+    # loop on cov to get error bar
     # -----------------------------
 
-    data_min = None
-    data_max = None
-    if key_std is not None:
+    if key_cov is not None:
 
-        data_min = np.full(data_out.shape, np.inf)
-        data_max = np.full(data_out.shape, -np.inf)
-        inc = np.r_[-1, 0, 1]
-        lind_std = [inc for ii in range(nx)]
+        data_min, data_max = _uncertainty_propagation(
+            # resources
+            coll=coll,
+            key_model=key_model,
+            lamb=lamb,
+            data_in=data_in,
+            data_out=data_out,
+            nx=nx,
+            lind=lind,
+            func=func,
+            # method
+            method=uncertainty_method,
+            # slicing
+            ind0=ind0,
+            ind0_out=ind0_out,
+            sli_in=sli_in,
+            sli_out=sli_out,
+            # uncertainty input
+            cov=cov_in,
+            # binning
+            dbinning=dbinning,
+            bin_ind=bin_ind,
+            bin_dlamb=bin_dlamb,
+            # timing
+            timing=timing,
+        )
 
-        for ind in itt.product(*lind):
+        if timing is True:
+            t7 = dtm.datetime.now()  # DB
+            print(f'... timing {fname}: uncertainty {(t7-t6).total_seconds()} s')
 
-            # update slices
-            if ind0 is not None:
-                sli_in[ind0] = ind
-                sli_out[ind0_out] = ind
-
-            datain = data_in[tuple(sli_in)]
-
-            for stdi in itt.product(*lind_std):
-
-                # data = data_in + std * (-1, 0, 1)
-                datain = (
-                    data_in[tuple(sli_in)]
-                    + np.r_[stdi] * std_in[tuple(sli_in)]
-                )
-
-                # call func
-                datai = func(
-                    x_free=datain,
-                    lamb=lamb if dbinning is False else dbinning['lamb'],
-                    bin_ind=bin_ind,
-                    bin_dlamb=bin_dlamb,
-                )
-
-                # update min, max
-                data_min[tuple(sli_out)] = np.minimum(
-                    data_min[tuple(sli_out)], datai,
-                )
-                data_max[tuple(sli_out)] = np.maximum(
-                    data_max[tuple(sli_out)],
-                    datai,
-                )
+    else:
+        data_min = None
+        data_max = None
 
     # --------------
     # return
@@ -303,17 +336,21 @@ def _check(
     # others
     binning=None,
     details=None,
+    # uncertainty propagation
+    uncertainty_method=None,
     # others
     returnas=None,
     store=None,
     store_key=None,
+    # timing
+    timing=None,
 ):
 
     # ---------------------
     # key_model, key_data
     # ---------------------
 
-    key_model, key_data, key_std, lamb, binning = _check_keys(
+    key_model, key_data, key_cov, lamb, binning = _check_keys(
         coll=coll,
         key=key_model,
         key_data=key_data,
@@ -368,6 +405,17 @@ def _check(
     )
 
     # -----------------
+    # uncertainty_method
+    # -----------------
+
+    uncertainty_method = ds._generic_check._check_var(
+        uncertainty_method, 'uncertainty_method',
+        types=str,
+        default='old',
+        allowed=['new', 'old'],
+    )
+
+    # -----------------
     # store
     # -----------------
 
@@ -405,12 +453,24 @@ def _check(
     else:
         store_key = None
 
+    # -----------------
+    # timing
+    # -----------------
+
+    timing = ds._generic_check._check_var(
+        timing, 'timing',
+        types=bool,
+        default=False,
+    )
+
     return (
         key_model, ref_nx, ref_nf,
-        key_data, key_std,
+        key_data, key_cov,
         key_lamb, lamb, ref_lamb,
         binning, details,
+        uncertainty_method,
         returnas, store, store_key,
+        timing,
     )
 
 
@@ -436,14 +496,14 @@ def _check_keys(coll=None, key=None, key_data=None, lamb=None, binning=None):
     # if key_fit
     # ---------------
 
-    key_std = None
+    key_cov = None
     if key in lokf:
         key_fit = key
         key_model = coll.dobj[wsf][key_fit]['key_model']
 
         if key_data is None:
             key_data = coll.dobj[wsf][key_fit]['key_sol']
-            key_std = coll.dobj[wsf][key_fit]['key_std']
+            key_cov = coll.dobj[wsf][key_fit]['key_cov']
 
         if lamb is None:
             lamb = coll.dobj[wsf][key_fit]['key_lamb']
@@ -473,7 +533,7 @@ def _check_keys(coll=None, key=None, key_data=None, lamb=None, binning=None):
         allowed=lok,
     )
 
-    return key_model, key_data, key_std, lamb, binning
+    return key_model, key_data, key_cov, lamb, binning
 
 
 def _err_lamb(lamb):
@@ -484,3 +544,179 @@ def _err_lamb(lamb):
         f"Provided:\n{lamb}"
     )
     raise Exception(msg)
+
+
+#############################################
+#############################################
+#       uncertainty propagation
+#############################################
+
+
+def _uncertainty_propagation(
+    # resources
+    coll=None,
+    key_model=None,
+    lamb=None,
+    data_in=None,
+    data_out=None,
+    nx=None,
+    lind=None,
+    func=None,
+    # method
+    method=None,
+    # slicing
+    ind0=None,
+    ind0_out=None,
+    sli_in=None,
+    sli_out=None,
+    # uncertainty input
+    cov=None,
+    # binning
+    dbinning=None,
+    bin_ind=None,
+    bin_dlamb=None,
+    # timing
+    timing=None,
+):
+
+    # ------------------
+    # prepare
+    # ------------------
+
+    if timing is True:
+        i0 = 0  # DB
+        dt0 = 0
+        dt1 = 0
+
+    # prepare output
+    data_min = np.full(data_out.shape, np.inf)
+    data_max = np.full(data_out.shape, -np.inf)
+
+    # sli_cov
+    sli_cov = np.r_[
+        [0 for ii in range(data_in.ndim-1)] + [slice(None), slice(None)]
+    ]
+    ind_cov = np.arange(data_in.ndim-1)
+
+    # -------------------------------------------------------
+    # Proper uncertainty propagation using covariance matrix
+    # -------------------------------------------------------
+
+    # ref: https://en.wikipedia.org/wiki/Propagation_of_uncertainty
+
+    if method == 'new':
+
+        # ------------------------
+        # get jacobian at solution
+
+        # function
+        func_jac = coll.get_spectral_fit_func(
+            key=key_model,
+            func='jac',
+        )['jac']
+
+        # ------------------------
+        # loop on all spectra
+
+        for ind in itt.product(*lind):
+
+            # update slices
+            if ind0 is not None:
+                sli_in[ind0] = ind
+                sli_out[ind0_out] = ind
+                sli_cov[ind_cov] = ind
+
+            datain = data_in[tuple(sli_in)]
+
+            # values
+            jac = func_jac(
+                x_free=datain,
+                lamb=lamb if dbinning is False else dbinning['lamb'],
+                bin_ind=bin_ind,
+                bin_dlamb=bin_dlamb,
+            )
+
+            # derive std of sum
+            std_sum = np.sqrt((jac.T).dot(cov[tuple(sli_cov)].dot(jac)))
+
+            # ------------------------
+            # derive min, max
+
+            sliout = tuple(sli_out)
+            data_min[sliout] = data_out[sliout] - std_sum
+            data_max[sliout] = data_out[sliout] + std_sum
+
+    # ------------------------------------------------------
+    # brute force uncertainty propagation using min / max of all variables
+    # ------------------------------------------------------
+
+    else:
+
+        # prepare
+        inc = np.r_[-1, 0, 1]
+        lind_std = [inc for ii in range(nx)]
+
+        # std_in
+        sli_in
+
+        # -------------------
+        # loop on spectra
+
+        for ind in itt.product(*lind):
+
+            # update slices
+            if ind0 is not None:
+                sli_in[ind0] = ind
+                sli_out[ind0_out] = ind
+                sli_cov[ind_cov] = ind
+
+            # std
+            std = np.sqrt(np.diag(cov[tuple(sli_cov)]))
+
+            # loop on [-1, 0, 1] combinations
+            for stdi in itt.product(*lind_std):
+
+                # data = data_in + std * (-1, 0, 1)
+                datain = (
+                    data_in[tuple(sli_in)]
+                    + np.r_[stdi] * std
+                )
+
+                if timing is True:
+                    t00 = dtm.datetime.now()
+
+                # call func
+                datai = func(
+                    x_free=datain,
+                    lamb=lamb if dbinning is False else dbinning['lamb'],
+                    bin_ind=bin_ind,
+                    bin_dlamb=bin_dlamb,
+                )
+
+                if timing is True:
+                    t01 = dtm.datetime.now()
+                    dt0 += (t01 - t00).total_seconds()
+
+                # update min, max
+                data_min[tuple(sli_out)] = np.minimum(
+                    data_min[tuple(sli_out)], datai,
+                )
+                data_max[tuple(sli_out)] = np.maximum(
+                    data_max[tuple(sli_out)],
+                    datai,
+                )
+
+                if timing is True:
+                    t02 = dtm.datetime.now()
+                    dt1 += (t02 - t01).total_seconds()
+                    i0 += 1
+
+        if timing is True:
+            msg = (
+                f"\t... timing std: func {dt0} s\n"
+                f"\t... timing std: max/min {dt1} s\n"
+                f"\t... timing std: ntot = {i0}\n"
+            )
+            print(msg)
+
+    return data_min, data_max

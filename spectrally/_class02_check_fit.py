@@ -161,7 +161,7 @@ def _check(
                 'key_bs': key_bs,
                 'key_bs_vect': key_bs_vect,
                 'key_sol': None,
-                'key_std': None,
+                'key_cov': None,
                 'dparams': dparams,
                 'dvalid': dvalid,
             },

@@ -50,7 +50,9 @@ def main(
         key_data, key_std,
         key_lamb, lamb, ref_lamb,
         binning, details,
+        _,
         _, store, store_key,
+        _,
     ) = _interpolate._check(
         coll=coll,
         key_model=key,
