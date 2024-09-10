@@ -66,6 +66,7 @@ def main(
         key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
+        ref_cov, shape_cov,
         lamb, data, axis,
         chain,
         store, overwrite,
@@ -137,6 +138,9 @@ def main(
         key_model=key_model,
         key_data=key_data,
         key_lamb=key_lamb,
+        # covariance
+        ref_cov=ref_cov,
+        shape_cov=shape_cov,
         # lamb, data, axis
         lamb=lamb,
         data=data,
@@ -266,11 +270,34 @@ def _check(
     ref_lamb = coll.ddata[key_lamb]['ref']
     axis = ref_data.index(ref_lamb[0])
 
+    # -----------
+    # derive ref covariance
+
+    # ref
+    wsm = coll._which_model
+    ref_nxfree = coll.dobj[wsm][key_model]['ref_nx']
+    ref_cov = tuple(
+        [
+            rr for ii, rr in enumerate(ref_data)
+            if ii != axis
+            ]
+        + [ref_nxfree, ref_nxfree]
+    )
+
+    # shape
+    nxfree = coll.dref[ref_nxfree]['size']
+    shape_cov = tuple(
+        [
+            ss for ii, ss in enumerate(data.shape)
+            if ii != axis
+            ]
+        + [nxfree, nxfree]
+    )
+
     # ---------------------------------
     # voigt not handled for fitting yet
     # ---------------------------------
 
-    wsm = coll._which_model
     lvoigt = [
         k0 for k0, v0 in coll.dobj[wsm][key_model]['dmodel'].items()
         if v0['type'] == 'voigt'
@@ -366,6 +393,7 @@ def _check(
         key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
+        ref_cov, shape_cov,
         lamb, data, axis,
         chain,
         store, overwrite,
@@ -508,15 +536,15 @@ def _store(
     ksol = f"{key}_sol"
 
     # solution arrays
-    sol = dout['sol'].ravel() if ravel is True else dout['sol']
-    if dout['std'] is None:
-        kstd = None
-        std = None
+    sol = dout['sol'].squeeze() if ravel is True else dout['sol']
+    if dout['cov'] is None:
+        kcov = None
+        cov = None
     else:
-        kstd = f"{key}_std"
-        std = dout['std'].ravel() if ravel is True else dout['std']
+        kcov = f"{key}_cov"
+        cov = dout['cov'].squeeze() if ravel is True else dout['cov']
 
-    # add
+    # add as data
     if ksol in coll.ddata.keys():
         if overwrite is True:
             c0 = (
@@ -525,8 +553,8 @@ def _store(
             )
             if c0 is True:
                 coll._ddata[ksol]['data'] = sol
-                if std is not None:
-                    coll._ddata[kstd]['data'] = std
+                if cov is not None:
+                    coll._ddata[kcov]['data'] = cov
 
             else:
                 msg = (
@@ -551,14 +579,20 @@ def _store(
             dim='fit_sol',
         )
 
-        # std
-        if std is not None:
+        # cov
+        if cov is not None:
+            cunits = coll.ddata[key_data]['units']
+            if isinstance(cunits, str):
+                cunits = f"{cunits}^2"
+            else:
+                cunits = cunits * cunits
+
             coll.add_data(
-                key=kstd,
-                data=std,
-                ref=tuple(ref),
-                units=coll.ddata[key_data]['units'],
-                dim='fit_std',
+                key=kcov,
+                data=cov,
+                ref=dout['ref_cov'],
+                units=cunits,
+                dim='fit_cov',
             )
 
     # -------------
@@ -592,7 +626,7 @@ def _store(
 
     wsf = coll._which_fit
     coll._dobj[wsf][key]['key_sol'] = ksol
-    coll._dobj[wsf][key]['key_std'] = kstd
+    coll._dobj[wsf][key]['key_cov'] = kcov
 
     # scale, bounds, x0
     coll._dobj[wsf][key]['dinternal'] = {

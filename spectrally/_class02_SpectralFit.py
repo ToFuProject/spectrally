@@ -290,6 +290,8 @@ class SpectralFit(Previous):
         connect=None,
         dinc=None,
         show_commands=None,
+        # timing
+        timing=None,
     ):
 
         """ Plot a spectral model using specified data
@@ -325,4 +327,6 @@ class SpectralFit(Previous):
             connect=connect,
             dinc=dinc,
             show_commands=show_commands,
+            # timing
+            timing=timing,
         )
