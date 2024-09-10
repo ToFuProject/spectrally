@@ -154,10 +154,14 @@ class SpectralModel(Previous):
         # options
         details=None,
         binning=None,
+        # uncertainty propagation
+        uncertainty_method=None,
         # others
         returnas=None,
         store=None,
         store_key=None,
+        # timing
+        timing=None,
     ):
         """ Interpolate the spectral model at lamb using key_data
 
@@ -187,10 +191,14 @@ class SpectralModel(Previous):
             # options
             details=details,
             binning=binning,
+            # uncertainty propagation
+            uncertainty_method=uncertainty_method,
             # others
             returnas=returnas,
             store=store,
             store_key=store_key,
+            # timing
+            timing=timing,
         )
 
     # ----------------------

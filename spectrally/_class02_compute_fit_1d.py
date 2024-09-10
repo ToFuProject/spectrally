@@ -34,6 +34,9 @@ def main(
     key_model=None,
     key_data=None,
     key_lamb=None,
+    # covarance
+    ref_cov=None,
+    shape_cov=None,
     # lamb, data, axis
     lamb=None,
     data=None,
@@ -186,6 +189,9 @@ def main(
         lamb=lamb,
         data=data,
         axis=axis,
+        # covarance
+        ref_cov=ref_cov,
+        shape_cov=shape_cov,
         # iok
         dind=dind,
         iok_all=iok_all,
@@ -270,6 +276,9 @@ def _loop(
     lamb=None,
     data=None,
     axis=None,
+    # covarance
+    ref_cov=None,
+    shape_cov=None,
     # iok
     dind=None,
     iok_all=None,
@@ -363,10 +372,17 @@ def _loop(
     nfev = np.full(shape_reduced, np.nan)
     time = np.full(shape_reduced, np.nan)
     sol = np.full(shape_sol, np.nan)
+
+    # covariance matrix
     if solver == 'scipy.curve_fit':
-        std = np.full(shape_sol, np.nan)
+        cov = np.full(shape_cov, np.nan)
+        sli_cov = np.r_[
+            [0 for ii in shape_reduced] + [slice(None), slice(None)]
+        ]
+        ind_cov = np.arange(len(shape_reduced))
+        scales_cov = scales[:, None] * scales[None, :]
     else:
-        std = None
+        cov = None
 
     message = ['' for ii in range(np.prod(shape_reduced))]
     errmsg = ['' for ii in range(np.prod(shape_reduced))]
@@ -416,6 +432,10 @@ def _loop(
 
         sli_sol[ind_ind] = ind
         slii = tuple(sli_sol)
+
+        # covariance
+        if cov is not None:
+            sli_cov[ind_cov] = ind
 
         # ---------------
         # x0
@@ -537,7 +557,7 @@ def _loop(
 
                 # store scaled solution
                 sol[slii] = popt * scales
-                std[slii] = np.sqrt(np.diag(pcov)) * scales
+                cov[tuple(sli_cov)] = pcov * scales_cov
 
                 # message
                 message[ii] = mesg
@@ -605,7 +625,10 @@ def _loop(
     dout = {
         'validity': validity,
         'sol': sol,
-        'std': std,
+        # covariance
+        'cov': cov,
+        'ref_cov': ref_cov,
+        # output
         'msg': np.reshape(message, shape_reduced),
         'nfev': nfev,
         'cost': cost,

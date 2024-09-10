@@ -6,6 +6,9 @@ Created on Sat Mar  9 16:09:08 2024
 """
 
 
+import datetime as dtm
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -28,6 +31,8 @@ def main(
     keyY=None,
     # options
     details=None,
+    # uncertainty propagation
+    uncertainty_method=None,
     # plotting
     dprop=None,
     vmin=None,
@@ -47,6 +52,8 @@ def main(
     connect=None,
     dinc=None,
     show_commands=None,
+    # timing
+    timing=None,
 ):
 
     # -------------------
@@ -59,6 +66,7 @@ def main(
         lines_labels, dlabels, lines_labels_rotation,
         lines_labels_horizontalalignment,
         connect,
+        timing,
     ) = _check(
         coll=coll,
         key=key,
@@ -72,7 +80,14 @@ def main(
         # interactivity
         nmax=nmax,
         connect=connect,
+        # timing
+        timing=timing,
     )
+
+    if timing is True:
+        print()
+        fname = 'plot_spectral_fit()'
+        t1 = dtm.datetime.now()  # DB
 
     # -------------------
     # interpolate
@@ -82,9 +97,17 @@ def main(
         key_model=key_fit,
         # options
         details=details,
+        # uncertainty propagation
+        uncertainty_method=uncertainty_method,
         # others
         returnas=dict,
+        # timing
+        timing=timing,
     )
+
+    if timing is True:
+        t2 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: interpolate {(t2-t1).total_seconds()} s')
 
     # -------------------
     # extract coll2
@@ -98,6 +121,10 @@ def main(
         details=details,
         keyY=keyY,
     )
+
+    if timing is True:
+        t3 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: extract {(t3-t2).total_seconds()} s')
 
     # -------------------
     # prepare figure
@@ -116,6 +143,10 @@ def main(
         )
 
     dax = ds._generic_check._check_dax(dax)
+
+    if timing is True:
+        t4 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: get_dax {(t4-t3).total_seconds()} s')
 
     # -------------------
     # plot
@@ -155,6 +186,10 @@ def main(
             lines_labels_horizontalalignment=lines_labels_horizontalalignment,
         )
 
+    if timing is True:
+        t5 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: plot {(t5-t4).total_seconds()} s')
+
     # -------------------
     # finalize
     # -------------------
@@ -164,6 +199,10 @@ def main(
         dout=dout,
         tit=tit,
     )
+
+    if timing is True:
+        t6 = dtm.datetime.now()  # DB
+        print(f'... timing {fname}: finalize {(t6-t5).total_seconds()} s')
 
     # ---------------------
     # connect interactivity
@@ -178,6 +217,10 @@ def main(
             dax.connect()
 
             dax.show_commands(verb=show_commands)
+
+            if timing is True:
+                t7 = dtm.datetime.now()  # DB
+                print(f'... timing {fname}: connect {(t7-t6).total_seconds()} s\n')
             return dax
         else:
             return dax, dgroup
@@ -202,6 +245,8 @@ def _check(
     # interactivity
     nmax=None,
     connect=None,
+    # timing
+    timing=None,
 ):
 
     # -------------
@@ -284,12 +329,23 @@ def _check(
         default=True,
     )
 
+    # -------------
+    # timing
+    # -------------
+
+    timing = ds._generic_check._check_var(
+        timing, 'timing',
+        types=bool,
+        default=True,
+    )
+
     return (
         key, key_model, key_sol, key_data, key_lamb,
         details, binning,
         lines_labels, dlabels, lines_labels_rotation,
         lines_labels_horizontalalignment,
         connect,
+        timing,
     )
 
 
@@ -404,7 +460,7 @@ def _plot_1d(
                 )
 
         # ------------
-        # plot std
+        # plot uncertainty
         # -----------
 
         if dkeys.get('sum_min') is not None:
@@ -533,6 +589,12 @@ def _plot_2d(
         connect=False,
         inplace=True,
     )
+
+    # --------------
+    # plot uncertainty
+    # --------------
+
+
 
     # -----------------
     # adjust colors

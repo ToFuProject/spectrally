@@ -47,10 +47,12 @@ def main(
     # all other variables
     (
         key_model, ref_nx, ref_nf,
-        key_data, key_std,
+        key_data, key_cov,
         key_lamb, lamb, ref_lamb,
         binning, details,
+        _,
         _, store, store_key,
+        _,
     ) = _interpolate._check(
         coll=coll,
         key_model=key,
@@ -111,7 +113,7 @@ def main(
 
     dout = func(
         x_free=coll.ddata[key_data]['data'],
-        x_std=None if key_std is None else coll.ddata[key_std]['data'],
+        x_cov=None if key_cov is None else coll.ddata[key_cov]['data'],
         lamb=lamb,
     )
 
@@ -210,7 +212,7 @@ def _get_func_moments(
 
     def func(
         x_free=None,
-        x_std=None,
+        x_cov=None,
         lamb=None,
         param_val=param_val,
         c0=c0,
@@ -233,6 +235,14 @@ def _get_func_moments(
             k0: {} for k0 in dind.keys()
             if k0 not in ['func', 'nfunc', 'jac']
         }
+
+        # --------------------
+        # cov to std
+
+        if x_cov is not None:
+            x_std = np.sqrt(np.diagonal(x_cov, axis1=-2, axis2=-1))
+        else:
+            x_std = None
 
         # ----------------------------
         # get x_full from constraints

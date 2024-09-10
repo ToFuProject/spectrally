@@ -271,6 +271,8 @@ class SpectralFit(Previous):
         keyY=None,
         # options
         details=None,
+        # uncertainty propagation
+        uncertainty_method=None,
         # plotting
         dprop=None,
         vmin=None,
@@ -290,6 +292,8 @@ class SpectralFit(Previous):
         connect=None,
         dinc=None,
         show_commands=None,
+        # timing
+        timing=None,
     ):
 
         """ Plot a spectral model using specified data
@@ -306,6 +310,8 @@ class SpectralFit(Previous):
             keyY=keyY,
             # options
             details=details,
+            # uncertainty propagation
+            uncertainty_method=uncertainty_method,
             # plotting
             dprop=dprop,
             vmin=vmin,
@@ -325,4 +331,6 @@ class SpectralFit(Previous):
             connect=connect,
             dinc=dinc,
             show_commands=show_commands,
+            # timing
+            timing=timing,
         )
