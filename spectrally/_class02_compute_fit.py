@@ -96,6 +96,7 @@ def main(
     if data.ndim == 1:
         # don't change axis !
         data = data[:, None]
+        shape_cov = (1,) + shape_cov
         ravel = True
 
     # ------------
