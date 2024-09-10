@@ -127,6 +127,8 @@ def main(
     # compute spectral fit
     # ---------------------
 
+    dax = None
+    dout = None
     if compute is True:
 
         _compute_spectral_fit(
