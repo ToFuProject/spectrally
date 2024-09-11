@@ -7,8 +7,8 @@ import copy
 
 from ._class01_SpectralModel import SpectralModel as Previous
 from . import _class02_check_fit as _check_fit
+from . import _class02_show as _show
 from . import _class02_binning as _binning
-from . import _class01_fit_func as _fit_func
 from . import _class02_compute_fit as _compute_fit
 from . import _class02_plot_valid as _plot_valid
 from . import _class02_plot_fit as _plot_fit
@@ -40,7 +40,7 @@ class SpectralFit(Previous):
 
     def _get_show_obj(self, which=None):
         if which == self._which_fit:
-            return _check_fit._show
+            return _show._show
         else:
             return super()._get_show_obj(which)
 
