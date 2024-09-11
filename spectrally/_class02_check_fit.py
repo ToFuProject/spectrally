@@ -294,7 +294,7 @@ def _check_keys(
                 types=str,
                 allowed=lok_data + ['poisson'],
                 default='poisson',
-                extra_msg=_err_key_sigma(key_sigma, returnas=True),
+                extra_msg=_err_key_sigma(key_sigma, lok=lok, returnas=True),
             )
 
             asig_def = True
@@ -316,6 +316,10 @@ def _check_keys(
         absolute_sigma, 'absolute_sigma',
         types=bool,
         default=asig_def,
+        extra_msg=(
+            "Determines whether the error 'key_sigma' should be "
+            "understood as a relative or absolute error bar"
+        ),
     )
 
     # -------------
@@ -403,19 +407,23 @@ def _check_keys(
     )
 
 
-def _err_key_sigma(key_sigma=None, returnas=False):
+def _err_key_sigma(key_sigma=None, lok=None, returnas=False):
 
     msg = (
-        "Arg key_sigma must either be:\n"
-        "\t- str: a key to a array with:"
-            "\t\t- same units as key_data"
+        "Arg 'key_sigma' must either be:\n"
+        "\t- str: a key to a array with:\n"
+            "\t\t- same units as key_data\n"
             "\t\t- same ref as key_data or key_lamb\n"
             "\t\t- only strictly positive values\n"
-            "\t\tAvailable:{lok}\n"
+    )
+    if lok is not None:
+        msg += f"\t\tAvailable:\n\t{lok}\n"
+
+    msg += (
         "\t- 'poisson': poisson statictics (sqrt(data))\n"
         "\t- float or int : constant unique sigma for all data points\n"
         "\t- str: a float with '%' (e.g.: '5.0%'), constant percentage error\n"
-        "Provided:\n\t{key_sigma}"
+        f"\nProvided:\n\t{key_sigma}"
     )
 
     if returnas is True:
