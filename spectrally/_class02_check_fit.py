@@ -18,20 +18,6 @@ from . import _class01_valid as _valid
 
 #############################################
 #############################################
-#       DEFAULTS
-#############################################
-
-
-_LFIT_ORDER = [
-    'sol',
-    'model', 'data', 'sigma', 'lamb', 'bs',
-    'positive', 'nsigma', 'fraction',
-    'mask', 'domain', 'focus',
-]
-
-
-#############################################
-#############################################
 #       fit CHECK
 #############################################
 
@@ -45,6 +31,7 @@ def _check(
     # data and noise
     key_data=None,
     key_sigma=None,
+    absolute_sigma=None,
     # wavelength and phi
     key_lamb=None,
     key_bs_vect=None,
@@ -68,6 +55,7 @@ def _check(
         key_lamb,
         key_bs_vect,
         key_bs,
+        absolute_sigma,
         # derived
         ref,
         ref0,
@@ -161,7 +149,8 @@ def _check(
                 'key_bs': key_bs,
                 'key_bs_vect': key_bs_vect,
                 'key_sol': None,
-                'key_std': None,
+                'key_cov': None,
+                'absolute_sigma': absolute_sigma,
                 'dparams': dparams,
                 'dvalid': dvalid,
             },
@@ -189,6 +178,7 @@ def _check_keys(
     key_lamb=None,
     key_bs_vect=None,
     key_bs=None,
+    absolute_sigma=None,
     # unused
     **kwdargs,
 ):
@@ -253,6 +243,70 @@ def _check_keys(
     # axis_lamb
     ref_lamb = coll.ddata[key_lamb]['ref'][0]
     axis_lamb = ref.index(ref_lamb)
+
+    # -------------
+    # key_sigma
+    # -------------
+
+    if key_sigma is None:
+        key_sigma = 'poisson'
+
+    # key_sigma
+    if isinstance(key_sigma, str):
+
+        # percentage
+        c0 = (
+            key_sigma[-1] == '%'
+            and all([ss.isnumeric() or ss == '.' for ss in key_sigma[:-1]])
+        )
+        if c0:
+            asig_def = True
+
+        else:
+
+            lok_data = [
+                k0 for k0, v0 in coll.ddata.items()
+                if v0['units'] == coll.ddata[key_data]['units']
+                and (
+                    v0['ref'] == ref
+                    or v0['ref'] == ref_lamb
+                )
+                and np.all(v0['data'] > 0)
+            ]
+
+            lok = list(coll.ddata.keys())
+            key_sigma = ds._generic_check._check_var(
+                key_sigma, 'key_sigma',
+                types=str,
+                allowed=lok_data + ['poisson'],
+                default='poisson',
+                extra_msg=_err_key_sigma(key_sigma, lok=lok, returnas=True),
+            )
+
+            asig_def = True
+
+    else:
+        key_sigma = float(ds._generic_check._check_var(
+            key_sigma, 'key_sigma',
+            types=(int, float),
+            sign='>0',
+            extra_msg=_err_key_sigma(key_sigma, returnas=True),
+        ))
+        asig_def = True
+
+    # -------------
+    # absolute_sigma
+    # -------------
+
+    absolute_sigma = ds._generic_check._check_var(
+        absolute_sigma, 'absolute_sigma',
+        types=bool,
+        default=asig_def,
+        extra_msg=(
+            "Determines whether the error 'key_sigma' should be "
+            "understood as a relative or absolute error bar"
+        ),
+    )
 
     # -------------
     # key_bs
@@ -328,6 +382,7 @@ def _check_keys(
         key_lamb,
         key_bs_vect,
         key_bs,
+        absolute_sigma,
         # derived
         ref,
         ref0,
@@ -338,80 +393,29 @@ def _check_keys(
     )
 
 
-#############################################
-#############################################
-#       Show
-#############################################
+def _err_key_sigma(key_sigma=None, lok=None, returnas=False):
 
+    msg = (
+        "Arg 'key_sigma' must either be:\n"
+        "\t- str: a key to a array with:\n"
+            "\t\t- same units as key_data\n"
+            "\t\t- same ref as key_data or key_lamb\n"
+            "\t\t- only strictly positive values\n"
+    )
+    if lok is not None:
+        msg += f"\t\tAvailable:\n\t{lok}\n"
 
-def _show(coll=None, which=None, lcol=None, lar=None, show=None):
+    msg += (
+        "\t- 'poisson': poisson statictics (sqrt(data))\n"
+        "\t- float or int : constant unique sigma for all data points\n"
+        "\t- str: a float with '%' (e.g.: '5.0%'), constant percentage error\n"
+        f"\nProvided:\n\t{key_sigma}"
+    )
 
-    # ---------------------------
-    # column names
-    # ---------------------------
-
-    lcol.append([which] + _LFIT_ORDER)
-
-    # ---------------------------
-    # data
-    # ---------------------------
-
-    lkey = [
-        k1 for k1 in coll._dobj.get(which, {}).keys()
-        if show is None or k1 in show
-    ]
-
-    lar0 = []
-    for k0 in lkey:
-
-        # initialize with key
-        arr = [k0]
-
-        # add nb of func of each type
-        dfit = coll.dobj[which][k0]
-        for k1 in _LFIT_ORDER:
-
-            if k1 in ['model', 'data', 'sigma', 'lamb', 'bs', 'sol']:
-                nn = '' if dfit[f"key_{k1}"] is None else dfit[f"key_{k1}"]
-
-            elif k1 in ['nsigma', 'fraction', 'positive']:
-                nn = str(dfit['dvalid'][k1])
-
-            elif k1 in ['mask']:
-                nn = str(dfit['dvalid']['mask']['key'] is not None)
-
-            elif k1 in ['domain']:
-                c0 = all([
-                    len(v0['spec']) == 1
-                    and np.allclose(v0['spec'][0], np.inf*np.r_[-1, 1])
-                    for k0, v0 in dfit['dvalid']['domain'].items()
-                ])
-                if c0:
-                    nn = ''
-                else:
-                    lk = list(dfit['dvalid']['domain'].keys())
-                    if len(lk) == 2 and lk[0] != dfit['key_lamb']:
-                        lk = [lk[1], lk[0]]
-
-                    nn = ', '.join([
-                        str(len(dfit['dvalid']['domain'][k0]['spec']))
-                        for k0 in lk
-                    ])
-
-            elif k1 in ['focus']:
-                if dfit['dvalid'].get('focus') is None:
-                    nn = ''
-                else:
-                    nn = len(dfit['dvalid']['focus'])
-                    nn = f"{nn} / {dfit['dvalid']['focus_logic']}"
-
-            arr.append(nn)
-
-        lar0.append(arr)
-
-    lar.append(lar0)
-
-    return lcol, lar
+    if returnas is True:
+        return msg
+    else:
+        raise Exception(msg)
 
 
 # ###########################################

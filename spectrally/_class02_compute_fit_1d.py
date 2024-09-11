@@ -3,7 +3,6 @@
 
 
 import itertools as itt
-import functools
 import datetime as dtm
 
 
@@ -34,9 +33,13 @@ def main(
     key_model=None,
     key_data=None,
     key_lamb=None,
+    # covarance
+    ref_cov=None,
+    shape_cov=None,
     # lamb, data, axis
     lamb=None,
     data=None,
+    sigma=None,
     axis=None,
     ravel=None,
     # binning
@@ -50,6 +53,7 @@ def main(
     # solver options
     solver=None,
     dsolver_options=None,
+    absolute_sigma=None,
     # options
     strict=None,
     verb=None,
@@ -185,7 +189,11 @@ def main(
         # lamb, data, axis
         lamb=lamb,
         data=data,
+        sigma=sigma,
         axis=axis,
+        # covarance
+        ref_cov=ref_cov,
+        shape_cov=shape_cov,
         # iok
         dind=dind,
         iok_all=iok_all,
@@ -205,6 +213,7 @@ def main(
         # solver options
         solver=solver,
         dsolver_options=dsolver_options,
+        absolute_sigma=absolute_sigma,
         # options
         lk_xfree=lk_xfree,
         strict=strict,
@@ -269,7 +278,11 @@ def _loop(
     # lamb, data, axis
     lamb=None,
     data=None,
+    sigma=None,
     axis=None,
+    # covarance
+    ref_cov=None,
+    shape_cov=None,
     # iok
     dind=None,
     iok_all=None,
@@ -289,6 +302,7 @@ def _loop(
     # solver options
     solver=None,
     dsolver_options=None,
+    absolute_sigma=None,
     # options
     lk_xfree=None,
     strict=None,
@@ -363,10 +377,17 @@ def _loop(
     nfev = np.full(shape_reduced, np.nan)
     time = np.full(shape_reduced, np.nan)
     sol = np.full(shape_sol, np.nan)
+
+    # covariance matrix
     if solver == 'scipy.curve_fit':
-        std = np.full(shape_sol, np.nan)
+        cov = np.full(shape_cov, np.nan)
+        sli_cov = np.r_[
+            [0 for ii in shape_reduced] + [slice(None), slice(None)]
+        ]
+        ind_cov = np.arange(len(shape_reduced))
+        scales_cov = scales[:, None] * scales[None, :]
     else:
-        std = None
+        cov = None
 
     message = ['' for ii in range(np.prod(shape_reduced))]
     errmsg = ['' for ii in range(np.prod(shape_reduced))]
@@ -396,7 +417,6 @@ def _loop(
     else:
         pass
 
-
     # -----------------
     # main loop
     # -----------------
@@ -416,6 +436,10 @@ def _loop(
 
         sli_sol[ind_ind] = ind
         slii = tuple(sli_sol)
+
+        # covariance
+        if cov is not None:
+            sli_cov[ind_cov] = ind
 
         # ---------------
         # x0
@@ -512,8 +536,8 @@ def _loop(
                     lamb if dbinning is False else dbinning['lamb'],
                     data[slii][iok_all[slii]],
                     p0=x0,
-                    sigma=None,
-                    absolute_sigma=False,
+                    sigma=sigma[slii][iok_all[slii]],
+                    absolute_sigma=absolute_sigma,
                     check_finite=True,    # to be updated
                     bounds=(bounds0, bounds1),
                     jac=func_jac2,
@@ -537,7 +561,7 @@ def _loop(
 
                 # store scaled solution
                 sol[slii] = popt * scales
-                std[slii] = np.sqrt(np.diag(pcov)) * scales
+                cov[tuple(sli_cov)] = pcov * scales_cov
 
                 # message
                 message[ii] = mesg
@@ -605,7 +629,10 @@ def _loop(
     dout = {
         'validity': validity,
         'sol': sol,
-        'std': std,
+        # covariance
+        'cov': cov,
+        'ref_cov': ref_cov,
+        # output
         'msg': np.reshape(message, shape_reduced),
         'nfev': nfev,
         'cost': cost,

@@ -12,6 +12,7 @@ Created on Tue Feb 20 14:44:51 2024
 import warnings
 
 
+import numpy as np
 import datastock as ds
 
 
@@ -66,7 +67,10 @@ def main(
         key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
-        lamb, data, axis,
+        key_sigma,
+        ref_cov, shape_cov,
+        lamb, data, sigma, axis,
+        absolute_sigma,
         chain,
         store, overwrite,
         strict, verb, verb_scp, timing,
@@ -95,6 +99,8 @@ def main(
     if data.ndim == 1:
         # don't change axis !
         data = data[:, None]
+        sigma = sigma[:, None]
+        shape_cov = (1,) + shape_cov
         ravel = True
 
     # ------------
@@ -137,9 +143,13 @@ def main(
         key_model=key_model,
         key_data=key_data,
         key_lamb=key_lamb,
+        # covariance
+        ref_cov=ref_cov,
+        shape_cov=shape_cov,
         # lamb, data, axis
         lamb=lamb,
         data=data,
+        sigma=sigma,
         axis=axis,
         ravel=ravel,
         # binning
@@ -153,6 +163,7 @@ def main(
         # solver options
         solver=solver,
         dsolver_options=dsolver_options,
+        absolute_sigma=absolute_sigma,
         # options
         strict=strict,
         verb=verb,
@@ -260,17 +271,42 @@ def _check(
     key_model = coll.dobj[wsf][key]['key_model']
     key_data = coll.dobj[wsf][key]['key_data']
     key_lamb = coll.dobj[wsf][key]['key_lamb']
+    key_sigma = coll.dobj[wsf][key]['key_sigma']
+    absolute_sigma = coll.dobj[wsf][key]['absolute_sigma']
     lamb = coll.ddata[key_lamb]['data']
     data = coll.ddata[key_data]['data']
     ref_data = coll.ddata[key_data]['ref']
     ref_lamb = coll.ddata[key_lamb]['ref']
     axis = ref_data.index(ref_lamb[0])
 
+    # -----------
+    # derive ref covariance
+
+    # ref
+    wsm = coll._which_model
+    ref_nxfree = coll.dobj[wsm][key_model]['ref_nx']
+    ref_cov = tuple(
+        [
+            rr for ii, rr in enumerate(ref_data)
+            if ii != axis
+            ]
+        + [ref_nxfree, ref_nxfree]
+    )
+
+    # shape
+    nxfree = coll.dref[ref_nxfree]['size']
+    shape_cov = tuple(
+        [
+            ss for ii, ss in enumerate(data.shape)
+            if ii != axis
+            ]
+        + [nxfree, nxfree]
+    )
+
     # ---------------------------------
     # voigt not handled for fitting yet
     # ---------------------------------
 
-    wsm = coll._which_model
     lvoigt = [
         k0 for k0, v0 in coll.dobj[wsm][key_model]['dmodel'].items()
         if v0['type'] == 'voigt'
@@ -283,6 +319,30 @@ def _check(
             "Consider using another spectral model with pvoigt instead"
         )
         raise Exception(msg)
+
+    # ---------------
+    # sigma
+    # ---------------
+
+    if key_sigma == 'poisson':
+        sigma = np.sqrt(np.abs(data))
+        sigma[sigma == 0] = np.nanmin(sigma[sigma>0])
+
+    elif isinstance(key_sigma, float):
+        sigma = np.full(data.shape, key_sigma, dtype=float)
+
+    elif key_sigma.endswith('%'):
+        sigma = np.abs(data) * float(key_sigma[:-1]) / 100.
+        sigma[sigma == 0] = np.nanmin(sigma[sigma>0])
+
+    else:
+        sigma = coll.ddata[key_sigma]['data']
+        if sigma.ndim < data.ndim:
+            resh = [sigma.size if ii == axis else 1 for ii in range(data.ndim)]
+            sigma = sigma.reshape(resh)
+            for ii, ss in enumerate(data.shape):
+                if ii != axis:
+                    sigma = np.repeat(sigma, ss, axis=ii)
 
     # --------------
     # chain
@@ -366,7 +426,10 @@ def _check(
         key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
-        lamb, data, axis,
+        key_sigma,
+        ref_cov, shape_cov,
+        lamb, data, sigma, axis,
+        absolute_sigma,
         chain,
         store, overwrite,
         strict, verb, verb_scp, timing,
@@ -413,7 +476,7 @@ def _get_solver_options(
             tr_solver='exact',
             tr_options={},
             diff_step=None,
-            max_nfev=None,
+            max_nfev=6000,
             loss='linear',
             verbose=verb_scp,
         )
@@ -432,7 +495,7 @@ def _get_solver_options(
             tr_solver='exact',
             tr_options={},
             diff_step=None,
-            max_nfev=1000,
+            max_nfev=6000,
             loss='linear',
             verbose=verb_scp,
         )
@@ -508,15 +571,15 @@ def _store(
     ksol = f"{key}_sol"
 
     # solution arrays
-    sol = dout['sol'].ravel() if ravel is True else dout['sol']
-    if dout['std'] is None:
-        kstd = None
-        std = None
+    sol = dout['sol'].squeeze() if ravel is True else dout['sol']
+    if dout['cov'] is None:
+        kcov = None
+        cov = None
     else:
-        kstd = f"{key}_std"
-        std = dout['std'].ravel() if ravel is True else dout['std']
+        kcov = f"{key}_cov"
+        cov = dout['cov'].squeeze() if ravel is True else dout['cov']
 
-    # add
+    # add as data
     if ksol in coll.ddata.keys():
         if overwrite is True:
             c0 = (
@@ -525,8 +588,8 @@ def _store(
             )
             if c0 is True:
                 coll._ddata[ksol]['data'] = sol
-                if std is not None:
-                    coll._ddata[kstd]['data'] = std
+                if cov is not None:
+                    coll._ddata[kcov]['data'] = cov
 
             else:
                 msg = (
@@ -551,14 +614,20 @@ def _store(
             dim='fit_sol',
         )
 
-        # std
-        if std is not None:
+        # cov
+        if cov is not None:
+            cunits = coll.ddata[key_data]['units']
+            if isinstance(cunits, str):
+                cunits = f"{cunits}^2"
+            else:
+                cunits = cunits * cunits
+
             coll.add_data(
-                key=kstd,
-                data=std,
-                ref=tuple(ref),
-                units=coll.ddata[key_data]['units'],
-                dim='fit_std',
+                key=kcov,
+                data=cov,
+                ref=dout['ref_cov'],
+                units=cunits,
+                dim='fit_cov',
             )
 
     # -------------
@@ -592,7 +661,7 @@ def _store(
 
     wsf = coll._which_fit
     coll._dobj[wsf][key]['key_sol'] = ksol
-    coll._dobj[wsf][key]['key_std'] = kstd
+    coll._dobj[wsf][key]['key_cov'] = kcov
 
     # scale, bounds, x0
     coll._dobj[wsf][key]['dinternal'] = {
