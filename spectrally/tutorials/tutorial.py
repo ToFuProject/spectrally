@@ -527,6 +527,7 @@ def _add_spectral_fit(coll=None, data=None):
             key_model='sm0',
             key_data='spectra',
             key_lamb='lamb',
+            key_sigma='poisson',
             dvalid={
                 'nsigma': 3,
                 'fraction': 0.31,
@@ -539,6 +540,7 @@ def _add_spectral_fit(coll=None, data=None):
             key_model='sm1',
             key_data='spectra',
             key_lamb='lamb',
+            key_sigma='5%',
             dvalid={
                 'nsigma': 3,
                 'fraction': 0.31,
@@ -551,6 +553,7 @@ def _add_spectral_fit(coll=None, data=None):
             key_model='sm1',
             key_data='spectra',
             key_lamb='lamb',
+            key_sigma=5,
             dvalid={
                 'nsigma': 3,
                 'fraction': 0.31,
@@ -568,7 +571,7 @@ def _add_spectral_fit(coll=None, data=None):
                 key=k0.replace('sm_', 'sf_'),
                 key_model=k0,
                 key_data='current',
-                key_sigma=None,
+                key_sigma='poisson',
                 key_lamb='sample',
                 # params
                 dvalid={
@@ -588,8 +591,50 @@ def _add_spectral_fit(coll=None, data=None):
                 key='sf0',
                 key_model=k0,
                 key_data='spectra',
-                key_sigma=None,
+                key_sigma='poisson',
                 key_lamb='lamb',
+                # params
+                dvalid={
+                    'nsigma': 2,
+                    'fraction': 0.11,
+                },
+            )
+
+            coll.add_spectral_fit(
+                key='sf1',
+                key_model=k0,
+                key_data='spectra',
+                key_sigma='poisson',
+                key_lamb='lamb',
+                absolute_sigma=False,
+                # params
+                dvalid={
+                    'nsigma': 2,
+                    'fraction': 0.11,
+                },
+            )
+
+            coll.add_spectral_fit(
+                key='sf2',
+                key_model=k0,
+                key_data='spectra',
+                key_sigma='10%',
+                key_lamb='lamb',
+                absolute_sigma=False,
+                # params
+                dvalid={
+                    'nsigma': 2,
+                    'fraction': 0.11,
+                },
+            )
+
+            coll.add_spectral_fit(
+                key='sf3',
+                key_model=k0,
+                key_data='spectra',
+                key_sigma=10,
+                key_lamb='lamb',
+                absolute_sigma=False,
                 # params
                 dvalid={
                     'nsigma': 2,

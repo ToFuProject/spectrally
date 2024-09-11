@@ -12,6 +12,7 @@ Created on Tue Feb 20 14:44:51 2024
 import warnings
 
 
+import numpy as np
 import datastock as ds
 
 
@@ -66,8 +67,10 @@ def main(
         key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
+        key_sigma,
         ref_cov, shape_cov,
-        lamb, data, axis,
+        lamb, data, sigma, axis,
+        absolute_sigma,
         chain,
         store, overwrite,
         strict, verb, verb_scp, timing,
@@ -96,6 +99,7 @@ def main(
     if data.ndim == 1:
         # don't change axis !
         data = data[:, None]
+        sigma = sigma[:, None]
         shape_cov = (1,) + shape_cov
         ravel = True
 
@@ -145,6 +149,7 @@ def main(
         # lamb, data, axis
         lamb=lamb,
         data=data,
+        sigma=sigma,
         axis=axis,
         ravel=ravel,
         # binning
@@ -158,6 +163,7 @@ def main(
         # solver options
         solver=solver,
         dsolver_options=dsolver_options,
+        absolute_sigma=absolute_sigma,
         # options
         strict=strict,
         verb=verb,
@@ -265,6 +271,8 @@ def _check(
     key_model = coll.dobj[wsf][key]['key_model']
     key_data = coll.dobj[wsf][key]['key_data']
     key_lamb = coll.dobj[wsf][key]['key_lamb']
+    key_sigma = coll.dobj[wsf][key]['key_sigma']
+    absolute_sigma = coll.dobj[wsf][key]['absolute_sigma']
     lamb = coll.ddata[key_lamb]['data']
     data = coll.ddata[key_data]['data']
     ref_data = coll.ddata[key_data]['ref']
@@ -311,6 +319,30 @@ def _check(
             "Consider using another spectral model with pvoigt instead"
         )
         raise Exception(msg)
+
+    # ---------------
+    # sigma
+    # ---------------
+
+    if key_sigma == 'poisson':
+        sigma = np.sqrt(np.abs(data))
+        sigma[sigma == 0] = np.nanmin(sigma[sigma>0])
+
+    elif isinstance(key_sigma, float):
+        sigma = np.full(data.shape, key_sigma, dtype=float)
+
+    elif key_sigma.endswith('%'):
+        sigma = np.abs(data) * float(key_sigma[:-1]) / 100.
+        sigma[sigma == 0] = np.nanmin(sigma[sigma>0])
+
+    else:
+        sigma = coll.ddata[key_sigma]['data']
+        if sigma.ndim < data.ndim:
+            resh = [sigma.size if ii == axis else 1 for ii in range(data.ndim)]
+            sigma = sigma.reshape(resh)
+            for ii, ss in enumerate(data.shape):
+                if ii != axis:
+                    sigma = np.repeat(sigma, ss, axis=ii)
 
     # --------------
     # chain
@@ -394,8 +426,10 @@ def _check(
         key_model,
         key_data, key_lamb,
         ref_data, ref_lamb,
+        key_sigma,
         ref_cov, shape_cov,
-        lamb, data, axis,
+        lamb, data, sigma, axis,
+        absolute_sigma,
         chain,
         store, overwrite,
         strict, verb, verb_scp, timing,
@@ -442,7 +476,7 @@ def _get_solver_options(
             tr_solver='exact',
             tr_options={},
             diff_step=None,
-            max_nfev=None,
+            max_nfev=6000,
             loss='linear',
             verbose=verb_scp,
         )
@@ -461,7 +495,7 @@ def _get_solver_options(
             tr_solver='exact',
             tr_options={},
             diff_step=None,
-            max_nfev=1000,
+            max_nfev=6000,
             loss='linear',
             verbose=verb_scp,
         )
