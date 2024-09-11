@@ -262,36 +262,51 @@ def _check_keys(
     # key_sigma
     # -------------
 
+    if key_sigma is None:
+        key_sigma = 'poisson'
+
     # key_sigma
-    if key_sigma is None or isinstance(key_sigma, str):
+    if isinstance(key_sigma, str):
 
-        lok_data = [
-            k0 for k0, v0 in coll.ddata.items()
-            if v0['ref'] == ref
-            or v0['ref'] == ref_lamb
-        ]
-
-        lok = list(coll.ddata.keys())
-        key_sigma = ds._generic_check._check_var(
-            key_sigma, 'key_sigma',
-            types=str,
-            allowed=lok_data + ['poisson'],
-            default='poisson',
+        # percentage
+        c0 = (
+            key_sigma[-1] == '%'
+            and all([ss.isnumeric() or ss == '.' for ss in key_sigma[:-1]])
         )
+        if c0:
+            asig_def = True
 
-        asig_def = True
+        else:
+
+            lok_data = [
+                k0 for k0, v0 in coll.ddata.items()
+                if v0['units'] == coll.ddata[key_data]['units']
+                and (
+                    v0['ref'] == ref
+                    or v0['ref'] == ref_lamb
+                )
+                and np.all(v0['data'] > 0)
+            ]
+
+            lok = list(coll.ddata.keys())
+            key_sigma = ds._generic_check._check_var(
+                key_sigma, 'key_sigma',
+                types=str,
+                allowed=lok_data + ['poisson'],
+                default='poisson',
+                extra_msg=_err_key_sigma(key_sigma, returnas=True),
+            )
+
+            asig_def = True
 
     else:
-        if not isinstance(key_sigma, (int, float)):
-            msg = (
-                "Arg key_sigma must either be:\n"
-                "\t- str: a key to a array with same shape as data or lamb\n"
-                "\t- 'poisson': poisson statictics\n"
-                "\t- float: constant unique sigma for all\n"
-            )
-            raise Exception(msg)
-
-        asig_def = False
+        key_sigma = float(ds._generic_check._check_var(
+            key_sigma, 'key_sigma',
+            types=(int, float),
+            sign='>0',
+            extra_msg=_err_key_sigma(key_sigma, returnas=True),
+        ))
+        asig_def = True
 
     # -------------
     # absolute_sigma
@@ -386,6 +401,27 @@ def _check_keys(
         axis_lamb,
         axis_bs,
     )
+
+
+def _err_key_sigma(key_sigma=None, returnas=False):
+
+    msg = (
+        "Arg key_sigma must either be:\n"
+        "\t- str: a key to a array with:"
+            "\t\t- same units as key_data"
+            "\t\t- same ref as key_data or key_lamb\n"
+            "\t\t- only strictly positive values\n"
+            "\t\tAvailable:{lok}\n"
+        "\t- 'poisson': poisson statictics (sqrt(data))\n"
+        "\t- float or int : constant unique sigma for all data points\n"
+        "\t- str: a float with '%' (e.g.: '5.0%'), constant percentage error\n"
+        "Provided:\n\t{key_sigma}"
+    )
+
+    if returnas is True:
+        return msg
+    else:
+        raise Exception(msg)
 
 
 #############################################

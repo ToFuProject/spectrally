@@ -189,6 +189,7 @@ def main(
         # lamb, data, axis
         lamb=lamb,
         data=data,
+        sigma=sigma,
         axis=axis,
         # covarance
         ref_cov=ref_cov,
@@ -277,6 +278,7 @@ def _loop(
     # lamb, data, axis
     lamb=None,
     data=None,
+    sigma=None,
     axis=None,
     # covarance
     ref_cov=None,
@@ -415,7 +417,6 @@ def _loop(
     else:
         pass
 
-
     # -----------------
     # main loop
     # -----------------
@@ -535,7 +536,7 @@ def _loop(
                     lamb if dbinning is False else dbinning['lamb'],
                     data[slii][iok_all[slii]],
                     p0=x0,
-                    sigma=None,
+                    sigma=sigma[slii][iok_all[slii]],
                     absolute_sigma=absolute_sigma,
                     check_finite=True,    # to be updated
                     bounds=(bounds0, bounds1),

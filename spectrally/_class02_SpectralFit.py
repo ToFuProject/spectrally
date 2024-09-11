@@ -60,6 +60,7 @@ class SpectralFit(Previous):
         key_model=None,
         key_data=None,
         key_sigma=None,
+        absolute_sigma=None,
         # wavelength
         key_lamb=None,
         # optional 2d fit
@@ -79,6 +80,7 @@ class SpectralFit(Previous):
             key_model=key_model,
             key_data=key_data,
             key_sigma=key_sigma,
+            absolute_sigma=absolute_sigma,
             # wavelength
             key_lamb=key_lamb,
             # optional 2d fit

@@ -12,6 +12,7 @@ Created on Tue Feb 20 14:44:51 2024
 import warnings
 
 
+import numpy as np
 import datastock as ds
 
 
@@ -98,6 +99,7 @@ def main(
     if data.ndim == 1:
         # don't change axis !
         data = data[:, None]
+        sigma = sigma[:, None]
         shape_cov = (1,) + shape_cov
         ravel = True
 
@@ -323,13 +325,24 @@ def _check(
     # ---------------
 
     if key_sigma == 'poisson':
-        sigma = None
+        sigma = np.sqrt(np.abs(data))
+        sigma[sigma == 0] = np.nanmin(sigma[sigma>0])
 
-    elif isinstance(key_sigma, (int, float)):
-        sigma = None
+    elif isinstance(key_sigma, float):
+        sigma = np.full(data.shape, key_sigma, dtype=float)
+
+    elif key_sigma.endswith('%'):
+        sigma = np.abs(data) * float(key_sigma[:-1]) / 100.
+        sigma[sigma == 0] = np.nanmin(sigma[sigma>0])
 
     else:
-        sigma = None
+        sigma = coll.ddata[key_sigma]['data']
+        if sigma.ndim < data.ndim:
+            resh = [sigma.size if ii == axis else 1 for ii in range(data.ndim)]
+            sigma = sigma.reshape(resh)
+            for ii, ss in enumerate(data.shape):
+                if ii != axis:
+                    sigma = np.repeat(sigma, ss, axis=ii)
 
     # --------------
     # chain
@@ -463,7 +476,7 @@ def _get_solver_options(
             tr_solver='exact',
             tr_options={},
             diff_step=None,
-            max_nfev=None,
+            max_nfev=6000,
             loss='linear',
             verbose=verb_scp,
         )
@@ -482,7 +495,7 @@ def _get_solver_options(
             tr_solver='exact',
             tr_options={},
             diff_step=None,
-            max_nfev=1000,
+            max_nfev=6000,
             loss='linear',
             verbose=verb_scp,
         )
