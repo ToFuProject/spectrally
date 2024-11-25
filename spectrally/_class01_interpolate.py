@@ -44,7 +44,7 @@ def main(
 
     (
         key_model, ref_nx, ref_nf,
-        key_data, key_cov,
+        key_data, key_cov, axis,
         key_lamb, lamb, ref_lamb,
         binning, details,
         uncertainty_method,
@@ -253,6 +253,7 @@ def main(
             lamb=lamb,
             data_in=data_in,
             data_out=data_out,
+            axis=axis,
             nx=nx,
             lind=lind,
             func=func,
@@ -363,6 +364,8 @@ def _check(
     ref_nf = coll.dobj[wsm][key_model]['ref_nf']
     ref_nx = coll.dobj[wsm][key_model]['ref_nx']
 
+    axis = coll.ddata[key_data]['ref'].index(ref_nx)
+
     # -----------------
     # lamb
     # -----------------
@@ -465,7 +468,7 @@ def _check(
 
     return (
         key_model, ref_nx, ref_nf,
-        key_data, key_cov,
+        key_data, key_cov, axis,
         key_lamb, lamb, ref_lamb,
         binning, details,
         uncertainty_method,
@@ -559,6 +562,7 @@ def _uncertainty_propagation(
     lamb=None,
     data_in=None,
     data_out=None,
+    axis=None,
     nx=None,
     lind=None,
     func=None,
@@ -597,6 +601,16 @@ def _uncertainty_propagation(
         [0 for ii in range(data_in.ndim-1)] + [slice(None), slice(None)]
     ]
     ind_cov = np.arange(data_in.ndim-1)
+
+    sli_cov = [0 for ii in cov.shape]
+    sli_cov[axis] = slice(None)
+    sli_cov[axis+1] = slice(None)
+    sli_cov = np.array(sli_cov)
+
+    ind_cov = np.array(
+        [ii for ii in range(len(cov.shape)) if ii not in [axis, axis+1]],
+        dtype=int,
+    )
 
     # -------------------------------------------------------
     # Proper uncertainty propagation using covariance matrix
