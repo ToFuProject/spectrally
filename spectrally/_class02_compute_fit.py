@@ -100,7 +100,7 @@ def main(
         # don't change axis !
         data = data[:, None]
         sigma = sigma[:, None]
-        shape_cov = (1,) + shape_cov
+        shape_cov = shape_cov + (1,)
         ravel = True
 
     # ------------
