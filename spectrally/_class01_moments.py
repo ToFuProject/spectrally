@@ -47,7 +47,7 @@ def main(
     # all other variables
     (
         key_model, ref_nx, ref_nf,
-        key_data, key_cov,
+        key_data, key_cov, axis,
         key_lamb, lamb, ref_lamb,
         binning, details,
         _,
@@ -92,7 +92,6 @@ def main(
     # ------------
 
     dind = _check_mz(dmz, dind=dind)
-    axis = coll.ddata[key_data]['ref'].index(ref_nx)
 
     # ------------
     # get func
@@ -240,7 +239,12 @@ def _get_func_moments(
         # cov to std
 
         if x_cov is not None:
-            x_std = np.sqrt(np.diagonal(x_cov, axis1=-2, axis2=-1))
+            # see _class02_compute_fit.py, line 294
+            # ref_cov_axis = (axis, axis+1)
+            x_std = np.sqrt(np.diagonal(x_cov, axis1=axis, axis2=axis+1))
+            # diagonal always returns diag as last index
+            if axis < x_cov.ndim-2:
+                x_std = np.swapaxes(x_std, -1, axis)
         else:
             x_std = None
 

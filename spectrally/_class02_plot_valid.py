@@ -586,7 +586,7 @@ def _plot_2d(
     if keyY is None:
         kmob = f"{key_data}_h00"
         keyY = collax.dobj['mobile'][kmob]['data'][0]
-        refY = collax.ddata[keyY]['ref']
+        refY = collax.ddata[keyY]['ref'][0]
 
     # -----------------
     # plot valid
@@ -695,7 +695,7 @@ def _plot_2d(
         collax.add_axes(
             handle=ax,
             key=kax,
-            refy=[refY[0]],
+            refy=[refY],
             datay=[keyY],
             harmonize=True,
         )

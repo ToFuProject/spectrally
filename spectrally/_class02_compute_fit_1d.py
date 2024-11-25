@@ -381,10 +381,14 @@ def _loop(
     # covariance matrix
     if solver == 'scipy.curve_fit':
         cov = np.full(shape_cov, np.nan)
-        sli_cov = np.r_[
-            [0 for ii in shape_reduced] + [slice(None), slice(None)]
-        ]
-        ind_cov = np.arange(len(shape_reduced))
+        sli_cov = [0 for ii in shape_cov]
+        sli_cov[axis] = slice(None)
+        sli_cov[axis+1] = slice(None)
+        sli_cov = np.array(sli_cov)
+        ind_cov = np.array(
+            [ii for ii in range(len(shape_cov)) if ii not in [axis, axis+1]],
+            dtype=int,
+        )
         scales_cov = scales[:, None] * scales[None, :]
     else:
         cov = None

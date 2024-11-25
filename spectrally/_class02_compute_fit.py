@@ -100,7 +100,7 @@ def main(
         # don't change axis !
         data = data[:, None]
         sigma = sigma[:, None]
-        shape_cov = (1,) + shape_cov
+        shape_cov = shape_cov + (1,)
         ravel = True
 
     # ------------
@@ -285,23 +285,19 @@ def _check(
     # ref
     wsm = coll._which_model
     ref_nxfree = coll.dobj[wsm][key_model]['ref_nx']
-    ref_cov = tuple(
-        [
-            rr for ii, rr in enumerate(ref_data)
-            if ii != axis
-            ]
-        + [ref_nxfree, ref_nxfree]
+    ref_cov = (
+        ref_data[:axis]
+        + (ref_nxfree, ref_nxfree)
+        + ref_data[axis+1:]
     )
+    # hence
+    # ref_cov_axis = (axis, axis+1)
 
     # shape
     nxfree = coll.dref[ref_nxfree]['size']
-    shape_cov = tuple(
-        [
-            ss for ii, ss in enumerate(data.shape)
-            if ii != axis
-            ]
-        + [nxfree, nxfree]
-    )
+    shape_cov = tuple([
+        coll.dref[rr]['size'] for rr in ref_cov
+    ])
 
     # ---------------------------------
     # voigt not handled for fitting yet

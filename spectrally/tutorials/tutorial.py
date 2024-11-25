@@ -118,8 +118,7 @@ def main(
     if data == 'sxr':
         dax = coll.plot_spectral_fit_input_validity('sf1')
     elif data == 'ebit':
-        pass
-        # dax = coll.plot_spectral_fit_input_validity('sf0')
+        dax = coll.plot_spectral_fit_input_validity('sf0')
     else:
         dax = coll.plot_spectral_fit_input_validity('sf_exp')
 
@@ -154,6 +153,7 @@ def main(
         # extract moments
         # ---------------------
 
+        dout = None
         if data == 'sxr':
             dout = coll.get_spectral_model_moments('sf1')
         elif data == 'ebit':
