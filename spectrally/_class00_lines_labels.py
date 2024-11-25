@@ -87,10 +87,11 @@ def main(
 
             # get color cycle and loop
             color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+            ncol = len(color_cycle)
             for ii, uu in enumerate(lunique):
                 for k0 in dlabels.keys():
                     if coll.dobj[wsl].get(k0, {}).get(colors, k0) == uu:
-                        dlabels[k0]['color'] = color_cycle[ii]
+                        dlabels[k0]['color'] = color_cycle[ii%ncol]
 
     else:
 
