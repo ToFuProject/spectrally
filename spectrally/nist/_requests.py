@@ -496,18 +496,18 @@ def _csv_parser(
                         if isinstance(v0, str):
                             rowi[k0] = v0.replace('=', '').replace('"', '')
                         else:
-                            msg = (
-                                "Error reading NIST file:\n"
-                                f"\t- pfe: {pfe}\n"
-                                f"\t- ii = {ii}\n"
-                                f"\t- line_count = {line_count}\n"
-                                f"\t- i0 = {i0}\n"
-                                f"\t- row = {row}\n"
-                                f"\t- i1 = {i1}\n"
-                                f"\t- k0 = {k0}\n"
-                                f"\t- v0 = {v0}\n"
-                            )
-                            raise Exception(msg)
+                            # msg = (
+                            #     "Error reading NIST file:\n"
+                            #     f"\t- pfe: {pfe}\n"
+                            #     f"\t- ii = {ii}\n"
+                            #     f"\t- line_count = {line_count}\n"
+                            #     f"\t- i0 = {i0}\n"
+                            #     f"\t- i1 = {i1}\n"
+                            #     f"\t- k0 = {k0}\n"
+                            #     f"\t- v0 = {v0}\n"
+                            # )
+                            # raise Exception(msg)
+                            pass
 
                 if ok is True:
                     key = 'nist_{:03}'.format(ii)
