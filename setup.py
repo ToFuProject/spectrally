@@ -123,8 +123,7 @@ setup(
         "matplotlib",
         "pandas",
         "requests",
-        "datastock>=0.0.42",
-        "bsplines2d>=0.0.17",
+        "bsplines2d>=0.0.19",
     ],
     python_requires=">=3.6",
 
