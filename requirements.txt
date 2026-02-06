@@ -1,8 +1,3 @@
 ####### Requirements without Version Specifiers #######
-numpy
-scipy
-matplotlib
 pandas
-astropy
 requests
-bsplines2d>=0.0.19
