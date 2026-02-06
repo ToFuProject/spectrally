@@ -46,7 +46,9 @@ Issues = "https://github.com/ToFuProject/spectrally/issues"
 
 
 [project.entry-points."spectrally"]
-spectrally = "scripts.main:main"
+spectrally = "spectrally.scripts.spectrally_bash:main"
+spectrally-version = 'spectrally.scripts.spectrallyversion:main',
+specrally-custom = 'spectrally.scripts.spectrallycustom:main',
 
 
 [dependency-groups]
