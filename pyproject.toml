@@ -1,4 +1,66 @@
 [build-system]
-requires = ["setuptools>=40.8.0",
-	    "wheel",
-	    ]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools]
+packages = ["spectrally", "spectrally.tests"]
+
+
+[tool.setuptools_scm]
+version_file = "spectrally/_version.py"
+
+
+[tool.setuptools.dynamic]
+classifiers = {file = ["CLASSIFIERS.txt"]}
+
+
+[project]
+name = "spectrally"
+readme = "README.md"
+license = {text = "MIT"}
+dynamic = ["version", "classifiers"]
+description = "Generic spectrum fitting library with multiple constraints"
+authors = [
+    {name = "Didier VEZINET", email = "didier.vezinet@gmail.com"},
+]
+maintainers = [
+    {name = "Didier VEZINET", email = "didier.vezinet@gmail.com"},
+]
+keywords = [
+    "data", "spectrum fitting", "Collection",
+]
+# due to astropy >= 6.1 and to end-of-life of 3.9
+# see https://devguide.python.org/versions/
+requires-python = ">=3.10"
+dependencies = [
+	"bsplines2d>=0.0.30",
+	"pandas",
+	"requests",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/ToFuProject/spectrally"
+Issues = "https://github.com/ToFuProject/spectrally/issues"
+
+
+[project.entry-points."spectrally"]
+spectrally = "spectrally.scripts.spectrally_bash:main"
+spectrally-version = 'spectrally.scripts.spectrallyversion:main'
+specrally-custom = 'spectrally.scripts.spectrallycustom:main'
+
+
+[dependency-groups]
+dev = [
+	"pytest",
+]
+
+
+[project.optional-dependencies]
+linting = [
+  'ruff'
+]
+formatting = [
+  'ruff'
+]

@@ -5,7 +5,21 @@
 import warnings
 
 
-from .version import __version__
+# ###############
+# __version__
+# ###############
+
+
+from . import _version
+__version__ = _version.version
+__version_tuple__ = _version.version_tuple
+
+
+# ###############
+# sub-packages
+# ###############
+
+
 from ._class02_SpectralFit import SpectralFit as Collection
 from ._saveload import load
 from ._class01_show import *
